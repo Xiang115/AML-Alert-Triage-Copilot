@@ -7,7 +7,7 @@ planning only; **no backend code exists yet** (only the typology KB + docs).
 
 ## Read these first (don't re-derive — they're authoritative)
 
-- `CLAUDE.md` — stack (Gemini API), locked camelCase API contract, intended repo structure, ADR index.
+- `CLAUDE.md` — stack (DeepSeek API), locked camelCase API contract, intended repo structure, ADR index.
 - `CONTEXT.md` — domain glossary. Use these exact terms (Triage, adversarial Verifier, Typology Card,
   Distinguishing Test, Disposition, STRDraft).
 - `docs/PRD.md` — problem, user stories, module breakdown, **testing plan**.
@@ -28,8 +28,8 @@ planning only; **no backend code exists yet** (only the typology KB + docs).
    reported ratio. This is the first data task or the accuracy number is meaningless.
 4. **`synthaml_loader.py`** — raw CSVs → `Alert`/`Transaction`/`Account` + the three-bucket split.
    Unit-tested (see PRD Testing Decisions).
-5. **LLM client** — one swappable wrapper over Gemini (OpenAI-compat endpoint), **temperature 0**
-   (ADR-0003).
+5. **LLM client** — one swappable wrapper over DeepSeek (OpenAI-compat endpoint
+   `https://api.deepseek.com/v1`; V4 Pro workhorse, V4 Flash verifier), **temperature 0** (ADR-0003).
 6. **Pipeline** `agents/`: knowledge_base → triage → verifier → str_drafter, plus a pure
    `compute_confidence` (ADR-0007) and an orchestrator shared by precompute + the live endpoint.
    Verifier is **adversarial**, graded on the matched card's `distinguishingTest` (ADR-0001).
@@ -69,6 +69,6 @@ normalization. LLM agents get at most one fixture-driven smoke test — not unit
 - `superpowers:executing-plans` / `subagent-driven-development` — PRD → implementation.
 - `safehood-git-flow` — for commits/PRs (adapted here: branch `type/short-desc`, squash-merge,
   `Co-Authored-By: Claude Opus 4.8`, STOP before merge). main is at `62c873f`.
-- `claude-api` — when wiring the Gemini client / model IDs / caching.
+- DeepSeek API docs — when wiring the client / confirming the exact V4 Pro & Flash model IDs / caching.
 
 Not started: anything in `/frontend` (Person A). Nothing is blocked except by the data download (step 1).

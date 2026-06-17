@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+# /backend is the self-contained Python root: run `pytest` from here.
+pythonpath = ["."]
+testpaths = ["tests"]

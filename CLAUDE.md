@@ -39,7 +39,7 @@ agents/str_drafter.py      → drafts STR, only when recommendation is escalate
 ## Tech stack (locked)
 
 - **Backend/agents:** Python + FastAPI.
-- **LLM:** Gemini API — a capable Gemini model as workhorse (triage + STR drafting); a cheaper/faster Gemini model for the verifier. **Wrap the call behind one swappable client** (Gemini exposes an OpenAI-compatible endpoint) so the model/provider is a config change, not a code change. Use context/prompt caching for the reused typology context.
+- **LLM:** DeepSeek API — **DeepSeek V4 Pro** as workhorse (triage + STR drafting); **DeepSeek V4 Flash** (cheaper/faster) for the verifier. **Wrap the call behind one swappable client** (DeepSeek exposes an OpenAI-compatible endpoint at `https://api.deepseek.com/v1`) so the model/provider is a config change, not a code change. Use prompt caching for the reused typology context.
 - **Frontend:** React (Vite) + Tailwind — a polished analyst console.
 - **Data:** **SynthAML** primary — the Jensen et al. (2023, *Nature Scientific Data*) synthetic set built on Spar Nord (Danish bank) data: ~20k alerts + ~16M transactions, alert outcomes = reported/dismissed, one-to-many alert→transactions. **Download from Figshare, DOI `10.6084/m9.figshare.c.6504421.v1`** — NOT a random Kaggle "synthetic AML" kernel. Backups: SAML-D, IBM-AML.
 

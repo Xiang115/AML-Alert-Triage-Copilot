@@ -68,9 +68,9 @@ queue and writes that file — it is a build tool, not an endpoint. One live end
 (`POST /alerts/{alertId}/triage`) runs the pipeline on demand for Q&A. Pipeline is **plain linear
 Python**: retrieve Typology Card → triage → verify → draft. No LangGraph/LangChain.
 
-**LLM client (deep module).** Single provider-agnostic wrapper over the **Gemini API** (OpenAI-compatible
-endpoint), **temperature 0** across the pipeline (ADR-0003). Workhorse model for triage + STR drafting;
-a cheaper/faster model for the Verifier. Interface roughly: `complete(prompt, model, schema) -> parsed`.
+**LLM client (deep module).** Single provider-agnostic wrapper over the **DeepSeek API** (OpenAI-compatible
+endpoint), **temperature 0** across the pipeline (ADR-0003). **DeepSeek V4 Pro** for triage + STR drafting;
+**DeepSeek V4 Flash** for the Verifier. Interface roughly: `complete(prompt, model, schema) -> parsed`.
 
 **Knowledge base (deep module, ADR-0002).** Loads the curated **Typology Cards** from
 `backend/data/typologies/typologies.json` and selects the relevant card(s) for an Alert. No embeddings,

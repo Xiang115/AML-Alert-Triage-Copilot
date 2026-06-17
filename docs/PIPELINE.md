@@ -10,7 +10,7 @@ Today is **17 Jun 2026**. Golden path must run end-to-end by **23 Jun** (Day 7).
 
 | Phase | What | Owner | Target | Status |
 |---|---|---|---|---|
-| 0 | Scaffold + shared contract types | A + B | 18 Jun | ☐ |
+| 0 | Scaffold + shared contract types | A + B | 18 Jun | ✅ |
 | 1 | Data foundation (SynthAML load + 3-bucket split) | B | 19 Jun | ☐ |
 | 2 | LLM client + knowledge base | B | 19 Jun | ☐ |
 | 3 | Triage agent + confidence | B | 20 Jun | ☐ |
@@ -32,7 +32,7 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
 /backend
   main.py                     FastAPI app (Phase 7)
   schemas.py                  Pydantic models = the API contract (Phase 0)
-  llm.py                      swappable Gemini client (Phase 2)
+  llm.py                      swappable DeepSeek client (Phase 2)
   config.py                   env/model ids/thresholds (Phase 0)
   /agents
     knowledge_base.py         load + select Typology Cards (Phase 2)
@@ -56,7 +56,7 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
   /tests
     test_confidence.py  test_evaluate.py  test_str_drafter.py  test_synthaml_loader.py
   requirements.txt
-  .env                        GEMINI_API_KEY (gitignored)
+  .env                        DEEPSEEK_API_KEY (gitignored)
 /frontend                     Vite + React + Tailwind (Phase 0, 9)
 ```
 
@@ -68,13 +68,13 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
 
 **Backend.**
 1. `requirements.txt`: `fastapi uvicorn[standard] pydantic python-dotenv openai pandas pytest`.
-   (Gemini via its OpenAI-compatible endpoint, so the `openai` SDK is the client — ADR/CLAUDE stack.)
+   (DeepSeek via its OpenAI-compatible endpoint, so the `openai` SDK is the client — ADR/CLAUDE stack.)
 2. `backend/schemas.py` — Pydantic v2 models for every entity in `CLAUDE.md` → "API contract":
    `Account, Transaction, Alert, MatchedTypology, Verifier, STRDraft, TriageResult, Decision, Metrics`.
    Internal fields snake_case; emit camelCase via `model_config = ConfigDict(alias_generator=to_camel,
    populate_by_name=True)` and dump with `by_alias=True`. **This file is the single source of the contract.**
-3. `backend/config.py` — load `.env`; expose `GEMINI_API_KEY`, `GEMINI_BASE_URL`
-   (`https://generativelanguage.googleapis.com/v1beta/openai/`), `MODEL_WORKHORSE`, `MODEL_VERIFIER`,
+3. `backend/config.py` — load `.env`; expose `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`
+   (`https://api.deepseek.com/v1`), `MODEL_WORKHORSE` (deepseek-v4-pro), `MODEL_VERIFIER` (deepseek-v4-flash),
    `REVIEW_THRESHOLD` (default 0.6), `RANDOM_SEED`.
 4. `backend/main.py` — stub `GET /alerts` returning `[]`; enable CORS for the Vite dev origin.
 
@@ -84,7 +84,7 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
 7. `frontend/src/api.ts` — client with a `MOCK` flag that reads `frontend/src/fixtures/*.json` so A is
    not blocked on the backend.
 
-**Done when:** `uvicorn backend.main:app` serves `GET /alerts → []` in camelCase; frontend renders an
+**Done when:** `uvicorn main:app` (from `/backend`) serves `GET /alerts` in camelCase; frontend renders an
 empty queue page; both committed.
 
 ## Phase 1 — Data foundation (Day 2, B) — CRITICAL PATH, do before any prompt tuning
@@ -111,8 +111,8 @@ exists; `pytest tests/test_synthaml_loader.py` green.
 ## Phase 2 — LLM client + knowledge base (Day 2–3, B)
 
 1. `backend/llm.py`:
-   - `complete_json(system: str, user: str, model: str) -> dict` — calls Gemini via the OpenAI SDK
-     (`base_url=GEMINI_BASE_URL`), **`temperature=0`** (ADR-0003), `response_format` JSON; parse + return.
+   - `complete_json(system: str, user: str, model: str) -> dict` — calls DeepSeek via the OpenAI SDK
+     (`base_url=DEEPSEEK_BASE_URL`), **`temperature=0`** (ADR-0003), `response_format` JSON; parse + return.
      One retry on parse failure. Provider/model swappable via `config.py`.
 2. `backend/agents/knowledge_base.py`:
    - `load_cards() -> list[Card]` (from `data/typologies/typologies.json`)

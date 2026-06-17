@@ -1,0 +1,11 @@
+# Phase 0+ backend deps. Run from /backend with the local venv:
+#   python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
+fastapi
+uvicorn[standard]
+pydantic>=2
+python-dotenv
+httpx          # required by starlette TestClient
+pytest
+# --- used from later phases ---
+openai         # DeepSeek via its OpenAI-compatible endpoint (Phase 2)
+pandas         # SynthAML loader (Phase 1)
