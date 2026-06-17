@@ -3,7 +3,8 @@
     "description": "Curated AML typology cards. These are the retrieval unit for triage + verifier. Hand-authored, tiny, deterministic. NOT generated from PDF RAG.",
     "jurisdiction": "Malaysia-first (BNM/AMLA), grounded in FATF Recommendations.",
     "ctrCashThresholdMYR": 25000,
-    "note": "Verify exact citation sections against the source PDFs before the demo. Source strings below are document-level; tighten section numbers if time allows."
+    "ctrThresholdNote": "VERIFIED: BNM Cash Threshold Report, RM25,000, effective 1 Jan 2019 (reduced from RM50,000). Covers CASH only (excludes electronic transfers, cheques, bank drafts) and aggregates within the same day.",
+    "note": "Source strings below are document-level; tighten FATF/BNM section numbers against the source PDFs if time allows."
   },
   "typologies": [
     {
@@ -54,18 +55,18 @@
       "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000",
       "definition": "Transactions are deliberately broken into amounts just below a reporting threshold to avoid triggering a Cash Threshold Report (CTR).",
       "indicators": [
-        "Multiple deposits clustered just under the RM25,000 CTR threshold",
+        "Multiple CASH deposits clustered just under the RM25,000 CTR threshold",
         "Repeated similar sub-threshold amounts over a short period",
-        "Often cash channel; sometimes split across branches or days",
+        "Spread across DAYS, BRANCHES, or multiple PERSONS (smurfing) to defeat same-day aggregation",
         "Total aggregated value is substantial"
       ],
       "dataSignals": [
         "Transaction.amount repeatedly between ~20,000 and 24,999",
-        "Transaction.channel == cash / branch deposits",
-        "Cluster of similar amounts within a tight timestamp window"
+        "Transaction.channel == cash / branch deposits (CTR is cash-only; transfers do not trigger it)",
+        "Cluster of similar amounts spread across separate days (same-day cash is auto-aggregated by BNM)"
       ],
       "benignLookalike": "A business making genuine recurring sub-threshold payments (e.g. supplier instalments) or salary/rent flows.",
-      "distinguishingTest": "Benign recurring payments have CONSISTENT counterparties and a documented commercial reason. Structuring shows amounts SUSPICIOUSLY clustered just below the threshold with no reason other than avoiding the report.",
+      "distinguishingTest": "Benign recurring payments have CONSISTENT counterparties and a documented commercial reason. Structuring shows CASH amounts SUSPICIOUSLY clustered just below RM25,000, deliberately spread across days/persons, with no reason other than avoiding the report.",
       "typicalDisposition": "escalate",
       "strNarrativeHints": ["List the sub-threshold amounts and dates", "State the RM25,000 threshold being avoided", "Show the aggregate total"]
     },

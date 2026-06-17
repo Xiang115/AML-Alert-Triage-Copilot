@@ -17,3 +17,8 @@ and transparently label the rest, rather than fabricate clean figures a judge co
 This requires a held-out split fixed up front (tuning vs evaluation alerts) — otherwise accuracy just
 measures memorization. Trade-off: less headline-grabbing than round fabricated numbers, but one real
 held-out accuracy number plus honest labeling survives Q&A; fake precision does not.
+
+**Sampling:** LLM-triaging all ~20k SynthAML alerts is too slow/costly under the deadline, so
+`accuracyVsLabels` is measured over a **stratified random sample of the held-out slice (~100–300
+alerts)** that preserves the ~17% reported ratio. It is still a real measured number; note the sample
+size (n) on the metric slide so the claim is honest. Fix the random seed for reproducibility.

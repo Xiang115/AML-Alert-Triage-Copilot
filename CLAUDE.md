@@ -41,7 +41,7 @@ agents/str_drafter.py      → drafts STR, only when recommendation is escalate
 - **Backend/agents:** Python + FastAPI.
 - **LLM:** Gemini API — a capable Gemini model as workhorse (triage + STR drafting); a cheaper/faster Gemini model for the verifier. **Wrap the call behind one swappable client** (Gemini exposes an OpenAI-compatible endpoint) so the model/provider is a config change, not a code change. Use context/prompt caching for the reused typology context.
 - **Frontend:** React (Vite) + Tailwind — a polished analyst console.
-- **Data:** SynthAML primary (alerts + transactions + Report/Dismiss labels). Backups: SAML-D, IBM-AML.
+- **Data:** **SynthAML** primary — the Jensen et al. (2023, *Nature Scientific Data*) synthetic set built on Spar Nord (Danish bank) data: ~20k alerts + ~16M transactions, alert outcomes = reported/dismissed, one-to-many alert→transactions. **Download from Figshare, DOI `10.6084/m9.figshare.c.6504421.v1`** — NOT a random Kaggle "synthetic AML" kernel. Backups: SAML-D, IBM-AML.
 
 ## Intended repo structure
 

@@ -1,3 +1,6 @@
 work/
 .claude/
 .codegraph/
+
+# SynthAML dataset — large CSVs (~935 MB), download from Figshare, never commit
+backend/data/synthaml/
