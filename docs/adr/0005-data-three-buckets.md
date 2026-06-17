@@ -42,3 +42,24 @@ typology can be evidenced from real rows — that decides demo-queue vs hero-cas
 demo-queue typologies must reference only fields that exist or are derivable on real rows; counterparty-
 and profile-dependent signals belong to the hero cases. Confirm actual CSV headers/categories on
 download before finalizing the loader.
+
+## Update — Phase 1, after profiling the real data (supersedes the table above)
+
+The real columns are `AlertID, Date, Outcome` (alerts) and `AlertID, Timestamp, Entry(Credit|Debit),
+Type(Card|Wire|Cash|International), Size` (transactions), with **median ~829 transactions per alert**
+and **`Size` a normalized float (mean 0, std 1, ~half negative) — NOT a currency amount**. There is no
+counterparty, no holder, no KYC, and no usable money value. Consequences:
+
+- **No clean on-screen vignette is possible from real rows** — they are dense, amount-less, counterparty-
+  less histories. Even pass-through/dormant can't be shown as a tidy 2–3 transaction story, and
+  structuring (a threshold pattern) is impossible without real amounts.
+- **Decision (grill, Phase 1): real SynthAML powers the held-out accuracy metric ONLY; the entire
+  on-screen demo queue AND the hero cases are hand-crafted.** The earlier "demo queue = real rows"
+  premise is dropped.
+- Triage cannot read ~829 raw rows, so the loader (`backend/synthaml_loader.py`) reduces each alert to
+  a fixed **`AlertFeatures`** record (volume, credit/debit, channel mix incl. cash/international,
+  span/dormancy/burst, size distribution, net flow), precomputed once to **`backend/data/alert_features.csv`**
+  (committed, ~20k rows). The frozen 80/20 stratified split lives in **`backend/data/holdout_alert_ids.json`**
+  (committed; 16,000 held-out, 0.172 Report ratio preserved in both sets).
+- The hand-crafted demo/hero cases keep full fields (counterparty, MYR amounts, runningBalance) and carry
+  all narrative typologies; they are never counted in accuracy.

@@ -11,7 +11,7 @@ Today is **17 Jun 2026**. Golden path must run end-to-end by **23 Jun** (Day 7).
 | Phase | What | Owner | Target | Status |
 |---|---|---|---|---|
 | 0 | Scaffold + shared contract types | A + B | 18 Jun | ✅ |
-| 1 | Data foundation (SynthAML load + 3-bucket split) | B | 19 Jun | ☐ |
+| 1 | Data foundation (SynthAML features + held-out split) | B | 19 Jun | ✅ |
 | 2 | LLM client + knowledge base | B | 19 Jun | ☐ |
 | 3 | Triage agent + confidence | B | 20 Jun | ☐ |
 | 4 | Verifier agent (the wow) | B | 20 Jun | ☐ |
@@ -44,7 +44,8 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
   /data
     synthaml/                 (gitignored CSVs — Phase 1)
     explore_schema.py         one-off header/category dump (Phase 1)
-    synthaml_loader.py        raw → entities + 3-bucket split (Phase 1)
+    synthaml_loader.py        raw → AlertFeatures + held-out split (Phase 1)
+    alert_features.csv        precomputed per-alert features, 20k rows (Phase 1)
     holdout_alert_ids.json    frozen held-out split (Phase 1)
     hero_cases.json           hand-crafted alerts (Phase 6)
     precompute.py             build tool → results.json (Phase 6)
@@ -87,26 +88,28 @@ whole console against fixture JSON (mock mode) while B builds Phases 1–8. They
 **Done when:** `uvicorn main:app` (from `/backend`) serves `GET /alerts` in camelCase; frontend renders an
 empty queue page; both committed.
 
-## Phase 1 — Data foundation (Day 2, B) — CRITICAL PATH, do before any prompt tuning
+## Phase 1 — Data foundation (Day 2, B) — CRITICAL PATH, do before any prompt tuning ✅ DONE
 
-**Goal:** real SynthAML mapped to entities, with the held-out split frozen.
+**Reality (after profiling):** alerts are `AlertID, Date, Outcome`; transactions are `AlertID, Timestamp,
+Entry(Credit|Debit), Type(Card|Wire|Cash|International), Size` with **median ~829 txns/alert** and
+**`Size` normalized (not currency)**; no counterparty/holder/KYC. So real data drives the **accuracy
+metric only**; the demo is hand-crafted (see ADR-0005 Phase 1 update). The loader reduces each alert to
+an `AlertFeatures` record rather than mapping to display entities.
 
-1. Download to `backend/data/synthaml/` (links in `docs/handoff-backend.md`; dir is gitignored).
-2. `explore_schema.py` — print both CSVs' headers, dtypes, row counts, the **alert↔transaction join
-   key**, and the distinct values of `entry type` / `transaction type`. **Confirm reality vs the
-   idealized `Transaction` schema before coding the loader** (mapping rules: `docs/adr/0005`).
-3. `synthaml_loader.py`:
-   - `load_raw() -> (alerts_df, txns_df)`
-   - `to_alert(alert_row, txns) -> Alert` — map size→amount, timestamp→timestamp, entry type→direction;
-     **compute `runningBalance`** as per-account cumulative sum ordered by timestamp; **synthesize**
-     `Account` (holderName/accountType/openedAt) and any KYC fields deterministically from the id.
-   - `split_three_buckets(seed) -> {working, heldout}` — stratified on `outcome` to preserve ~17%
-     reported; write held-out ids to `holdout_alert_ids.json` (commit this file — it freezes the split).
-4. `tests/test_synthaml_loader.py` — direction/runningBalance correctness on a tiny fixture; held-out
-   and working sets are disjoint.
+1. Download to `backend/data/synthaml/` (gitignored). ✅
+2. `backend/synthaml_loader.py` (TDD'd pure functions):
+   - `aggregate_features(txns) -> DataFrame` — one row/alert: volume, credit/debit, channel mix
+     (card/wire/cash/intl), span/dormancy/burst, size mean/std/max, net flow.
+   - `stratified_split(labels, holdout_frac, seed) -> (working, holdout)` — stratified on Outcome,
+     deterministic by seed.
+   - `build(synthaml_dir, out_dir)` — I/O entrypoint: streams the 935 MB once → writes
+     `data/alert_features.csv` (committed, 20k rows) + `data/holdout_alert_ids.json` (committed,
+     16,000 held-out).
+3. `tests/test_synthaml_loader.py` — feature values on a tiny fixture; split disjoint/sized/ratio-
+   preserved/deterministic.
 
-**Done when:** `load_alert(id)` returns a populated `Alert` with embedded transactions; `holdout_alert_ids.json`
-exists; `pytest tests/test_synthaml_loader.py` green.
+**Done when:** ✅ `build` produced `alert_features.csv` (20k rows, 0 NaN) + `holdout_alert_ids.json`
+(80%, 0.172 Report ratio in both sets); `pytest` green (15 tests).
 
 ## Phase 2 — LLM client + knowledge base (Day 2–3, B)
 
