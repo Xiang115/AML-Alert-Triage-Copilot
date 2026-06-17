@@ -1,10 +1,16 @@
 # Confidence is computed from indicator coverage, not self-reported by the LLM
 
 `TriageResult.confidence` (0-1) is computed, not asked of the model. The LLM does the grounded part it
-is good at — deciding which of the matched typology card's indicators/dataSignals are actually present
-in the evidence — and `confidence` is then derived as the fraction of the card's indicators that
-fired, capped down when the Verifier flags. A `flagged` verifier can push confidence below the
-human-review threshold.
+is good at — deciding which of the matched typology card's indicators are actually present in the
+evidence — and `confidence` measures **support for the chosen recommendation**, capped when the
+Verifier flags.
+
+Refinement (Phase 3): confidence is **recommendation-aware**, not raw coverage. Let
+`coverage = fired/total`. For an **escalate**, `support = coverage` (more red flags → more confident).
+For a **dismiss**, `support = 1 - coverage` (a clean dismiss fires no indicators yet is *high*
+confidence — raw coverage would wrongly report ~0). A `flagged` verifier caps support below the
+human-review threshold. Implemented as the pure `compute_confidence(fired, total, recommendation,
+verifier_flagged)`.
 
 Why: LLM self-reported confidence is poorly calibrated and indefensible under judging ("did the model
 just make that number up?"). A coverage-based score is deterministic, explainable ("confidence = how

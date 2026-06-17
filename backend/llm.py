@@ -26,14 +26,15 @@ def complete_json(
     model: str,
     *,
     client=None,
-    max_tokens: int = 1024,
+    max_tokens: int = 2048,
     temperature: float = 0.0,
 ) -> dict:
     """Call the model and parse a JSON object response. Retries once on invalid JSON.
 
     Note: DeepSeek V4 (pro/flash) emits hidden reasoning tokens that count against
-    max_tokens. Budget generously (>= a few hundred) or the visible JSON gets
-    truncated to empty. The 1024 default is comfortable for our triage/STR outputs.
+    max_tokens — observed ~1500 on a full 5-card triage prompt. Budget generously or
+    the visible JSON gets truncated to empty; the 2048 default leaves headroom. STR
+    drafting (longer output) should pass a higher max_tokens.
     """
     client = client or _default_client()
     messages = [
