@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "description": "Curated AML typology cards. These are the retrieval unit for triage + verifier. Hand-authored, tiny, deterministic. NOT generated from PDF RAG.",
+    "jurisdiction": "Malaysia-first (BNM/AMLA), grounded in FATF Recommendations.",
+    "ctrCashThresholdMYR": 25000,
+    "note": "Verify exact citation sections against the source PDFs before the demo. Source strings below are document-level; tighten section numbers if time allows."
+  },
+  "typologies": [
+    {
+      "code": "PT-01",
+      "name": "Pass-through / Rapid Movement",
+      "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document",
+      "definition": "Funds are received and moved on almost immediately, leaving little or no balance retained. The account is a conduit, not a destination.",
+      "indicators": [
+        "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+        "runningBalance spikes on the inbound then drains back to ~0",
+        "Little to no funds retained; no spending consistent with the stated purpose of the account",
+        "Often a newly opened or recently dormant account"
+      ],
+      "dataSignals": [
+        "Transaction.direction alternates inbound -> outbound with matching amounts",
+        "Transaction.runningBalance returns to near-zero after each cycle",
+        "Short delta between inbound timestamp and onward outbound timestamp"
+      ],
+      "benignLookalike": "High-turnover business sweeping daily takings to an operating/settlement account on a regular schedule.",
+      "distinguishingTest": "Benign sweeps are REGULAR (same time, same destination, commercial rationale). Pass-through laundering shows IRREGULAR timing, DIVERSE counterparties, and no commercial rationale for the account holder profile.",
+      "typicalDisposition": "escalate",
+      "strNarrativeHints": ["State the in/out amounts and dates", "Note balance returning to zero", "Note absence of economic purpose"]
+    },
+    {
+      "code": "FI-01",
+      "name": "Fan-in / Fan-out (Consolidation)",
+      "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance",
+      "definition": "Many inbound transfers from unrelated parties are consolidated in one account, then moved out in fewer, larger transfers. Classic scam-victim consolidation / money-mule pattern.",
+      "indicators": [
+        "Multiple inbound credits from many unrelated individuals over a short period",
+        "Funds aggregated then forwarded onward in one or few large outbound transfers",
+        "Senders have no apparent relationship to the account holder",
+        "Amounts and frequency inconsistent with the account holder's profile"
+      ],
+      "dataSignals": [
+        "High count of distinct Transaction.counterpartyName / counterpartyAccount on inbound legs",
+        "Inbound many-to-one followed by outbound one-to-few",
+        "runningBalance climbs through inbound legs then drops sharply on outbound"
+      ],
+      "benignLookalike": "Legitimate merchant or crowdfunding account receiving many small customer payments.",
+      "distinguishingTest": "Merchants receive payments FOR goods/services (consistent amounts, business account type, retained/working balance). Mule consolidation shows unrelated PERSONAL senders, rapid full forwarding, and a personal account type.",
+      "typicalDisposition": "escalate",
+      "strNarrativeHints": ["Count and characterise the inbound senders", "Show consolidation then onward transfer", "Note holder profile mismatch"]
+    },
+    {
+      "code": "ST-01",
+      "name": "Structuring / Smurfing",
+      "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000",
+      "definition": "Transactions are deliberately broken into amounts just below a reporting threshold to avoid triggering a Cash Threshold Report (CTR).",
+      "indicators": [
+        "Multiple deposits clustered just under the RM25,000 CTR threshold",
+        "Repeated similar sub-threshold amounts over a short period",
+        "Often cash channel; sometimes split across branches or days",
+        "Total aggregated value is substantial"
+      ],
+      "dataSignals": [
+        "Transaction.amount repeatedly between ~20,000 and 24,999",
+        "Transaction.channel == cash / branch deposits",
+        "Cluster of similar amounts within a tight timestamp window"
+      ],
+      "benignLookalike": "A business making genuine recurring sub-threshold payments (e.g. supplier instalments) or salary/rent flows.",
+      "distinguishingTest": "Benign recurring payments have CONSISTENT counterparties and a documented commercial reason. Structuring shows amounts SUSPICIOUSLY clustered just below the threshold with no reason other than avoiding the report.",
+      "typicalDisposition": "escalate",
+      "strNarrativeHints": ["List the sub-threshold amounts and dates", "State the RM25,000 threshold being avoided", "Show the aggregate total"]
+    },
+    {
+      "code": "DA-01",
+      "name": "Dormant-then-Active",
+      "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document",
+      "definition": "An account inactive for a long period suddenly shows high-value or high-volume activity, often without any update to customer due diligence.",
+      "indicators": [
+        "Long period of no/low activity followed by sudden large throughput",
+        "Reactivation not accompanied by a KYC/CDD refresh",
+        "Funds often move straight out after arriving",
+        "Activity profile inconsistent with the account's history"
+      ],
+      "dataSignals": [
+        "Large gap between Account.openedAt / last activity and the alert transactions",
+        "Sudden jump in Transaction.amount and frequency",
+        "Inbound immediately followed by outbound (overlaps PT-01)"
+      ],
+      "benignLookalike": "A seasonal business, or a genuine one-off large legitimate transaction (property purchase, inheritance) with supporting documentation.",
+      "distinguishingTest": "Benign reactivation has a DOCUMENTED rationale and often retains funds or spends them on the stated purpose. Suspicious reactivation has NO rationale, no CDD update, and rapid onward movement.",
+      "typicalDisposition": "escalate",
+      "strNarrativeHints": ["State the dormancy period", "Contrast prior vs current activity", "Note missing CDD refresh"]
+    },
+    {
+      "code": "KYC-01",
+      "name": "KYC Profile Mismatch",
+      "source": "FATF Recommendations (2012), R.10 (CDD); BNM AML/CFT Policy Document",
+      "definition": "Transaction volume, value, or type is materially inconsistent with the customer's stated occupation, income, or declared account purpose.",
+      "indicators": [
+        "Throughput far exceeds declared income or expected activity",
+        "Transaction types inconsistent with account type (e.g. heavy international wires on a basic personal account)",
+        "Counterparties or geographies inconsistent with the customer profile",
+        "Stated occupation does not explain the flows"
+      ],
+      "dataSignals": [
+        "Aggregate Transaction.amount over period >> plausible income for Account.holderName profile",
+        "Account.accountType inconsistent with channel / counterparty mix",
+        "Cross-border counterpartyBank inconsistent with profile"
+      ],
+      "benignLookalike": "A customer whose genuine circumstances changed (new job, business growth, inheritance) and who can document it.",
+      "distinguishingTest": "A genuine profile change is EXPLAINABLE and documentable. A mismatch typology is flagged when the activity has NO consistent explanation against the known profile and no updated CDD on file.",
+      "typicalDisposition": "escalate",
+      "strNarrativeHints": ["State the declared profile vs observed activity", "Quantify the gap", "Note absence of supporting documentation"]
+    }
+  ]
+}
