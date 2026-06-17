@@ -12,7 +12,7 @@ Today is **17 Jun 2026**. Golden path must run end-to-end by **23 Jun** (Day 7).
 |---|---|---|---|---|
 | 0 | Scaffold + shared contract types | A + B | 18 Jun | ✅ |
 | 1 | Data foundation (SynthAML features + held-out split) | B | 19 Jun | ✅ |
-| 2 | LLM client + knowledge base | B | 19 Jun | ☐ |
+| 2 | LLM client + knowledge base | B | 19 Jun | ✅ |
 | 3 | Triage agent + confidence | B | 20 Jun | ☐ |
 | 4 | Verifier agent (the wow) | B | 20 Jun | ☐ |
 | 5 | STR drafter + pipeline orchestrator | B | 21 Jun | ☐ |
