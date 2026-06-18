@@ -1,9 +1,16 @@
 work/
+backend/data/knowledge_base/processed/
+backend/data/knowledge_base/chroma_db/
+.env
+D:\Dev\nexhack-track2-architecture\.env
 .claude/
 .codegraph/
 
 # SynthAML dataset — large CSVs (~935 MB), download from Figshare, never commit
 backend/data/synthaml/
+backend/data/datasets/
+*.csv
+*.log
 
 # Python
 backend/.venv/
