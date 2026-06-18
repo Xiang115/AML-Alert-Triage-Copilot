@@ -1,69 +1,76 @@
-"""FastAPI app for AML Alert-Triage Copilot.
+"""FastAPI serving layer (PIPELINE Phase 7).
 
-Provides endpoints for listing alerts, showing alert details, running live
-triage with a timeout/failure fallback, persistence of analyst decisions,
-and serving evaluation metrics.
+Loads the precomputed `results.json` on startup and serves it from memory, so the
+filmed demo never waits on an LLM (CLAUDE.md > Architecture). The single live
+endpoint, POST /alerts/{id}/triage, re-runs the pipeline for Q&A only: it returns
+a fresh result WITHOUT mutating the precomputed demo source, and falls back to the
+precomputed triage if the provider hiccups (ADR-0003).
+
+Run from /backend:  uvicorn main:app --reload
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-import os
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from agents.pipeline import run_triage
 from schemas import Alert, CamelModel, Metrics, STRDraft, TriageResult
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api")
 
-# Paths
-_DATA_DIR = Path(__file__).resolve().parent / "data"
-_RESULTS_FILE = _DATA_DIR / "results.json"
-_FIXTURE_FILE = _DATA_DIR / "fixtures" / "alerts.json"
-_METRICS_FILE = _DATA_DIR / "fixtures" / "metrics.json"
-_LIVE_METRICS_FILE = _DATA_DIR / "metrics.json"
-
-# In-memory alerts database
-_ALERTS_MAP: dict[str, Alert] = {}
+_DATA = Path(__file__).resolve().parent / "data"
+_RESULTS = _DATA / "results.json"
+_METRICS = _DATA / "metrics.json"
 
 
-def load_data() -> None:
-    """Load alerts data from results.json (or fallback fixture) on startup/reset."""
-    global _ALERTS_MAP
-    _ALERTS_MAP.clear()
-
-    # Detect if we are running in pytest
-    is_testing = "pytest" in sys.modules or os.getenv("TESTING") == "true"
-    
-    # In tests, force fixture. In production/reload, prefer results.json
-    path = _FIXTURE_FILE if is_testing else (_RESULTS_FILE if _RESULTS_FILE.exists() else _FIXTURE_FILE)
-
-    if not path.exists():
-        logger.error(f"Data file not found at: {path}")
-        return
-
-    try:
-        raw_data = json.loads(path.read_text(encoding="utf-8"))
-        for item in raw_data:
-            alert_obj = Alert.model_validate(item)
-            _ALERTS_MAP[alert_obj.alert_id] = alert_obj
-        logger.info(f"Loaded {len(_ALERTS_MAP)} alerts from {path.name} (testing={is_testing})")
-    except Exception as e:
-        logger.exception(f"Error loading alerts data from {path}: {e}")
+def _load_alerts() -> dict[str, dict]:
+    """Load precomputed alerts (camelCase dicts), validating each against the contract."""
+    out: dict[str, dict] = {}
+    for a in json.loads(_RESULTS.read_text(encoding="utf-8")):
+        Alert.model_validate(a)  # fail fast on a malformed results.json
+        out[a["alertId"]] = a
+    return out
 
 
-# Initialize state
-load_data()
+_ALERTS: dict[str, dict] = _load_alerts()
+_DECISIONS: dict[str, dict] = {}  # in-memory for the session (CLAUDE.md: leaning in-memory)
+
+
+# --- error shape: { "error": { "code", "message" } } (CLAUDE.md > API contract) ---
+
+class ApiError(Exception):
+    def __init__(self, status_code: int, code: str, message: str):
+        self.status_code = status_code
+        self.code = code
+        self.message = message
+
+
+def _require_alert(alert_id: str) -> dict:
+    alert = _ALERTS.get(alert_id)
+    if alert is None:
+        raise ApiError(404, "ALERT_NOT_FOUND", f"No alert with id '{alert_id}'.")
+    return alert
+
+
+class DecisionRequest(CamelModel):
+    action: Literal["approve", "override"]
+    final_disposition: Literal["escalate", "dismiss"]
+    edited_str_draft: STRDraft | None = None
+
+
+def get_llm_client():
+    """Injectable LLM client. None in prod → agents lazily build the real DeepSeek
+    client; tests override this dependency with a fake so /triage spends no tokens."""
+    return None
+
 
 app = FastAPI(title="AML Alert-Triage Copilot")
 app.add_middleware(
@@ -74,103 +81,74 @@ app.add_middleware(
 )
 
 
-class DecisionRequest(CamelModel):
-    action: Literal["approve", "override"]
-    final_disposition: Literal["escalate", "dismiss"]
-    edited_str_draft: STRDraft | None = None
+@app.exception_handler(ApiError)
+def _api_error_handler(_request, exc: ApiError):
+    return JSONResponse(status_code=exc.status_code, content={"error": {"code": exc.code, "message": exc.message}})
 
 
 @app.get("/alerts")
 def list_alerts(status: str | None = None):
-    """List alerts. Optional ?status= filter. Transactions are omitted in the queue."""
-    items = list(_ALERTS_MAP.values())
-    if status is not None:
-        items = [a for a in items if a.status == status]
-    
-    return [
-        a.model_copy(update={"transactions": None}).model_dump(by_alias=True, mode="json")
-        for a in items
-    ]
+    """Queue. Optional ?status= filter. Queue items omit embedded transactions."""
+    items = [a for a in _ALERTS.values() if status is None or a["status"] == status]
+    return [{**a, "transactions": None} for a in items]
 
 
 @app.get("/alerts/{alert_id}")
 def get_alert(alert_id: str):
-    """Retrieve detailed alert including transactions and triage details."""
-    alert = _ALERTS_MAP.get(alert_id)
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-    return alert.model_dump(by_alias=True, mode="json")
+    """Detail: account + embedded transactions + embedded triage."""
+    return _require_alert(alert_id)
 
 
-@app.post("/alerts/{alert_id}/triage", response_model=TriageResult)
-async def post_triage(alert_id: str):
-    """Run live agent triage. Fallback to precomputed result if it takes >3s or fails."""
-    alert = _ALERTS_MAP.get(alert_id)
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
-
-    alert_dict = alert.model_dump(by_alias=True, mode="json")
-
+@app.post("/alerts/{alert_id}/triage")
+def live_triage(alert_id: str, client=Depends(get_llm_client)):
+    """LIVE pipeline run (Q&A only). Returns a fresh TriageResult; never persists it.
+    Falls back to the precomputed triage if the provider fails (ADR-0003)."""
+    alert = _require_alert(alert_id)
     try:
-        # Run the synchronous agent pipeline in an executor to avoid blocking the loop
-        loop = asyncio.get_running_loop()
-        triage_data = await asyncio.wait_for(
-            loop.run_in_executor(None, run_triage, alert_dict),
-            timeout=3.0
-        )
-        triage_result = TriageResult.model_validate(triage_data)
-        
-        # Cache the result in memory
-        alert.triage = triage_result
-        return triage_result.model_dump(by_alias=True, mode="json")
-    except Exception as e:
-        logger.warning(f"Live triage for {alert_id} failed or timed out: {e}. Using precomputed fallback.")
-        
-        fallback_triage = alert.triage
-        if not fallback_triage:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Live triage failed, and no precomputed fallback was available: {e}"
-            )
-        return fallback_triage.model_dump(by_alias=True, mode="json")
+        result = run_triage(alert, client=client)
+        return TriageResult.model_validate(result).model_dump(by_alias=True, mode="json")
+    except Exception as e:  # noqa: BLE001 — demo resilience: replay precomputed on any failure
+        logger.warning("Live triage for %s failed (%s); serving precomputed fallback.", alert_id, e)
+        return alert["triage"]
 
 
 @app.post("/alerts/{alert_id}/decision")
-def post_decision(alert_id: str, req: DecisionRequest):
-    """Persist analyst decisions in-memory and return the updated alert."""
-    alert = _ALERTS_MAP.get(alert_id)
-    if not alert:
-        raise HTTPException(status_code=404, detail="Alert not found")
+def decide(alert_id: str, body: DecisionRequest):
+    """Analyst approve/override → updates status (+ STR per disposition), returns the Alert."""
+    alert = _require_alert(alert_id)
+    alert["status"] = "approved" if body.action == "approve" else "overridden"
 
-    # Mutate the in-memory state
-    alert.status = "approved" if req.action == "approve" else "overridden"
-    
-    # Handle STR draft updates based on final disposition
-    if req.final_disposition == "escalate":
-        if req.edited_str_draft is not None:
-            alert.triage.str_draft = req.edited_str_draft
+    # Reflect the analyst's STR decision on the record (reset via POST /reset restores it).
+    if body.final_disposition == "escalate":
+        if body.edited_str_draft is not None:
+            alert["triage"]["strDraft"] = body.edited_str_draft.model_dump(by_alias=True, mode="json")
     else:
-        alert.triage.str_draft = None
+        alert["triage"]["strDraft"] = None
 
-    return alert.model_dump(by_alias=True, mode="json")
+    _DECISIONS[alert_id] = {
+        "alertId": alert_id,
+        "action": body.action,
+        "finalDisposition": body.final_disposition,
+        "editedStrDraft": alert["triage"]["strDraft"],
+        "decidedAt": datetime.now().isoformat(),
+    }
+    return alert
 
 
-@app.get("/metrics", response_model=Metrics)
+@app.get("/metrics")
 def get_metrics():
-    """Retrieve evaluation metrics from offline runs, falling back to fixtures."""
-    path = _LIVE_METRICS_FILE if _LIVE_METRICS_FILE.exists() else _METRICS_FILE
-    if not path.exists():
-        raise HTTPException(status_code=404, detail="Metrics file not found")
-
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return Metrics.model_validate(data).model_dump(by_alias=True, mode="json")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load or parse metrics: {e}")
+    """Serve metrics.json (Phase 8). 404s in contract shape until that artifact exists."""
+    if not _METRICS.exists():
+        raise ApiError(404, "METRICS_NOT_READY", "metrics.json has not been generated yet (Phase 8).")
+    data = json.loads(_METRICS.read_text(encoding="utf-8"))
+    return Metrics.model_validate(data).model_dump(by_alias=True, mode="json")
 
 
 @app.post("/reset")
-def reset_alerts():
-    """Reset the in-memory alerts state back to the original source files."""
-    load_data()
-    return {"status": "success", "message": "In-memory alert state reset successfully."}
+def reset():
+    """Reload the in-memory alert state from results.json and clear session decisions.
+    Not in the core contract — a demo convenience to clear edits between rehearsals."""
+    _ALERTS.clear()
+    _ALERTS.update(_load_alerts())
+    _DECISIONS.clear()
+    return {"status": "success", "message": "In-memory state reset from results.json."}

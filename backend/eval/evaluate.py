@@ -1,156 +1,147 @@
-"""Offline evaluation script for the AML Alert-Triage Copilot.
+"""Offline evaluation (PIPELINE Phase 8) — measure accuracyVsLabels for real.
 
-Samples a stratified holdout split from SynthAML, runs a local proxy classifier
-representing agent indicator coverage, computes metric stats, and writes the
-canonical metrics.json file to hydrate the System Performance page.
+Runs the REAL triage agent (an LLM call, not a classifier — CLAUDE.md) over a
+stratified random sample of the held-out SynthAML slice and compares its
+recommendation to the Report/Dismiss label (ADR-0004). The held-out split was
+frozen before any prompt tuning (data/holdout_alert_ids.json), so the number
+isn't memorisation.
+
+Triage reads aggregated per-alert features (real SynthAML rows are dense and
+amount-less; see ADR-0005), via render_features_evidence. One LLM call per
+sampled alert — keep the sample small. Run manually:
+    python -m eval.evaluate            # default n=60
+    python -m eval.evaluate --n 250    # bigger sample, more tokens
+
+Metric math (compute_metrics) is pure and unit-tested; this module's main()
+adds the data loading + live LLM run + metrics.json write.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# Setup paths relative to evaluate.py
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
-HOLDOUT_IDS_FILE = DATA_DIR / "holdout_alert_ids.json"
-FEATURES_FILE = DATA_DIR / "alert_features.csv"
-ALERTS_FILE = DATA_DIR / "datasets" / "synthaml" / "synthetic_alerts.csv"
-OUTPUT_METRICS_FILE = DATA_DIR / "metrics.json"
+from agents.knowledge_base import load_cards
+from agents.triage import render_features_evidence, triage
+from config import RANDOM_SEED
+from synthaml_loader import FEATURE_COLUMNS
+
+_DATA = Path(__file__).resolve().parent.parent / "data"
+_HOLDOUT_IDS = _DATA / "holdout_alert_ids.json"
+_FEATURES = _DATA / "alert_features.csv"
+_ALERTS = _DATA / "synthaml" / "synthetic_alerts.csv"
+_OUT = _DATA / "metrics.json"
+
+# Modeled time numbers (ADR-0004): baseline is a cited assumption, copilot a
+# conservative estimate — presented as illustrative, not measured.
+_BASELINE_MIN = 14.0
+_COPILOT_MIN = 4.5
+
+# Feature-evidence triage reasons harder than the demo prompts; give the visible
+# JSON headroom so it isn't truncated to empty. Calls are I/O-bound on the API,
+# so run them through a small thread pool to cut wall-time (same token count).
+_EVAL_MAX_TOKENS = 8192
+_WORKERS = 6
 
 
-def main() -> None:
-    print("Loading evaluation datasets...")
-    if not HOLDOUT_IDS_FILE.exists():
-        print(f"Error: holdout_alert_ids.json not found at {HOLDOUT_IDS_FILE}")
-        return
-    if not FEATURES_FILE.exists():
-        print(f"Error: alert_features.csv not found at {FEATURES_FILE}")
-        return
-    if not ALERTS_FILE.exists():
-        print(f"Error: synthetic_alerts.csv not found at {ALERTS_FILE}")
-        return
+def label_to_recommendation(outcome: str) -> str:
+    """SynthAML Outcome → the recommendation it should map to."""
+    return "escalate" if str(outcome).strip().lower() == "report" else "dismiss"
 
-    # Load holdout IDs and datasets
-    holdout_ids = set(json.loads(HOLDOUT_IDS_FILE.read_text(encoding="utf-8")))
-    features_df = pd.read_csv(FEATURES_FILE)
-    alerts_df = pd.read_csv(ALERTS_FILE)
 
-    # Reconcile ID types and merge
-    alerts_df["AlertID"] = alerts_df["AlertID"].astype(int)
-    features_df["AlertID"] = features_df["AlertID"].astype(int)
-    merged_df = pd.merge(alerts_df, features_df, on="AlertID")
+def compute_metrics(
+    predictions: list[str],
+    actuals: list[str],
+    *,
+    baseline_min: float = _BASELINE_MIN,
+    copilot_min: float = _COPILOT_MIN,
+) -> dict:
+    """Pure metric math (ADR-0004). Returns the Metrics wire shape (camelCase)."""
+    total = len(predictions)
+    correct = sum(p == a for p, a in zip(predictions, actuals))
+    accuracy = correct / total if total else 0.0
 
-    # Filter to holdout split
-    holdout_df = merged_df[merged_df["AlertID"].isin(holdout_ids)].copy()
-    print(f"Total holdout alerts available: {len(holdout_df)}")
+    pred_dismiss = [(p, a) for p, a in zip(predictions, actuals) if p == "dismiss"]
+    tn = sum(a == "dismiss" for _, a in pred_dismiss)
+    fp_reduction = tn / len(pred_dismiss) if pred_dismiss else 0.0
 
-    # Stratified sample of 250 alerts deterministically
-    sample_size = 250
-    rng = np.random.RandomState(42)
-
-    sampled_dfs = []
-    # outcome ratio (Report/Dismiss)
-    for outcome, group in holdout_df.groupby("Outcome"):
-        prop = len(group) / len(holdout_df)
-        n_sample = int(round(sample_size * prop))
-        if n_sample > len(group):
-            n_sample = len(group)
-        shuffled_indices = rng.permutation(group.index)
-        sampled_dfs.append(group.loc[shuffled_indices[:n_sample]])
-
-    sample_df = pd.concat(sampled_dfs)
-
-    # Adjust sample size precisely if rounding left a minor difference
-    if len(sample_df) < sample_size:
-        diff = sample_size - len(sample_df)
-        remaining = holdout_df[~holdout_df["AlertID"].isin(sample_df["AlertID"])]
-        sample_df = pd.concat([sample_df, remaining.iloc[:diff]])
-    elif len(sample_df) > sample_size:
-        sample_df = sample_df.iloc[:sample_size]
-
-    print(f"Sampled {len(sample_df)} alerts for offline evaluation.")
-
-    # Run proxy classifier logic
-    predictions = []
-    for _, row in sample_df.iterrows():
-        # Rule-based proxy matching agent typology indicators
-        # 1. Pass-through / Rapid movement (PT-01) proxy
-        is_pass_through = (
-            row["txnCount"] >= 5 and 
-            0.85 <= row["creditDebitRatio"] <= 1.15 and 
-            row["spanDays"] <= 15.0 and
-            abs(row["netFlow"]) < 0.1 * row["sizeMax"]
-        )
-
-        # 2. Structuring / Smurfing (ST-01) proxy
-        is_structuring = (
-            row["cashFrac"] > 0.4 and 
-            row["creditCount"] >= 3 and
-            row["sizeMean"] > 0.3
-        )
-
-        # 3. Fan-in / Fan-out (FI-01) proxy
-        is_fan_in_out = (
-            row["creditCount"] >= 3 and 
-            row["debitCount"] <= 1 and
-            row["wireFrac"] > 0.3
-        )
-
-        if is_pass_through or is_structuring or is_fan_in_out:
-            predictions.append("escalate")
-        else:
-            predictions.append("dismiss")
-
-    sample_df["Predicted"] = predictions
-    sample_df["Actual"] = sample_df["Outcome"].apply(lambda x: "escalate" if x == "Report" else "dismiss")
-
-    # Compute metrics
-    tp = ((sample_df["Predicted"] == "escalate") & (sample_df["Actual"] == "escalate")).sum()
-    fp = ((sample_df["Predicted"] == "escalate") & (sample_df["Actual"] == "dismiss")).sum()
-    tn = ((sample_df["Predicted"] == "dismiss") & (sample_df["Actual"] == "dismiss")).sum()
-    fn = ((sample_df["Predicted"] == "dismiss") & (sample_df["Actual"] == "escalate")).sum()
-
-    total = len(sample_df)
-    accuracy = (tp + tn) / total
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    false_positive_reduction = tn / (tn + fp) if (tn + fp) > 0 else 0.0
-
-    # Review time baseline and copilot times (modeled/cited)
-    avg_time_baseline = 14.0
-    avg_time_copilot = 4.5
-
-    # Print results
-    print("\n================ EVALUATION SUMMARY ================")
-    print(f"Total Evaluated:          {total}")
-    print(f"True Positives (TP):      {tp}")
-    print(f"False Positives (FP):     {fp}")
-    print(f"True Negatives (TN):      {tn}")
-    print(f"False Negatives (FN):     {fn}")
-    print("----------------------------------------------------")
-    print(f"Accuracy:                 {accuracy * 100:.1f}%")
-    print(f"Precision:                {precision * 100:.1f}%")
-    print(f"Recall:                   {recall * 100:.1f}%")
-    print(f"False Positive Reduction: {false_positive_reduction * 100:.1f}%")
-    print("====================================================")
-
-    # Conforms strictly to the Metrics wire contract schema
-    metrics_payload = {
-        "totalAlerts": 250,
-        "accuracyVsLabels": 0.89,
-        "falsePositiveReduction": 0.62,
-        "avgReviewTimeBaselineMin": float(avg_time_baseline),
-        "avgReviewTimeWithCopilotMin": float(avg_time_copilot)
+    return {
+        "totalAlerts": total,
+        "accuracyVsLabels": round(accuracy, 4),
+        "falsePositiveReduction": round(fp_reduction, 4),
+        "avgReviewTimeBaselineMin": float(baseline_min),
+        "avgReviewTimeWithCopilotMin": float(copilot_min),
     }
 
-    # Write output to data/metrics.json
-    OUTPUT_METRICS_FILE.write_text(json.dumps(metrics_payload, indent=2), encoding="utf-8")
-    print(f"Wrote metrics JSON -> {OUTPUT_METRICS_FILE}")
+
+def _stratified_sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
+    """Sample n rows stratified on Outcome, preserving the reported ratio."""
+    rng = np.random.RandomState(seed)
+    parts = []
+    for _, group in df.groupby("Outcome"):
+        k = min(len(group), int(round(n * len(group) / len(df))))
+        idx = rng.permutation(group.index)[:k]
+        parts.append(group.loc[idx])
+    sample = pd.concat(parts)
+    return sample.sample(frac=1, random_state=seed).reset_index(drop=True)
+
+
+def _predict(row: pd.Series, cards: list[dict]) -> str:
+    features = {c: row[c] for c in FEATURE_COLUMNS}
+    try:
+        rec = triage(render_features_evidence(features), cards, max_tokens=_EVAL_MAX_TOKENS)["recommendation"]
+        return rec if rec in ("escalate", "dismiss") else "dismiss"
+    except Exception:  # noqa: BLE001 — rare hard failure; conservative default
+        return "dismiss"
+
+
+def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
+    for p in (_HOLDOUT_IDS, _FEATURES, _ALERTS):
+        if not p.exists():
+            print(f"Missing required input: {p}")
+            return
+
+    holdout = set(json.loads(_HOLDOUT_IDS.read_text(encoding="utf-8")))
+    feats = pd.read_csv(_FEATURES)  # first column is AlertID (the saved index)
+    labels = pd.read_csv(_ALERTS)[["AlertID", "Outcome"]]
+    feats["AlertID"] = feats["AlertID"].astype(int)
+    labels["AlertID"] = labels["AlertID"].astype(int)
+
+    merged = labels.merge(feats, on="AlertID")
+    merged = merged[merged["AlertID"].isin(holdout)]
+    sample = _stratified_sample(merged, n, seed)
+    print(f"Evaluating {len(sample)} held-out alerts via the live triage agent (n requested={n})...")
+
+    cards = load_cards()
+    rows = [row for _, row in sample.iterrows()]
+    actuals = [label_to_recommendation(row["Outcome"]) for row in rows]
+
+    predictions: list[str] = [""] * len(rows)
+    done = 0
+    with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
+        futures = {pool.submit(_predict, row, cards): i for i, row in enumerate(rows)}
+        for fut in as_completed(futures):
+            predictions[futures[fut]] = fut.result()
+            done += 1
+            if done % 10 == 0 or done == len(rows):
+                print(f"  {done}/{len(rows)}", flush=True)
+
+    metrics = compute_metrics(predictions, actuals)
+    _OUT.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    print("\n================ EVALUATION (held-out, measured) ================")
+    print(f"  n (sample)              {metrics['totalAlerts']}")
+    print(f"  accuracyVsLabels        {metrics['accuracyVsLabels']:.1%}")
+    print(f"  falsePositiveReduction  {metrics['falsePositiveReduction']:.1%}")
+    print(f"  reviewTime baseline->copilot  {_BASELINE_MIN}->{_COPILOT_MIN} min (modeled)")
+    print(f"Wrote {_OUT}")
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", type=int, default=60, help="stratified holdout sample size (LLM calls)")
+    main(n=ap.parse_args().n)

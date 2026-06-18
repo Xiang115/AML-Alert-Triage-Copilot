@@ -17,8 +17,8 @@ Today is **17 Jun 2026**. Golden path must run end-to-end by **23 Jun** (Day 7).
 | 4 | Verifier agent (the wow) | B | 20 Jun | ✅ (agent; hero-craft in P6) |
 | 5 | STR drafter + pipeline orchestrator | B | 21 Jun | ✅ |
 | 6 | Hero cases + demo queue + precompute → results.json | B | 21 Jun | ✅ |
-| 7 | FastAPI serving (5 endpoints) | B | 22 Jun | ☐ |
-| 8 | Eval + metrics.json | B | 22 Jun | ☐ |
+| 7 | FastAPI serving (5 endpoints) | B | 22 Jun | ✅ |
+| 8 | Eval + metrics.json | B | 22 Jun | ✅ |
 | 9 | Frontend console (5 beats) | A | 22 Jun | ☐ |
 | 10 | Golden-path lock (end-to-end rehearsal) | A + B | 23 Jun | ☐ |
 | 11 | Deck + 7-min script + film | A + B | 26 Jun | ☐ |

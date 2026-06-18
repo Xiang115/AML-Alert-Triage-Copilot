@@ -1,102 +1,178 @@
+"""FastAPI serving layer (Phase 7) — all contract endpoints, mocked (no tokens).
+
+The live /triage endpoint injects a fake LLM client via the get_llm_client
+dependency override, so the whole suite spends zero DeepSeek tokens.
+"""
+
+import copy
+import json
+
+import pytest
 from fastapi.testclient import TestClient
 
-from main import app
-from schemas import Alert
+import main
+from main import app, get_llm_client
+from schemas import Alert, TriageResult
 
 client = TestClient(app)
 
 
-def test_get_alerts_returns_camelcase_queue():
+@pytest.fixture(autouse=True)
+def _reset_state():
+    """Endpoints mutate in-memory state (decisions flip status); isolate each test."""
+    alerts = copy.deepcopy(main._ALERTS)
+    decisions = copy.deepcopy(main._DECISIONS)
+    yield
+    main._ALERTS.clear()
+    main._ALERTS.update(alerts)
+    main._DECISIONS.clear()
+    main._DECISIONS.update(decisions)
+    app.dependency_overrides.clear()
+
+
+# --- fake LLM client for the live /triage path ---
+
+class _Resp:
+    def __init__(self, content):
+        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
+
+
+class FakeClient:
+    def __init__(self, contents):
+        self._contents = list(contents)
+        self.chat = self
+        self.completions = self
+
+    def create(self, **kwargs):
+        return _Resp(self._contents.pop(0))
+
+
+class RaisingClient:
+    def __init__(self):
+        self.chat = self
+        self.completions = self
+
+    def create(self, **kwargs):
+        raise RuntimeError("simulated provider outage")
+
+
+# --- GET /alerts ---
+
+def test_get_alerts_returns_full_queue_camelcase_without_transactions():
     r = client.get("/alerts")
     assert r.status_code == 200
     data = r.json()
-    assert len(data) == 3
-    first = data[0]
-    assert "alertId" in first and "riskScore" in first
-    assert "alert_id" not in first  # camelCase only on the wire
-    # queue items carry no embedded transactions (detail does)
-    assert first["transactions"] is None
-    # every item is contract-valid
+    assert len(data) == 12  # 9 demo-queue + 3 hero
     for item in data:
+        assert "alertId" in item and "alert_id" not in item  # camelCase only
+        assert item["transactions"] is None  # queue omits embedded transactions
         Alert.model_validate(item)
 
 
 def test_get_alerts_filters_by_status():
     r = client.get("/alerts", params={"status": "pending"})
     assert r.status_code == 200
-    data = r.json()
-    assert len(data) == 2
-    assert all(a["status"] == "pending" for a in data)
+    assert all(a["status"] == "pending" for a in r.json())
 
 
-def test_get_alert_detail():
-    r = client.get("/alerts/ALERT-001")
+# --- GET /alerts/{id} ---
+
+def test_get_alert_detail_embeds_transactions_and_triage():
+    r = client.get("/alerts/DQ-001")
     assert r.status_code == 200
-    data = r.json()
-    assert data["alertId"] == "ALERT-001"
-    assert "account" in data
-    assert "transactions" in data
-    assert len(data["transactions"]) == 2
-    assert data["triage"]["alertId"] == "ALERT-001"
+    d = r.json()
+    assert d["alertId"] == "DQ-001"
+    assert d["transactions"] and d["transactions"][0]["transactionId"]
+    assert d["triage"]["recommendation"] in {"escalate", "dismiss"}
+    Alert.model_validate(d)
 
 
-def test_get_alert_detail_not_found():
-    r = client.get("/alerts/NONEXISTENT")
+def test_get_unknown_alert_returns_error_shaped_404():
+    r = client.get("/alerts/NOPE")
     assert r.status_code == 404
+    assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
+    assert "NOPE" in r.json()["error"]["message"]
 
 
-def test_post_decision_approve():
-    payload = {
-        "action": "approve",
-        "finalDisposition": "escalate",
-        "editedStrDraft": None
-    }
-    r = client.post("/alerts/ALERT-001/decision", json=payload)
+# --- POST /alerts/{id}/decision ---
+
+def test_decision_approve_sets_status_approved():
+    r = client.post("/alerts/DQ-001/decision", json={"action": "approve", "finalDisposition": "escalate"})
     assert r.status_code == 200
-    data = r.json()
-    assert data["status"] == "approved"
+    assert r.json()["status"] == "approved"
+    assert client.get("/alerts/DQ-001").json()["status"] == "approved"  # persists in session
 
 
-def test_post_decision_override():
-    payload = {
-        "action": "override",
-        "finalDisposition": "dismiss",
-        "editedStrDraft": None
-    }
-    r = client.post("/alerts/ALERT-002/decision", json=payload)
+def test_decision_override_to_dismiss_nulls_str_draft():
+    r = client.post("/alerts/DQ-003/decision", json={"action": "override", "finalDisposition": "dismiss"})
     assert r.status_code == 200
-    data = r.json()
-    assert data["status"] == "overridden"
-    assert data["triage"]["strDraft"] is None
+    body = r.json()
+    assert body["status"] == "overridden"
+    assert body["triage"]["strDraft"] is None  # overriding an escalate to dismiss drops the STR
 
 
-def test_get_metrics():
+def test_decision_on_unknown_alert_returns_error_shaped_404():
+    r = client.post("/alerts/NOPE/decision", json={"action": "approve", "finalDisposition": "dismiss"})
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
+
+
+# --- POST /alerts/{id}/triage (live) ---
+
+def test_live_triage_returns_fresh_result_without_persisting():
+    card_indicator = "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)"
+    fake = FakeClient([
+        json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [card_indicator],
+                    "citedTransactionIds": ["DT-1001"], "recommendation": "escalate", "explanation": "LIVE-RUN-MARKER"}),
+        json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+        json.dumps({"activitySummary": "live summary", "groundsForSuspicion": ["x"]}),
+    ])
+    app.dependency_overrides[get_llm_client] = lambda: fake
+
+    before = client.get("/alerts/DQ-001").json()["triage"]
+    r = client.post("/alerts/DQ-001/triage")
+    assert r.status_code == 200
+    fresh = r.json()
+    TriageResult.model_validate(fresh)
+    assert fresh["explanation"] == "LIVE-RUN-MARKER"
+    # the stored/precomputed triage is untouched (demo stays deterministic, ADR-0003)
+    assert client.get("/alerts/DQ-001").json()["triage"] == before
+
+
+def test_live_triage_falls_back_to_precomputed_on_provider_failure():
+    app.dependency_overrides[get_llm_client] = lambda: RaisingClient()
+    precomputed = client.get("/alerts/DQ-001").json()["triage"]
+    r = client.post("/alerts/DQ-001/triage")
+    assert r.status_code == 200  # demo resilience (ADR-0003): never 500 on camera
+    assert r.json() == precomputed
+
+
+def test_live_triage_unknown_alert_returns_error_shaped_404():
+    r = client.post("/alerts/NOPE/triage")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
+
+
+# --- POST /reset ---
+
+def test_reset_restores_status_and_clears_decisions():
+    client.post("/alerts/DQ-001/decision", json={"action": "approve", "finalDisposition": "escalate"})
+    r = client.post("/reset")
+    assert r.status_code == 200 and r.json()["status"] == "success"
+    assert client.get("/alerts/DQ-001").json()["status"] == "pending"  # back to source state
+
+
+# --- GET /metrics ---
+
+def test_metrics_served_in_contract_shape_when_present():
     r = client.get("/metrics")
     assert r.status_code == 200
-    data = r.json()
-    assert "totalAlerts" in data
-    assert "accuracyVsLabels" in data
-    assert "falsePositiveReduction" in data
+    body = r.json()
+    assert {"totalAlerts", "accuracyVsLabels", "falsePositiveReduction"} <= body.keys()
 
 
-def test_post_reset():
-    r = client.post("/reset")
-    assert r.status_code == 200
-    assert r.json()["status"] == "success"
-
-
-def test_post_triage_fallback(monkeypatch):
-    # Mock run_triage to fail to test fallback recovery
-    def mock_run_triage(alert):
-        raise RuntimeError("Simulated LLM pipeline failure")
-    
-    import main
-    monkeypatch.setattr(main, "run_triage", mock_run_triage)
-    
-    r = client.post("/alerts/ALERT-001/triage")
-    assert r.status_code == 200
-    data = r.json()
-    assert data["alertId"] == "ALERT-001"
-    assert data["recommendation"] == "escalate"
-    assert data["confidence"] == 0.86
-
+def test_metrics_404_error_shaped_when_absent(monkeypatch):
+    monkeypatch.setattr(main, "_METRICS", main._DATA / "definitely_absent_metrics.json")
+    r = client.get("/metrics")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "METRICS_NOT_READY"

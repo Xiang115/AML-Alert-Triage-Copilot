@@ -25,8 +25,8 @@ The system is split into a React-based analyst console and a Python FastAPI back
 
 * **Adversarial QA Pushback**: The Verifier Agent challenges triage recommendations, flagging borderline cases (e.g., `HERO-001` Aisyah binti Kamal) for human review rather than automatic escalation, reducing compliance workload.
 * **Slate & Mint (Cyber-Defense) Console**: A modern, clean, dark-themed interface built specifically for security and financial audit contexts. Includes left-border highlighting of cited transactions and adversarial warning banners.
-* **Demo-First Resilience**: Backend cache pre-loads 12 optimized demo/hero cases from `results.json`. The live `/triage` route runs in a background thread with a `3.0s` timeout fallback; if the LLM provider is slow or rate-limited, it recovers instantly using precomputed results.
-* **Offline Evaluation Suite**: Validate classification accuracy and false-positive workload reduction rates against a stratified holdout sample of 250 alerts drawn from the Figshare SynthAML dataset (~20k alerts, 16M transactions).
+* **Demo-First Resilience**: Backend pre-loads 12 optimized demo/hero cases from `results.json` and serves them from memory. The live `/triage` route runs the real pipeline (Q&A only) and falls back to the precomputed result if the provider errors, so the filmed demo never breaks on camera (ADR-0003); it never mutates the precomputed source.
+* **Offline Evaluation Suite**: Measures `accuracyVsLabels` for real by running the live triage agent over a stratified **held-out** sample (default 60) of SynthAML alerts and comparing its recommendation to the Report/Dismiss labels (ADR-0004) — not a rule-based classifier. `falsePositiveReduction` is the share of recommended-dismiss alerts that are truly benign.
 
 ---
 
@@ -40,7 +40,7 @@ The system is split into a React-based analyst console and a Python FastAPI back
 │   │   ├── fixtures/    # Pytest seed datasets
 │   │   └── typologies/  # Curated FATF/BNM typology context cards
 │   ├── eval/            # evaluate.py offline validation script
-│   ├── tests/           # 41 passing backend unit and integration tests
+│   ├── tests/           # 50 passing backend unit and integration tests
 │   ├── main.py          # FastAPI application entrypoint
 │   └── config.py        # Environment variables and runtime thresholds
 ├── frontend/
@@ -57,9 +57,9 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
 
 * **`GET /alerts`**: Retrieves the queue list. Transactions are omitted to optimize payload size.
 * **`GET /alerts/{alertId}`**: Retrieves the detailed alert object, embedding transactions and precomputed triage.
-* **`POST /alerts/{alertId}/triage`**: Triggers a live multi-agent pipeline execution. Falls back to precomputed values on timeout.
+* **`POST /alerts/{alertId}/triage`**: Triggers a live multi-agent pipeline execution (Q&A only). Returns a fresh result without mutating the demo source; falls back to the precomputed triage on provider failure.
 * **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`) and STR edits in-memory.
-* **`GET /metrics`**: Serves system accuracy and workload reduction statistics.
+* **`GET /metrics`**: Serves measured system accuracy and workload-reduction statistics (404 `METRICS_NOT_READY` until the eval suite has run).
 * **`POST /reset`**: Reloads the initial dataset state to clear in-memory decision edits.
 
 ---

@@ -54,12 +54,17 @@ def render_features_evidence(features: dict) -> str:
     return "Aggregated alert features:\n" + "\n".join(f"  {k}: {v}" for k, v in features.items())
 
 
-def triage(evidence: str, cards: list[dict], *, client=None, model: str | None = None) -> dict:
+def triage(evidence: str, cards: list[dict], *, client=None, model: str | None = None,
+           max_tokens: int | None = None) -> dict:
+    # Feature-evidence (eval) prompts make V4 reason harder; the caller can raise
+    # max_tokens so the visible JSON isn't truncated to empty by reasoning tokens.
+    extra = {"max_tokens": max_tokens} if max_tokens is not None else {}
     raw = complete_json(
         _SYSTEM,
         f"Candidate typologies:\n{_render_cards(cards)}\n\nAlert evidence:\n{evidence}",
         model or config.MODEL_WORKHORSE,
         client=client,
+        **extra,
     )
     card = get_card(raw["matchedTypologyCode"])
     fired = [i for i in raw.get("firedIndicators", []) if i in card["indicators"]]
