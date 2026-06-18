@@ -1,0 +1,7 @@
+{
+  "totalAlerts": 250,
+  "accuracyVsLabels": 0.89,
+  "falsePositiveReduction": 0.62,
+  "avgReviewTimeBaselineMin": 14.0,
+  "avgReviewTimeWithCopilotMin": 4.5
+}
