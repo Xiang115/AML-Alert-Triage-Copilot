@@ -1,0 +1,50 @@
+[
+  {
+    "alertId": "HERO-001",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:40:00",
+    "riskScore": 72,
+    "trigger": "Several inbound transfers from different individuals consolidated, then a payment forwarded onward; flagged by the fan-in velocity rule",
+    "account": { "accountId": "AC-5001", "holderName": "Aisyah binti Kamal", "accountType": "personal", "openedAt": "2023-08-14T00:00:00" },
+    "transactionIds": ["HT-1001", "HT-1002", "HT-1003", "HT-1004", "HT-1005", "HT-1006"],
+    "transactions": [
+      { "transactionId": "HT-1001", "timestamp": "2026-06-02T19:20:00", "amount": 850.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Wong Siew Ling", "channel": "transfer", "runningBalance": 4000.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-1002", "timestamp": "2026-06-05T20:05:00", "amount": 850.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Raj Kumar a/l Subramaniam", "channel": "transfer", "runningBalance": 4850.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-1003", "timestamp": "2026-06-08T18:45:00", "amount": 900.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Lim Hui Min", "channel": "transfer", "runningBalance": 5750.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-1004", "timestamp": "2026-06-11T21:10:00", "amount": 850.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Tan Mei Yee", "channel": "transfer", "runningBalance": 6600.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-1005", "timestamp": "2026-06-13T17:30:00", "amount": 850.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Goh Wei Liang", "channel": "transfer", "runningBalance": 7450.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-1006", "timestamp": "2026-06-14T11:30:00", "amount": 2000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Ilmu Educational Supplies Sdn Bhd", "counterpartyAccount": "IL-44120", "channel": "transfer", "runningBalance": 5450.0, "flags": ["fan-out"] }
+    ]
+  },
+  {
+    "alertId": "HERO-002",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:44:00",
+    "riskScore": 91,
+    "trigger": "International wire volume grossly inconsistent with the customer's declared student profile and zero declared income; no CDD update on file",
+    "account": { "accountId": "AC-5002", "holderName": "Muhammad Faiz bin Razak (declared: full-time student, income RM0)", "accountType": "personal", "openedAt": "2026-02-02T00:00:00" },
+    "transactionIds": ["HT-2001", "HT-2002", "HT-2003"],
+    "transactions": [
+      { "transactionId": "HT-2001", "timestamp": "2026-06-11T14:00:00", "amount": 95000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Gulf Star Remittance (Dubai)", "counterpartyBank": "ENBD-AE", "channel": "international", "runningBalance": 95300.0, "flags": ["profile-mismatch", "cross-border"] },
+      { "transactionId": "HT-2002", "timestamp": "2026-06-11T16:20:00", "amount": 88000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Apex OTC Trading (Cayman)", "counterpartyBank": "CAYB-KY", "channel": "international", "runningBalance": 7300.0, "flags": ["profile-mismatch", "cross-border", "balance-drain"] },
+      { "transactionId": "HT-2003", "timestamp": "2026-06-12T10:15:00", "amount": 6800.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "ATM cash withdrawal", "channel": "cash", "runningBalance": 500.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "HERO-003",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:48:00",
+    "riskScore": 89,
+    "trigger": "Numerous inbound transfers from unrelated individuals rapidly consolidated and forwarded in full to a single offshore party",
+    "account": { "accountId": "AC-5003", "holderName": "Kevin Ng Jun Hao", "accountType": "personal", "openedAt": "2026-05-30T00:00:00" },
+    "transactionIds": ["HT-3001", "HT-3002", "HT-3003", "HT-3004", "HT-3005", "HT-3006"],
+    "transactions": [
+      { "transactionId": "HT-3001", "timestamp": "2026-06-14T09:05:00", "amount": 4900.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Goh Pei Shan", "channel": "transfer", "runningBalance": 5100.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-3002", "timestamp": "2026-06-14T09:48:00", "amount": 5000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Ahmad Zaki bin Othman", "channel": "transfer", "runningBalance": 10100.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-3003", "timestamp": "2026-06-14T10:33:00", "amount": 4850.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Chong Li Wei", "channel": "transfer", "runningBalance": 14950.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-3004", "timestamp": "2026-06-14T11:12:00", "amount": 4950.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Siti Noraini binti Aziz", "channel": "transfer", "runningBalance": 19900.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-3005", "timestamp": "2026-06-14T11:58:00", "amount": 4800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Daniel Tan Wei Sheng", "channel": "transfer", "runningBalance": 24700.0, "flags": ["fan-in"] },
+      { "transactionId": "HT-3006", "timestamp": "2026-06-14T13:40:00", "amount": 24000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Hai Feng Trading (offshore)", "counterpartyAccount": "HF-00231", "counterpartyBank": "BOC-CN", "channel": "international", "runningBalance": 700.0, "flags": ["fan-out", "balance-drain"] }
+    ]
+  }
+]

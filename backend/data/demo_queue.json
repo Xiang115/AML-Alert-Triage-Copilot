@@ -1,0 +1,129 @@
+[
+  {
+    "alertId": "DQ-001",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:05:00",
+    "riskScore": 86,
+    "trigger": "Rapid in-out movement on a recently opened low-activity account",
+    "account": { "accountId": "AC-4101", "holderName": "Tan Wei Ming", "accountType": "personal", "openedAt": "2026-04-20T00:00:00" },
+    "transactionIds": ["DT-1001", "DT-1002"],
+    "transactions": [
+      { "transactionId": "DT-1001", "timestamp": "2026-06-14T09:40:00", "amount": 52000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Evergreen Logistics Ltd", "counterpartyAccount": "EG-88210", "channel": "transfer", "runningBalance": 52600.0, "flags": ["rapid-movement"] },
+      { "transactionId": "DT-1002", "timestamp": "2026-06-14T11:55:00", "amount": 51500.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "MaxCash Money Changer", "counterpartyAccount": "MC-40771", "channel": "transfer", "runningBalance": 1100.0, "flags": ["rapid-movement", "balance-drain"] }
+    ]
+  },
+  {
+    "alertId": "DQ-002",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:07:00",
+    "riskScore": 41,
+    "trigger": "Same-day inbound and outbound flagged as rapid movement",
+    "account": { "accountId": "AC-4102", "holderName": "Kopitiam Aroma Sdn Bhd", "accountType": "business", "openedAt": "2019-02-11T00:00:00" },
+    "transactionIds": ["DT-1003", "DT-1004", "DT-1005"],
+    "transactions": [
+      { "transactionId": "DT-1003", "timestamp": "2026-06-14T18:10:00", "amount": 3200.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card POS Settlement - Terminal 1", "channel": "card", "runningBalance": 5400.0, "flags": [] },
+      { "transactionId": "DT-1004", "timestamp": "2026-06-14T18:12:00", "amount": 2800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card POS Settlement - Terminal 2", "channel": "card", "runningBalance": 8200.0, "flags": [] },
+      { "transactionId": "DT-1005", "timestamp": "2026-06-14T20:00:00", "amount": 5500.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Kopitiam Aroma Sdn Bhd - Operating A/C", "counterpartyAccount": "OWN-2231", "channel": "transfer", "runningBalance": 2700.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "DQ-003",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:11:00",
+    "riskScore": 88,
+    "trigger": "Account dormant ~16 months then sudden high-value throughput; no CDD refresh on file",
+    "account": { "accountId": "AC-4103", "holderName": "Sarah Lee Mei Fong", "accountType": "personal", "openedAt": "2020-05-03T00:00:00" },
+    "transactionIds": ["DT-1006", "DT-1007"],
+    "transactions": [
+      { "transactionId": "DT-1006", "timestamp": "2026-06-13T10:20:00", "amount": 80000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Horizon Capital Partners", "counterpartyAccount": "HC-11904", "channel": "transfer", "runningBalance": 80120.0, "flags": ["dormant-reactivation"] },
+      { "transactionId": "DT-1007", "timestamp": "2026-06-13T14:05:00", "amount": 79500.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Lin Zhi Hao", "counterpartyAccount": "LZ-55021", "channel": "transfer", "runningBalance": 620.0, "flags": ["dormant-reactivation", "balance-drain"] }
+    ]
+  },
+  {
+    "alertId": "DQ-004",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:14:00",
+    "riskScore": 52,
+    "trigger": "Dormant account reactivated by a single large inbound credit",
+    "account": { "accountId": "AC-4104", "holderName": "Abdul Rahman bin Yusof", "accountType": "personal", "openedAt": "2016-09-01T00:00:00" },
+    "transactionIds": ["DT-1008", "DT-1009"],
+    "transactions": [
+      { "transactionId": "DT-1008", "timestamp": "2026-06-12T11:00:00", "amount": 350000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Messrs Tan & Co (Solicitors) - Property Sale Proceeds", "counterpartyAccount": "TC-90011", "channel": "transfer", "runningBalance": 350240.0, "flags": [] },
+      { "transactionId": "DT-1009", "timestamp": "2026-06-13T09:30:00", "amount": 4500.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Pejabat Tanah - Stamp Duty", "channel": "transfer", "runningBalance": 345740.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "DQ-005",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:18:00",
+    "riskScore": 83,
+    "trigger": "Repeated cash deposits just below the RM25,000 CTR threshold across multiple branches and days",
+    "account": { "accountId": "AC-4105", "holderName": "Daniel Choo Kah Wai", "accountType": "personal", "openedAt": "2025-12-10T00:00:00" },
+    "transactionIds": ["DT-1010", "DT-1011", "DT-1012", "DT-1013"],
+    "transactions": [
+      { "transactionId": "DT-1010", "timestamp": "2026-06-10T13:20:00", "amount": 24200.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - Branch Bukit Bintang", "channel": "cash", "runningBalance": 24500.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1011", "timestamp": "2026-06-11T15:40:00", "amount": 23800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - Branch Cheras", "channel": "cash", "runningBalance": 48300.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1012", "timestamp": "2026-06-12T10:05:00", "amount": 24100.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - Branch Petaling Jaya", "channel": "cash", "runningBalance": 72400.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1013", "timestamp": "2026-06-12T16:30:00", "amount": 70000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Sterling Overseas Trading", "counterpartyAccount": "SO-71200", "channel": "transfer", "runningBalance": 2400.0, "flags": ["balance-drain"] }
+    ]
+  },
+  {
+    "alertId": "DQ-006",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:21:00",
+    "riskScore": 38,
+    "trigger": "Routine daily cash takings just under the CTR threshold on an established retail account",
+    "account": { "accountId": "AC-4106", "holderName": "Sunrise Mart Sdn Bhd", "accountType": "business", "openedAt": "2018-07-05T00:00:00" },
+    "transactionIds": ["DT-1014", "DT-1015", "DT-1016", "DT-1017b", "DT-1018b"],
+    "transactions": [
+      { "transactionId": "DT-1014", "timestamp": "2026-06-10T18:30:00", "amount": 22400.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral", "channel": "cash", "runningBalance": 64200.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1015", "timestamp": "2026-06-11T18:25:00", "amount": 21800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral", "channel": "cash", "runningBalance": 86000.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1017b", "timestamp": "2026-06-12T18:35:00", "amount": 22900.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral", "channel": "cash", "runningBalance": 108900.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1018b", "timestamp": "2026-06-13T18:28:00", "amount": 21500.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral", "channel": "cash", "runningBalance": 130400.0, "flags": ["sub-threshold"] },
+      { "transactionId": "DT-1016", "timestamp": "2026-06-14T11:10:00", "amount": 18700.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Daikin Supplies Sdn Bhd - stock purchase invoice", "channel": "transfer", "runningBalance": 111700.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "DQ-007",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:25:00",
+    "riskScore": 33,
+    "trigger": "Regular inbound credit followed by outbound debits flagged by velocity rule",
+    "account": { "accountId": "AC-4107", "holderName": "Priya Nair", "accountType": "personal", "openedAt": "2022-01-15T00:00:00" },
+    "transactionIds": ["DT-1017", "DT-1018", "DT-1019"],
+    "transactions": [
+      { "transactionId": "DT-1017", "timestamp": "2026-06-25T09:00:00", "amount": 6800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Meridian Tech Sdn Bhd - Payroll", "channel": "transfer", "runningBalance": 9200.0, "flags": [] },
+      { "transactionId": "DT-1018", "timestamp": "2026-06-26T08:30:00", "amount": 1800.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Lee Property Management - Rent", "channel": "transfer", "runningBalance": 7400.0, "flags": [] },
+      { "transactionId": "DT-1019", "timestamp": "2026-06-26T08:35:00", "amount": 450.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Tenaga Nasional Berhad - Utilities", "channel": "transfer", "runningBalance": 6950.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "DQ-008",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:29:00",
+    "riskScore": 81,
+    "trigger": "Funds received and forwarded to a virtual-asset exchange within the hour on a new account",
+    "account": { "accountId": "AC-4108", "holderName": "Jason Foo Chee Keong", "accountType": "personal", "openedAt": "2026-05-28T00:00:00" },
+    "transactionIds": ["DT-1020", "DT-1021"],
+    "transactions": [
+      { "transactionId": "DT-1020", "timestamp": "2026-06-14T15:10:00", "amount": 38000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Chong Wai H* (individual)", "counterpartyAccount": "CW-22019", "channel": "transfer", "runningBalance": 38300.0, "flags": ["rapid-movement"] },
+      { "transactionId": "DT-1021", "timestamp": "2026-06-14T15:52:00", "amount": 37800.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "LunoX Digital Asset Exchange", "counterpartyAccount": "LX-00912", "channel": "transfer", "runningBalance": 500.0, "flags": ["rapid-movement", "balance-drain"] }
+    ]
+  },
+  {
+    "alertId": "DQ-009",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:33:00",
+    "riskScore": 44,
+    "trigger": "Many small inbound payments from numerous parties flagged as fan-in",
+    "account": { "accountId": "AC-4109", "holderName": "Lazada Reseller - Chai Boutique", "accountType": "business", "openedAt": "2021-03-22T00:00:00" },
+    "transactionIds": ["DT-1022", "DT-1023", "DT-1024", "DT-1025", "DT-1026"],
+    "transactions": [
+      { "transactionId": "DT-1022", "timestamp": "2026-06-14T10:02:00", "amount": 129.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88213", "channel": "card", "runningBalance": 12450.0, "flags": [] },
+      { "transactionId": "DT-1023", "timestamp": "2026-06-14T11:18:00", "amount": 89.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88240", "channel": "card", "runningBalance": 12539.0, "flags": [] },
+      { "transactionId": "DT-1024", "timestamp": "2026-06-14T12:47:00", "amount": 245.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88291", "channel": "card", "runningBalance": 12784.0, "flags": [] },
+      { "transactionId": "DT-1025", "timestamp": "2026-06-14T14:30:00", "amount": 67.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88312", "channel": "card", "runningBalance": 12851.0, "flags": [] },
+      { "transactionId": "DT-1026", "timestamp": "2026-06-14T17:00:00", "amount": 158.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88355", "channel": "card", "runningBalance": 13009.0, "flags": [] }
+    ]
+  }
+]
