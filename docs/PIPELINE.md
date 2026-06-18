@@ -15,7 +15,7 @@ Today is **17 Jun 2026**. Golden path must run end-to-end by **23 Jun** (Day 7).
 | 2 | LLM client + knowledge base | B | 19 Jun | ✅ |
 | 3 | Triage agent + confidence | B | 20 Jun | ✅ |
 | 4 | Verifier agent (the wow) | B | 20 Jun | ✅ (agent; hero-craft in P6) |
-| 5 | STR drafter + pipeline orchestrator | B | 21 Jun | ☐ |
+| 5 | STR drafter + pipeline orchestrator | B | 21 Jun | ✅ |
 | 6 | Hero cases + demo queue + precompute → results.json | B | 21 Jun | ☐ |
 | 7 | FastAPI serving (5 endpoints) | B | 22 Jun | ☐ |
 | 8 | Eval + metrics.json | B | 22 Jun | ☐ |

@@ -12,6 +12,11 @@ confidence — raw coverage would wrongly report ~0). A `flagged` verifier caps 
 human-review threshold. Implemented as the pure `compute_confidence(fired, total, recommendation,
 verifier_flagged)`.
 
+Ordering (Phase 5): the orchestrator runs verify → confidence (passing `verifier_flagged`), and **never
+overwrites the verifier's verdict**. Low confidence does not impersonate a verifier disagreement —
+`verifier.status` always means "the verifier (dis)agreed" (the demo signal). "Needs human review" is a
+**derived** condition computed downstream: `status == "flagged" OR confidence < REVIEW_THRESHOLD`.
+
 Why: LLM self-reported confidence is poorly calibrated and indefensible under judging ("did the model
 just make that number up?"). A coverage-based score is deterministic, explainable ("confidence = how
 many of the typology's red flags this alert exhibits"), and agrees with the same indicators the
