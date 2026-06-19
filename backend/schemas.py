@@ -48,6 +48,21 @@ class MatchedTypology(CamelModel):
     source: str
 
 
+class TypologyCard(CamelModel):
+    """A curated Typology Card (ADR-0002) — the source-of-truth shape for
+    typologies.json and the retrieval unit passed into the Triage/Verifier prompts."""
+    code: str
+    name: str
+    source: str
+    definition: str
+    indicators: list[str]
+    data_signals: list[str]
+    benign_lookalike: str
+    distinguishing_test: str
+    typical_disposition: str
+    str_narrative_hints: list[str]
+
+
 class Verifier(CamelModel):
     status: Literal["agreed", "flagged"]
     agrees_with_recommendation: bool
@@ -81,6 +96,16 @@ class STRDraft(CamelModel):
     recommended_action: str
 
 
+class TriageOutput(CamelModel):
+    """Internal Triage Agent output. Unlike the wire `TriageResult`, it carries
+    `fired_indicators` (consumed by confidence + STR drafting, never serialized)."""
+    recommendation: Literal["escalate", "dismiss"]
+    matched_typology: MatchedTypology
+    fired_indicators: list[str]
+    cited_transaction_ids: list[str]
+    explanation: str
+
+
 class TriageResult(CamelModel):
     alert_id: str
     recommendation: Literal["escalate", "dismiss"]
@@ -94,7 +119,9 @@ class TriageResult(CamelModel):
     generated_at: datetime
 
 
-class Alert(CamelModel):
+class AlertInput(CamelModel):
+    """An Alert before triage — the pipeline's input shape. `Alert` is this plus
+    the `triage` field, so a stored `Alert` is also a valid `AlertInput`."""
     alert_id: str
     status: Literal["pending", "approved", "overridden"]
     created_at: datetime
@@ -102,9 +129,12 @@ class Alert(CamelModel):
     trigger: str
     account: Account
     transaction_ids: list[str]
-    triage: TriageResult
     # None in the queue (GET /alerts); populated in detail (GET /alerts/{id}).
     transactions: list[Transaction] | None = None
+
+
+class Alert(AlertInput):
+    triage: TriageResult
 
 
 class Decision(CamelModel):

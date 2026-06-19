@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import config
 from llm import complete_json
+from schemas import TypologyCard, Verifier
 
 _SYSTEM = (
     "You are a skeptical second-line AML QA reviewer. Independently re-examine the evidence and "
@@ -21,20 +22,21 @@ _SYSTEM = (
 )
 
 
-def verify(evidence: str, recommendation: str, card: dict, *, client=None, model: str | None = None) -> dict:
+def verify(evidence: str, recommendation: str, card: TypologyCard, *, client=None,
+           model: str | None = None) -> Verifier:
     raw = complete_json(
         _SYSTEM,
         f"Recommendation to challenge: {recommendation}\n"
-        f"Typology [{card['code']}] {card['name']}\n"
-        f"Distinguishing test: {card['distinguishingTest']}\n"
-        f"Benign look-alike: {card['benignLookalike']}\n\n"
+        f"Typology [{card.code}] {card.name}\n"
+        f"Distinguishing test: {card.distinguishing_test}\n"
+        f"Benign look-alike: {card.benign_lookalike}\n\n"
         f"Evidence:\n{evidence}",
         model or config.MODEL_VERIFIER,
         client=client,
     )
     agrees = bool(raw["agreesWithRecommendation"])
-    return {
-        "status": "agreed" if agrees else "flagged",
-        "agreesWithRecommendation": agrees,
-        "note": raw.get("note", ""),
-    }
+    return Verifier(
+        status="agreed" if agrees else "flagged",
+        agrees_with_recommendation=agrees,
+        note=raw.get("note", ""),
+    )

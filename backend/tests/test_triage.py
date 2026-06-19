@@ -25,7 +25,7 @@ class FakeClient:
 
 def test_triage_resolves_card_and_clamps_indicators():
     card = get_card("PT-01")
-    real_indicator = card["indicators"][0]
+    real_indicator = card.indicators[0]
     model_out = json.dumps(
         {
             "matchedTypologyCode": "PT-01",
@@ -37,8 +37,8 @@ def test_triage_resolves_card_and_clamps_indicators():
     )
     out = triage("evidence block", [card], client=FakeClient([model_out]))
 
-    assert out["recommendation"] == "escalate"
-    assert out["matchedTypology"] == {"code": "PT-01", "name": card["name"], "source": card["source"]}
-    assert out["firedIndicators"] == [real_indicator]  # hallucinated one dropped
-    assert out["citedTransactionIds"] == ["T-1001"]
-    assert out["explanation"]
+    assert out.recommendation == "escalate"
+    assert out.matched_typology.model_dump() == {"code": "PT-01", "name": card.name, "source": card.source}
+    assert out.fired_indicators == [real_indicator]  # hallucinated one dropped
+    assert out.cited_transaction_ids == ["T-1001"]
+    assert out.explanation

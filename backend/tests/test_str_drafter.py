@@ -4,7 +4,7 @@ import json
 
 from agents.knowledge_base import get_card
 from agents.str_drafter import draft_str
-from schemas import STRDraft
+from schemas import Alert, MatchedTypology, STRDraft, TriageOutput
 
 
 class _Resp:
@@ -25,17 +25,18 @@ class FakeClient:
 
 
 def _alert():
-    return json.load(open("data/fixtures/alerts.json"))[0]  # ALERT-001, has transactions
+    # ALERT-001 (has transactions). Stored fixture carries triage, so parse as Alert.
+    return Alert.model_validate(json.load(open("data/fixtures/alerts.json"))[0])
 
 
 def _triage(recommendation="escalate"):
-    return {
-        "recommendation": recommendation,
-        "matchedTypology": {"code": "PT-01", "name": "Pass-through / Rapid Movement", "source": "FATF R.20"},
-        "firedIndicators": ["Inbound credit followed by outbound debit"],
-        "citedTransactionIds": ["T-1001", "T-1002"],
-        "explanation": "In then out within hours.",
-    }
+    return TriageOutput(
+        recommendation=recommendation,
+        matched_typology=MatchedTypology(code="PT-01", name="Pass-through / Rapid Movement", source="FATF R.20"),
+        fired_indicators=["Inbound credit followed by outbound debit"],
+        cited_transaction_ids=["T-1001", "T-1002"],
+        explanation="In then out within hours.",
+    )
 
 
 def test_no_str_draft_on_dismiss():
@@ -54,10 +55,10 @@ def test_str_draft_structured_object_on_escalate():
     )
     out = draft_str(_alert(), _triage("escalate"), get_card("PT-01"), client=FakeClient([model_out]))
 
-    assert out["activitySummary"] == "Funds received and forwarded within hours."
-    assert out["groundsForSuspicion"] == ["No economic purpose", "Balance drained to zero"]
-    assert out["subject"]["accountId"] == "AC-1001"
-    assert [t["transactionId"] for t in out["citedTransactions"]] == ["T-1001", "T-1002"]
-    assert out["typology"]["code"] == "PT-01"
-    assert out["recommendedAction"]
-    STRDraft.model_validate(out)  # conforms to the contract
+    assert out.activity_summary == "Funds received and forwarded within hours."
+    assert out.grounds_for_suspicion == ["No economic purpose", "Balance drained to zero"]
+    assert out.subject.account_id == "AC-1001"
+    assert [t.transaction_id for t in out.cited_transactions] == ["T-1001", "T-1002"]
+    assert out.typology.code == "PT-01"
+    assert out.recommended_action
+    assert isinstance(out, STRDraft)  # conforms to the contract

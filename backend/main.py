@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from agents.pipeline import run_triage
-from schemas import Alert, CamelModel, Metrics, STRDraft, TriageResult
+from schemas import Alert, CamelModel, Metrics, STRDraft
 
 logger = logging.getLogger("api")
 
@@ -105,8 +105,9 @@ def live_triage(alert_id: str, client=Depends(get_llm_client)):
     Falls back to the precomputed triage if the provider fails (ADR-0003)."""
     alert = _require_alert(alert_id)
     try:
-        result = run_triage(alert, client=client)
-        return TriageResult.model_validate(result).model_dump(by_alias=True, mode="json")
+        # Stored record has triage; parse as Alert (an AlertInput) at this seam.
+        result = run_triage(Alert.model_validate(alert), client=client)
+        return result.model_dump(by_alias=True, mode="json")
     except Exception as e:  # noqa: BLE001 — demo resilience: replay precomputed on any failure
         logger.warning("Live triage for %s failed (%s); serving precomputed fallback.", alert_id, e)
         return alert["triage"]
