@@ -6,24 +6,7 @@ from agents.knowledge_base import get_card
 from agents.triage import triage
 
 
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.calls = []
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        self.calls.append(kwargs)
-        return _Resp(self._contents.pop(0))
-
-
-def test_triage_resolves_card_and_clamps_indicators():
+def test_triage_resolves_card_and_clamps_indicators(make_client):
     card = get_card("PT-01")
     real_indicator = card.indicators[0]
     model_out = json.dumps(
@@ -35,7 +18,7 @@ def test_triage_resolves_card_and_clamps_indicators():
             "explanation": "Funds in then out within hours.",
         }
     )
-    out = triage("evidence block", [card], client=FakeClient([model_out]))
+    out = triage("evidence block", [card], client=make_client([model_out]))
 
     assert out.recommendation == "escalate"
     assert out.matched_typology.model_dump() == {"code": "PT-01", "name": card.name, "source": card.source}

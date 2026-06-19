@@ -6,43 +6,26 @@ from agents.knowledge_base import get_card
 from agents.verifier import verify
 
 
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.calls = []
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        self.calls.append(kwargs)
-        return _Resp(self._contents.pop(0))
-
-
-def test_disagreement_flags_for_human_review():
+def test_disagreement_flags_for_human_review(make_client):
     card = get_card("FI-01")
     out = verify(
         "evidence block",
         "escalate",
         card,
-        client=FakeClient([json.dumps({"agreesWithRecommendation": False, "note": "Could be a small business."})]),
+        client=make_client([json.dumps({"agreesWithRecommendation": False, "note": "Could be a small business."})]),
     )
     assert out.status == "flagged"
     assert out.agrees_with_recommendation is False
     assert out.note
 
 
-def test_agreement_passes_through():
+def test_agreement_passes_through(make_client):
     card = get_card("PT-01")
     out = verify(
         "evidence block",
         "escalate",
         card,
-        client=FakeClient([json.dumps({"agreesWithRecommendation": True, "note": "Evidence clearly meets the test."})]),
+        client=make_client([json.dumps({"agreesWithRecommendation": True, "note": "Evidence clearly meets the test."})]),
     )
     assert out.status == "agreed"
     assert out.agrees_with_recommendation is True
