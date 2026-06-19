@@ -7,23 +7,6 @@ from agents.str_drafter import draft_str
 from schemas import Alert, MatchedTypology, STRDraft, TriageOutput
 
 
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.calls = []
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        self.calls.append(kwargs)
-        return _Resp(self._contents.pop(0))
-
-
 def _alert():
     # ALERT-001 (has transactions). Stored fixture carries triage, so parse as Alert.
     return Alert.model_validate(json.load(open("data/fixtures/alerts.json"))[0])
@@ -39,21 +22,21 @@ def _triage(recommendation="escalate"):
     )
 
 
-def test_no_str_draft_on_dismiss():
-    fake = FakeClient([])
+def test_no_str_draft_on_dismiss(make_client):
+    fake = make_client([])
     out = draft_str(_alert(), _triage("dismiss"), get_card("PT-01"), client=fake)
     assert out is None
     assert fake.calls == []  # no LLM call when dismissing
 
 
-def test_str_draft_structured_object_on_escalate():
+def test_str_draft_structured_object_on_escalate(make_client):
     model_out = json.dumps(
         {
             "activitySummary": "Funds received and forwarded within hours.",
             "groundsForSuspicion": ["No economic purpose", "Balance drained to zero"],
         }
     )
-    out = draft_str(_alert(), _triage("escalate"), get_card("PT-01"), client=FakeClient([model_out]))
+    out = draft_str(_alert(), _triage("escalate"), get_card("PT-01"), client=make_client([model_out]))
 
     assert out.activity_summary == "Funds received and forwarded within hours."
     assert out.grounds_for_suspicion == ["No economic purpose", "Balance drained to zero"]

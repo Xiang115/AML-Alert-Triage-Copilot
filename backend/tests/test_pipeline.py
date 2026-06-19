@@ -11,21 +11,6 @@ from agents.pipeline import run_triage
 from schemas import Alert, TriageResult
 
 
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        return _Resp(self._contents.pop(0))
-
-
 def _alert():
     # ALERT-001. Stored fixture carries triage, so parse as Alert (an AlertInput).
     return Alert.model_validate(json.load(open("data/fixtures/alerts.json"))[0])
@@ -43,9 +28,9 @@ def _triage_json(fired, recommendation="escalate"):
     )
 
 
-def test_run_triage_assembles_full_result_on_escalate_agreed():
+def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     two = get_card("PT-01").indicators[:2]
-    fake = FakeClient(
+    fake = make_client(
         [
             _triage_json(two),
             json.dumps({"agreesWithRecommendation": True, "note": "Clearly meets the test."}),
@@ -63,9 +48,9 @@ def test_run_triage_assembles_full_result_on_escalate_agreed():
     assert out.cited_transaction_ids == ["T-1001", "T-1002"]
 
 
-def test_flag_caps_confidence_and_verifier_stays_pure():
+def test_flag_caps_confidence_and_verifier_stays_pure(make_client):
     four = get_card("PT-01").indicators[:4]
-    fake = FakeClient(
+    fake = make_client(
         [
             _triage_json(four),
             json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign sweep."}),

@@ -30,32 +30,6 @@ def _reset_state():
     app.dependency_overrides.clear()
 
 
-# --- fake LLM client for the live /triage path ---
-
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        return _Resp(self._contents.pop(0))
-
-
-class RaisingClient:
-    def __init__(self):
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        raise RuntimeError("simulated provider outage")
-
-
 # --- GET /alerts ---
 
 def test_get_alerts_returns_full_queue_camelcase_without_transactions():
@@ -119,9 +93,9 @@ def test_decision_on_unknown_alert_returns_error_shaped_404():
 
 # --- POST /alerts/{id}/triage (live) ---
 
-def test_live_triage_returns_fresh_result_without_persisting():
+def test_live_triage_returns_fresh_result_without_persisting(make_client):
     card_indicator = "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)"
-    fake = FakeClient([
+    fake = make_client([
         json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [card_indicator],
                     "citedTransactionIds": ["DT-1001"], "recommendation": "escalate", "explanation": "LIVE-RUN-MARKER"}),
         json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
@@ -139,8 +113,8 @@ def test_live_triage_returns_fresh_result_without_persisting():
     assert client.get("/alerts/DQ-001").json()["triage"] == before
 
 
-def test_live_triage_falls_back_to_precomputed_on_provider_failure():
-    app.dependency_overrides[get_llm_client] = lambda: RaisingClient()
+def test_live_triage_falls_back_to_precomputed_on_provider_failure(raising_client):
+    app.dependency_overrides[get_llm_client] = lambda: raising_client
     precomputed = client.get("/alerts/DQ-001").json()["triage"]
     r = client.post("/alerts/DQ-001/triage")
     assert r.status_code == 200  # demo resilience (ADR-0003): never 500 on camera

@@ -11,21 +11,6 @@ from agents.knowledge_base import get_card
 from schemas import Alert
 
 
-class _Resp:
-    def __init__(self, content):
-        self.choices = [type("C", (), {"message": type("M", (), {"content": content})})]
-
-
-class FakeClient:
-    def __init__(self, contents):
-        self._contents = list(contents)
-        self.chat = self
-        self.completions = self
-
-    def create(self, **kwargs):
-        return _Resp(self._contents.pop(0))
-
-
 def _input_alert(alert_id="DQ-X", account_type="personal"):
     return {
         "alertId": alert_id,
@@ -52,9 +37,9 @@ def _triage_json(recommendation, fired):
     })
 
 
-def test_escalate_alert_assembles_valid_alert_with_str_draft():
+def test_escalate_alert_assembles_valid_alert_with_str_draft(make_client):
     two = get_card("PT-01").indicators[:2]
-    fake = FakeClient([
+    fake = make_client([
         _triage_json("escalate", two),
         json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
         json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
@@ -68,8 +53,8 @@ def test_escalate_alert_assembles_valid_alert_with_str_draft():
     assert result["transactions"][0]["transactionId"] == "TX-1"  # detail embeds transactions
 
 
-def test_dismiss_alert_has_null_str_draft_and_no_str_call():
-    fake = FakeClient([
+def test_dismiss_alert_has_null_str_draft_and_no_str_call(make_client):
+    fake = make_client([
         _triage_json("dismiss", []),
         json.dumps({"agreesWithRecommendation": True, "note": "benign"}),
         # no third response: a dismiss must not trigger the STR drafter
