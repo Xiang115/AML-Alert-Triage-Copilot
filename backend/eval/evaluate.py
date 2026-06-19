@@ -26,8 +26,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from agents.evidence import render_features_evidence
 from agents.knowledge_base import load_cards
-from agents.triage import render_features_evidence, triage
+from agents.triage import triage
 from config import RANDOM_SEED
 from synthaml_loader import FEATURE_COLUMNS
 
