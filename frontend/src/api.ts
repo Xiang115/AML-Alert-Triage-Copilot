@@ -6,7 +6,7 @@ import alertsFixture from './fixtures/alerts.json'
 import metricsFixture from './fixtures/metrics.json'
 
 // Local state cache for mock mode to simulate database persistence
-let mockAlerts: Alert[] = [...(alertsFixture as unknown as Alert[])]
+const mockAlerts: Alert[] = [...(alertsFixture as unknown as Alert[])]
 
 const MOCK = import.meta.env.VITE_MOCK !== 'false'
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
