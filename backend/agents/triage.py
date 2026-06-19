@@ -1,9 +1,8 @@
 """Triage agent: pick Escalate/Dismiss against the candidate typology cards.
 
-Serves both data worlds (ADR-0005): demo/hero alerts (transactions) and eval
-alerts (aggregated features) — via two evidence renderers. The model returns a
-typology *code* and fired indicators; we resolve the card and clamp the
-indicators so `source`/membership can't be hallucinated.
+Takes pre-rendered evidence (see agents/evidence.py for the two data worlds,
+ADR-0005). The model returns a typology *code* and fired indicators; we resolve
+the card and clamp the indicators so `source`/membership can't be hallucinated.
 """
 
 from __future__ import annotations
@@ -11,7 +10,7 @@ from __future__ import annotations
 import config
 from agents.knowledge_base import get_card
 from llm import complete_json
-from schemas import AlertInput, MatchedTypology, TriageOutput, TypologyCard
+from schemas import MatchedTypology, TriageOutput, TypologyCard
 
 _SYSTEM = (
     "You are an AML alert-triage analyst. Decide Escalate or Dismiss for the alert by "
@@ -32,27 +31,6 @@ def _render_cards(cards: list[TypologyCard]) -> str:
             f"  distinguishing test: {c.distinguishing_test}"
         )
     return "\n".join(out)
-
-
-def render_alert_evidence(alert: AlertInput) -> str:
-    """Evidence block for a demo/hero alert (clean transactions)."""
-    acct = alert.account
-    lines = [
-        f"Account: {acct.holder_name} ({acct.account_type}, opened {acct.opened_at})",
-        f"Trigger: {alert.trigger}",
-        "Transactions (id | time | dir | amount | counterparty | runningBalance):",
-    ]
-    for t in alert.transactions or []:
-        lines.append(
-            f"  {t.transaction_id} | {t.timestamp} | {t.direction} | "
-            f"{t.amount} {t.currency} | {t.counterparty_name} | {t.running_balance}"
-        )
-    return "\n".join(lines)
-
-
-def render_features_evidence(features: dict) -> str:
-    """Evidence block for an eval alert (aggregated features, no transactions)."""
-    return "Aggregated alert features:\n" + "\n".join(f"  {k}: {v}" for k, v in features.items())
 
 
 def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str | None = None,

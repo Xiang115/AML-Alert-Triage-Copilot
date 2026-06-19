@@ -11,9 +11,10 @@ from datetime import datetime
 
 import config
 from agents.confidence import compute_confidence
+from agents.evidence import render_alert_evidence
 from agents.knowledge_base import get_card, select_cards
 from agents.str_drafter import draft_str
-from agents.triage import render_alert_evidence, triage
+from agents.triage import triage
 from agents.verifier import verify
 from schemas import AlertInput, TriageResult
 
