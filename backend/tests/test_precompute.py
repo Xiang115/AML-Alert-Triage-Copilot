@@ -53,7 +53,7 @@ def _triage_json(recommendation, fired):
 
 
 def test_escalate_alert_assembles_valid_alert_with_str_draft():
-    two = get_card("PT-01")["indicators"][:2]
+    two = get_card("PT-01").indicators[:2]
     fake = FakeClient([
         _triage_json("escalate", two),
         json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),

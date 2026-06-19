@@ -31,9 +31,9 @@ def test_disagreement_flags_for_human_review():
         card,
         client=FakeClient([json.dumps({"agreesWithRecommendation": False, "note": "Could be a small business."})]),
     )
-    assert out["status"] == "flagged"
-    assert out["agreesWithRecommendation"] is False
-    assert out["note"]
+    assert out.status == "flagged"
+    assert out.agrees_with_recommendation is False
+    assert out.note
 
 
 def test_agreement_passes_through():
@@ -44,5 +44,5 @@ def test_agreement_passes_through():
         card,
         client=FakeClient([json.dumps({"agreesWithRecommendation": True, "note": "Evidence clearly meets the test."})]),
     )
-    assert out["status"] == "agreed"
-    assert out["agreesWithRecommendation"] is True
+    assert out.status == "agreed"
+    assert out.agrees_with_recommendation is True

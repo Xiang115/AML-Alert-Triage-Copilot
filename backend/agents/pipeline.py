@@ -15,33 +15,34 @@ from agents.knowledge_base import get_card, select_cards
 from agents.str_drafter import draft_str
 from agents.triage import render_alert_evidence, triage
 from agents.verifier import verify
+from schemas import AlertInput, TriageResult
 
 
-def run_triage(alert: dict, *, client=None) -> dict:
+def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
     evidence = render_alert_evidence(alert)
     cards = select_cards(alert)
 
     tri = triage(evidence, cards, client=client)
-    card = get_card(tri["matchedTypology"]["code"])
+    card = get_card(tri.matched_typology.code)
 
-    ver = verify(evidence, tri["recommendation"], card, client=client)
+    ver = verify(evidence, tri.recommendation, card, client=client)
     confidence = compute_confidence(
-        len(tri["firedIndicators"]),
-        len(card["indicators"]),
-        tri["recommendation"],
-        verifier_flagged=ver["status"] == "flagged",
+        len(tri.fired_indicators),
+        len(card.indicators),
+        tri.recommendation,
+        verifier_flagged=ver.status == "flagged",
     )
     str_draft = draft_str(alert, tri, card, client=client)
 
-    return {
-        "alertId": alert["alertId"],
-        "recommendation": tri["recommendation"],
-        "confidence": confidence,
-        "explanation": tri["explanation"],
-        "matchedTypology": tri["matchedTypology"],
-        "citedTransactionIds": tri["citedTransactionIds"],
-        "verifier": ver,
-        "strDraft": str_draft,
-        "model": config.MODEL_WORKHORSE,
-        "generatedAt": datetime.now().isoformat(),
-    }
+    return TriageResult(
+        alert_id=alert.alert_id,
+        recommendation=tri.recommendation,
+        confidence=confidence,
+        explanation=tri.explanation,
+        matched_typology=tri.matched_typology,
+        cited_transaction_ids=tri.cited_transaction_ids,
+        verifier=ver,
+        str_draft=str_draft,
+        model=config.MODEL_WORKHORSE,
+        generated_at=datetime.now(),
+    )

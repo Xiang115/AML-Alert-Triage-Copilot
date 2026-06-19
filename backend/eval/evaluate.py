@@ -94,7 +94,7 @@ def _stratified_sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
 def _predict(row: pd.Series, cards: list[dict]) -> str:
     features = {c: row[c] for c in FEATURE_COLUMNS}
     try:
-        rec = triage(render_features_evidence(features), cards, max_tokens=_EVAL_MAX_TOKENS)["recommendation"]
+        rec = triage(render_features_evidence(features), cards, max_tokens=_EVAL_MAX_TOKENS).recommendation
         return rec if rec in ("escalate", "dismiss") else "dismiss"
     except Exception:  # noqa: BLE001 — rare hard failure; conservative default
         return "dismiss"

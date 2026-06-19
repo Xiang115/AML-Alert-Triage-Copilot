@@ -15,14 +15,14 @@ import json
 from pathlib import Path
 
 from agents.pipeline import run_triage
-from schemas import Alert
+from schemas import Alert, AlertInput, TriageResult
 
 _DATA = Path(__file__).resolve().parent
 _SOURCES = ["demo_queue.json", "hero_cases.json"]
 _OUT = _DATA / "results.json"
 
 
-def _run_with_retry(alert: dict, client, attempts: int = 3) -> dict:
+def _run_with_retry(alert: AlertInput, client, attempts: int = 3) -> TriageResult:
     """DeepSeek V4 occasionally returns an empty body (reasoning-token starvation);
     one llm-level retry already runs inside complete_json — add a small outer retry
     so a single flaky response doesn't abort a multi-alert batch."""
@@ -32,7 +32,7 @@ def _run_with_retry(alert: dict, client, attempts: int = 3) -> dict:
             return run_triage(alert, client=client)
         except Exception as e:  # noqa: BLE001 — surface only after exhausting retries
             last = e
-    raise RuntimeError(f"run_triage failed for {alert['alertId']} after {attempts} attempts: {last}")
+    raise RuntimeError(f"run_triage failed for {alert.alert_id} after {attempts} attempts: {last}")
 
 
 def build_results(alerts: list[dict], *, client=None) -> list[dict]:
@@ -41,21 +41,12 @@ def build_results(alerts: list[dict], *, client=None) -> list[dict]:
     Pure of file I/O so it can be tested with a fake LLM client (no tokens).
     """
     results = []
-    for alert in alerts:
+    for raw in alerts:
+        alert = AlertInput.model_validate(raw)  # input has no triage yet
         triage = _run_with_retry(alert, client)
-        assembled = {
-            "alertId": alert["alertId"],
-            "status": alert["status"],
-            "createdAt": alert["createdAt"],
-            "riskScore": alert["riskScore"],
-            "trigger": alert["trigger"],
-            "account": alert["account"],
-            "transactionIds": alert["transactionIds"],
-            "triage": triage,
-            "transactions": alert.get("transactions"),
-        }
-        # Validate against the wire contract; re-dump camelCase so results.json is canonical.
-        results.append(Alert.model_validate(assembled).model_dump(by_alias=True, mode="json"))
+        # Alert is AlertInput + triage; build it and re-dump camelCase as canonical.
+        assembled = Alert(**alert.model_dump(), triage=triage)
+        results.append(assembled.model_dump(by_alias=True, mode="json"))
     return results
 
 

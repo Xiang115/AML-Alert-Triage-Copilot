@@ -10,24 +10,27 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from schemas import TypologyCard
+
 _CARDS_FILE = Path(__file__).parent.parent / "data" / "typologies" / "typologies.json"
 
 
 @lru_cache(maxsize=1)
-def load_cards() -> list[dict]:
+def load_cards() -> list[TypologyCard]:
     """All curated typology cards (cached — the file is static)."""
-    return json.loads(_CARDS_FILE.read_text(encoding="utf-8"))["typologies"]
+    raw = json.loads(_CARDS_FILE.read_text(encoding="utf-8"))["typologies"]
+    return [TypologyCard.model_validate(c) for c in raw]
 
 
-def get_card(code: str) -> dict:
+def get_card(code: str) -> TypologyCard:
     """The card with this code; raises KeyError if there is none."""
     for card in load_cards():
-        if card["code"] == code:
+        if card.code == code:
             return card
     raise KeyError(code)
 
 
-def select_cards(alert=None) -> list[dict]:
+def select_cards(alert=None) -> list[TypologyCard]:
     """Candidate cards for an alert. The set is small, so return all and let the
     triage model pick the match. `alert` is a hook for future narrowing.
     """
