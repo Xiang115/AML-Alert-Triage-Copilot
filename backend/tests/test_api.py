@@ -91,6 +91,15 @@ def test_decision_on_unknown_alert_returns_error_shaped_404():
     assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
 
 
+def test_invalid_request_body_returns_error_shaped_422():
+    # Bad enum value: the error contract must hold for validation failures too,
+    # not leak FastAPI's default {"detail": [...]} shape.
+    r = client.post("/alerts/DQ-001/decision", json={"action": "nope", "finalDisposition": "escalate"})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert r.json()["error"]["message"]
+
+
 # --- POST /alerts/{id}/triage (live) ---
 
 def test_live_triage_returns_fresh_result_without_persisting(make_client):
@@ -150,3 +159,18 @@ def test_metrics_404_error_shaped_when_absent(monkeypatch):
     r = client.get("/metrics")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "METRICS_NOT_READY"
+
+
+# --- unexpected errors keep the contract shape (500) ---
+
+def test_unexpected_error_returns_error_shaped_500(monkeypatch):
+    # Force an unhandled error inside an endpoint; the catch-all must still emit
+    # {"error": {"code", "message"}}, not FastAPI's default 500 page.
+    def boom(*a, **k):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(main.Metrics, "model_validate", boom)
+    safe = TestClient(app, raise_server_exceptions=False)
+    r = safe.get("/metrics")
+    assert r.status_code == 500
+    assert r.json()["error"]["code"] == "INTERNAL_ERROR"
