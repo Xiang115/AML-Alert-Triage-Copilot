@@ -11,6 +11,7 @@ import { MetricsSnapshot } from './components/MetricsSnapshot'
 import { AlertDetail } from './components/AlertDetail'
 import { EmptyState } from './components/EmptyState'
 import { MetricsDashboard } from './components/MetricsDashboard'
+import { AuditView } from './components/AuditView'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('queue')
@@ -64,8 +65,10 @@ export default function App() {
           ) : (
             <EmptyState />
           )
-        ) : (
+        ) : activeTab === 'metrics' ? (
           <MetricsDashboard metrics={metrics} />
+        ) : (
+          <AuditView />
         )}
       </main>
     </div>

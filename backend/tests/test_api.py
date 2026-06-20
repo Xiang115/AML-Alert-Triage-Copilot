@@ -24,11 +24,13 @@ def _reset_state():
     """Endpoints mutate in-memory state (decisions flip status); isolate each test."""
     alerts = copy.deepcopy(main._ALERTS)
     decisions = copy.deepcopy(main._DECISIONS)
+    audit = copy.deepcopy(main._AUDIT_LOG)
     yield
     main._ALERTS.clear()
     main._ALERTS.update(alerts)
     main._DECISIONS.clear()
     main._DECISIONS.update(decisions)
+    main._AUDIT_LOG[:] = audit
     app.dependency_overrides.clear()
 
 
@@ -191,6 +193,80 @@ def test_export_unknown_alert_returns_error_shaped_404():
     r = client.get("/alerts/NOPE/str.xml")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
+
+
+# --- POST /alerts/{id}/str/submit (goAML filing acknowledgement) ---
+
+def test_submit_files_an_escalated_str_and_returns_an_accepted_ack():
+    _decide("DQ-001", "approve", "escalate")
+    r = client.post("/alerts/DQ-001/str/submit")
+    assert r.status_code == 200
+    ack = r.json()
+    assert ack["status"] == "accepted"
+    assert ack["alertId"] == "DQ-001"
+    assert ack["submissionRef"].startswith("MYFIU-2026-")
+
+
+def test_submit_is_gated_like_export():
+    assert client.post("/alerts/DQ-001/str/submit").json()["error"]["code"] == "STR_NOT_ADJUDICATED"
+    _decide("DQ-001", "approve", "dismiss")
+    assert client.post("/alerts/DQ-001/str/submit").json()["error"]["code"] == "STR_DISMISSED"
+
+
+def test_submission_appends_a_submission_event_to_the_audit_trail():
+    _decide("DQ-001", "approve", "escalate")
+    ack = client.post("/alerts/DQ-001/str/submit").json()
+    entry = next(e for e in client.get("/audit").json() if e["event"] == "submission")
+    assert entry["alertId"] == "DQ-001"
+    assert entry["submissionRef"] == ack["submissionRef"]
+
+
+# --- GET /audit (decision + submission audit trail) ---
+
+def test_decision_appends_audit_entry_pairing_ai_call_with_human_disposition():
+    # The audit trail's whole point: record what the AI recommended next to what
+    # the human decided, so an override is accountable after the fact.
+    triage = client.get("/alerts/DQ-001").json()["triage"]
+    _decide("DQ-001", "approve", "escalate")
+
+    log = client.get("/audit").json()
+    entry = next(e for e in log if e["alertId"] == "DQ-001" and e["event"] == "decision")
+    assert entry["aiRecommendation"] == triage["recommendation"]
+    assert entry["finalDisposition"] == "escalate"
+    assert entry["confidence"] == triage["confidence"]
+    assert entry["verifierStatus"] == triage["verifier"]["status"]
+    assert entry["action"] == "approve"
+
+
+def test_override_records_the_analyst_note_in_the_audit_trail():
+    client.post("/alerts/DQ-001/decision",
+                json={"action": "override", "finalDisposition": "dismiss", "note": "Confirmed legitimate salary run with HR."})
+    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "DQ-001")
+    assert entry["action"] == "override"
+    assert entry["note"] == "Confirmed legitimate salary run with HR."
+
+
+def test_approve_without_a_note_leaves_note_null():
+    _decide("DQ-001", "approve", "escalate")
+    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "DQ-001")
+    assert entry["note"] is None
+
+
+def test_audit_trail_is_append_only_across_a_change_of_mind():
+    # A reversed decision must not erase the first: both are kept, newest first.
+    _decide("DQ-001", "approve", "escalate")
+    _decide("DQ-001", "override", "dismiss")
+    entries = [e for e in client.get("/audit").json() if e["alertId"] == "DQ-001" and e["event"] == "decision"]
+    assert len(entries) == 2
+    assert entries[0]["finalDisposition"] == "dismiss"   # newest first
+    assert entries[1]["finalDisposition"] == "escalate"
+
+
+def test_reset_clears_the_audit_trail():
+    _decide("DQ-001", "approve", "escalate")
+    assert client.get("/audit").json()  # non-empty
+    client.post("/reset")
+    assert client.get("/audit").json() == []
 
 
 # --- POST /reset ---

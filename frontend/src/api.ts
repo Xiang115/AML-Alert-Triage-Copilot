@@ -1,13 +1,22 @@
 // API client. Defaults to MOCK mode (reads fixtures) so the console builds
 // without the backend running. Set VITE_MOCK=false to hit the live API.
 
-import type { Alert, AlertStatus, Metrics, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
+import type { Alert, AlertStatus, AuditEntry, Metrics, SubmissionAck, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
 import { resolveStrDraft } from './decision'
 import alertsFixture from './fixtures/alerts.json'
 import metricsFixture from './fixtures/metrics.json'
 
 // Local state cache for mock mode to simulate database persistence
 const mockAlerts: Alert[] = [...(alertsFixture as unknown as Alert[])]
+// Append-only audit trail for mock mode (mirrors the backend _AUDIT_LOG).
+const mockAudit: AuditEntry[] = []
+
+// Demo-stable FIU ref, mirroring backend goaml.submission_reference.
+function mockSubmissionRef(alertId: string): string {
+  let h = 0
+  for (let i = 0; i < alertId.length; i++) h = (h * 31 + alertId.charCodeAt(i)) >>> 0
+  return `MYFIU-2026-${String(h % 1_000_000).padStart(6, '0')}`
+}
 
 const MOCK = import.meta.env.VITE_MOCK !== 'false'
 const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
@@ -57,21 +66,28 @@ export async function postDecision(
   alertId: string,
   action: DecisionAction,
   finalDisposition: Recommendation,
-  editedStrDraft?: STRDraft | null
+  editedStrDraft?: STRDraft | null,
+  note?: string | null
 ): Promise<Alert> {
   const nextStatus: AlertStatus = action === 'approve' ? 'approved' : 'overridden'
 
   if (MOCK) {
     const idx = mockAlerts.findIndex((a) => a.alertId === alertId)
     if (idx === -1) throw new Error(`Alert ${alertId} not found`)
-    
+
+    const triage = mockAlerts[idx].triage
+    mockAudit.push({
+      alertId, event: 'decision', at: new Date().toISOString(), action,
+      aiRecommendation: triage.recommendation, finalDisposition,
+      confidence: triage.confidence, verifierStatus: triage.verifier.status, note: note ?? null,
+    })
     const updatedAlert = {
       ...mockAlerts[idx],
       status: nextStatus,
       triage: {
-        ...mockAlerts[idx].triage,
+        ...triage,
         // Apply the same disposition->STR rule the backend enforces.
-        strDraft: resolveStrDraft(finalDisposition, editedStrDraft, mockAlerts[idx].triage.strDraft),
+        strDraft: resolveStrDraft(finalDisposition, editedStrDraft, triage.strDraft),
       },
     }
     mockAlerts[idx] = updatedAlert
@@ -81,7 +97,7 @@ export async function postDecision(
   const r = await fetch(new URL(`/alerts/${alertId}/decision`, BASE), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, finalDisposition, editedStrDraft }),
+    body: JSON.stringify({ action, finalDisposition, editedStrDraft, note }),
   })
   if (!r.ok) throw new Error(`POST /alerts/${alertId}/decision ${r.status}`)
   return r.json()
@@ -103,6 +119,29 @@ export async function exportGoamlStr(alertId: string): Promise<void> {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
+}
+
+// File the approved STR to goAML and return the FIU acknowledgement. Gated server-side
+// on an escalate sign-off (same gate as export), recorded in the audit trail.
+export async function submitGoamlStr(alertId: string): Promise<SubmissionAck> {
+  if (MOCK) {
+    const ack: SubmissionAck = {
+      alertId, submissionRef: mockSubmissionRef(alertId), status: 'accepted',
+      submittedAt: new Date().toISOString(),
+    }
+    mockAudit.push({ alertId, event: 'submission', at: ack.submittedAt, submissionRef: ack.submissionRef })
+    return ack
+  }
+  const r = await fetch(new URL(`/alerts/${alertId}/str/submit`, BASE), { method: 'POST' })
+  if (!r.ok) throw new Error(`POST /alerts/${alertId}/str/submit ${r.status}`)
+  return r.json()
+}
+
+export async function getAudit(): Promise<AuditEntry[]> {
+  if (MOCK) return [...mockAudit].reverse()
+  const r = await fetch(new URL('/audit', BASE))
+  if (!r.ok) throw new Error(`GET /audit ${r.status}`)
+  return r.json()
 }
 
 export async function getMetrics(): Promise<Metrics> {

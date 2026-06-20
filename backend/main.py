@@ -24,8 +24,8 @@ from fastapi.responses import JSONResponse, Response
 
 from agents.pipeline import run_triage
 from decision import resolve_str_draft
-from goaml import GoamlConfig, to_goaml_str_xml
-from schemas import Alert, CamelModel, Decision, Metrics, STRDraft
+from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
+from schemas import Alert, AuditEntry, CamelModel, Decision, Metrics, STRDraft, SubmissionAck
 
 logger = logging.getLogger("api")
 
@@ -47,7 +47,8 @@ def _load_alerts() -> dict[str, dict]:
 
 
 _ALERTS: dict[str, dict] = _load_alerts()
-_DECISIONS: dict[str, dict] = {}  # in-memory for the session (CLAUDE.md: leaning in-memory)
+_DECISIONS: dict[str, dict] = {}  # current disposition per alert (drives the export gate)
+_AUDIT_LOG: list[dict] = []  # append-only accountability trail (decisions + submissions)
 
 
 # --- error shape: { "error": { "code", "message" } } (CLAUDE.md > API contract) ---
@@ -70,6 +71,7 @@ class DecisionRequest(CamelModel):
     action: Literal["approve", "override"]
     final_disposition: Literal["escalate", "dismiss"]
     edited_str_draft: STRDraft | None = None
+    note: str | None = None
 
 
 def get_llm_client():
@@ -150,6 +152,7 @@ def decide(alert_id: str, body: DecisionRequest):
         action=body.action,
         final_disposition=body.final_disposition,
         edited_str_draft=body.edited_str_draft,
+        note=body.note,
         decided_at=datetime.now(),
     )
 
@@ -160,15 +163,26 @@ def decide(alert_id: str, body: DecisionRequest):
     )
 
     _DECISIONS[alert_id] = decision.model_dump(by_alias=True, mode="json")
+    triage = alert["triage"]
+    _AUDIT_LOG.append(AuditEntry(
+        alert_id=alert_id,
+        event="decision",
+        at=decision.decided_at,
+        action=decision.action,
+        ai_recommendation=triage["recommendation"],
+        final_disposition=decision.final_disposition,
+        confidence=triage["confidence"],
+        verifier_status=triage["verifier"]["status"],
+        note=decision.note,
+    ).model_dump(by_alias=True, mode="json"))
     return alert
 
 
-@app.get("/alerts/{alert_id}/str.xml")
-def export_goaml_str(alert_id: str):
-    """Export the approved STR as a schema-valid goAML STR report (the integration
-    seam). Gated on a *filed* disposition: an STR can only leave the building after
-    an analyst signs off on an escalation. The gate is recomputed live from the
-    current decision, so a later change-of-mind to dismiss revokes the export."""
+def _require_escalate_signoff(alert_id: str) -> tuple[Alert, dict]:
+    """The STR filing gate, recomputed live from the current decision: an STR exists
+    only after an analyst signs off on an escalation. Raises 409 (no decision /
+    dismissed) so a later change-of-mind revokes both export and submission. Returns
+    the validated Alert plus its decision record."""
     _require_alert(alert_id)
     decision = _DECISIONS.get(alert_id)
     if decision is None:
@@ -178,19 +192,51 @@ def export_goaml_str(alert_id: str):
         )
     if decision["finalDisposition"] != "escalate":
         raise ApiError(409, "STR_DISMISSED", "Alert was dismissed; there is no STR to file.")
-
     alert = Alert.model_validate(_ALERTS[alert_id])
-    str_draft = alert.triage.str_draft
-    if str_draft is None:  # invariant: an escalate decision keeps the draft (decision.resolve_str_draft)
+    if alert.triage.str_draft is None:  # invariant: an escalate decision keeps the draft
         raise ApiError(409, "STR_DISMISSED", "No STR draft is present for this alert.")
+    return alert, decision
 
+
+@app.get("/alerts/{alert_id}/str.xml")
+def export_goaml_str(alert_id: str):
+    """Export the approved STR as a schema-valid goAML STR report (the integration seam)."""
+    alert, decision = _require_escalate_signoff(alert_id)
     xml = to_goaml_str_xml(
-        str_draft,
+        alert.triage.str_draft,
         alert.transactions or [],
         _GOAML_CONFIG,
         submission_date=datetime.fromisoformat(decision["decidedAt"]),
     )
     return Response(content=xml, media_type="application/xml")
+
+
+@app.post("/alerts/{alert_id}/str/submit")
+def submit_goaml_str(alert_id: str):
+    """File the approved STR and return the FIU acknowledgement. Generates+validates
+    the goAML report (so an unfileable report can't be acked), records the filing in
+    the audit trail, and returns a demo-stable submission reference."""
+    alert, decision = _require_escalate_signoff(alert_id)
+    to_goaml_str_xml(  # validate the report is well-formed before acknowledging it
+        alert.triage.str_draft, alert.transactions or [], _GOAML_CONFIG,
+        submission_date=datetime.fromisoformat(decision["decidedAt"]),
+    )
+    ack = SubmissionAck(
+        alert_id=alert_id,
+        submission_ref=submission_reference(alert_id),
+        status="accepted",
+        submitted_at=datetime.now(),
+    )
+    _AUDIT_LOG.append(AuditEntry(
+        alert_id=alert_id, event="submission", at=ack.submitted_at, submission_ref=ack.submission_ref,
+    ).model_dump(by_alias=True, mode="json"))
+    return ack.model_dump(by_alias=True, mode="json")
+
+
+@app.get("/audit")
+def get_audit():
+    """The append-only accountability trail, newest first (decisions + submissions)."""
+    return list(reversed(_AUDIT_LOG))
 
 
 @app.get("/metrics")
@@ -209,4 +255,5 @@ def reset():
     _ALERTS.clear()
     _ALERTS.update(_load_alerts())
     _DECISIONS.clear()
+    _AUDIT_LOG.clear()
     return {"status": "success", "message": "In-memory state reset from results.json."}
