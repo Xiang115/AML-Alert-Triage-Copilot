@@ -41,6 +41,16 @@ def _default_client():
     return _client
 
 
+def _log_cache_usage(resp, model: str) -> None:
+    """Surface DeepSeek's prompt-cache hit/miss tokens (when present) so the reuse
+    of the static typology prefix is verifiable. No-op for clients without usage."""
+    usage = getattr(resp, "usage", None)
+    hit = getattr(usage, "prompt_cache_hit_tokens", None)
+    miss = getattr(usage, "prompt_cache_miss_tokens", None)
+    if hit is not None or miss is not None:
+        logger.info("prompt cache: hit=%s miss=%s (%s)", hit, miss, model)
+
+
 def complete_model(
     system: str,
     user: str,
@@ -79,6 +89,7 @@ def complete_model(
             max_tokens=max_tokens,
         )
         content = resp.choices[0].message.content
+        _log_cache_usage(resp, model)
         try:
             return response_model.model_validate_json(content)
         except (ValidationError, ValueError, TypeError) as e:

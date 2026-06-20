@@ -1,6 +1,7 @@
 """llm.py unit tests use a fake client — they never call DeepSeek (no tokens)."""
 
 import json
+import logging
 
 import pytest
 
@@ -15,6 +16,31 @@ class _Probe(LLMResponse):
 
     recommendation: str
     explanation: str = ""
+
+
+def test_complete_model_logs_prompt_cache_usage(caplog):
+    # DeepSeek reports prompt_cache_hit_tokens/miss in usage; we surface it so the
+    # team can confirm the reused typology prefix is being cached (and cite cost).
+    class _Usage:
+        prompt_cache_hit_tokens = 320
+        prompt_cache_miss_tokens = 40
+
+    class _Resp:
+        usage = _Usage()
+        choices = [type("C", (), {"message": type("M", (), {"content": '{"recommendation": "escalate"}'})})]
+
+    class _UsageClient:
+        def __init__(self):
+            self.chat = self
+            self.completions = self
+
+        def create(self, **kwargs):
+            return _Resp()
+
+    with caplog.at_level(logging.INFO, logger="llm"):
+        complete_model("s", "u", "m", _Probe, client=_UsageClient())
+    assert "cache" in caplog.text.lower()
+    assert "320" in caplog.text
 
 
 def test_complete_model_returns_validated_instance(make_client):
