@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import Depends, FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -82,9 +83,31 @@ app.add_middleware(
 )
 
 
+def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
+    """The single error envelope (CLAUDE.md > API contract): every error exits here."""
+    return JSONResponse(status_code=status_code, content={"error": {"code": code, "message": message}})
+
+
 @app.exception_handler(ApiError)
 def _api_error_handler(_request, exc: ApiError):
-    return JSONResponse(status_code=exc.status_code, content={"error": {"code": exc.code, "message": exc.message}})
+    return _error_response(exc.status_code, exc.code, exc.message)
+
+
+@app.exception_handler(RequestValidationError)
+def _validation_error_handler(_request, exc: RequestValidationError):
+    """Malformed request body/params — keep the contract shape instead of FastAPI's default."""
+    detail = "; ".join(
+        f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors()
+    )
+    return _error_response(422, "VALIDATION_ERROR", detail or "Request validation failed.")
+
+
+@app.exception_handler(Exception)
+def _unexpected_error_handler(_request, exc: Exception):
+    """Last-resort catch-all so an unexpected failure still exits in the contract
+    shape. The message is generic — internals aren't leaked to the client."""
+    logger.exception("Unhandled error serving request")
+    return _error_response(500, "INTERNAL_ERROR", "An unexpected error occurred.")
 
 
 @app.get("/alerts")
