@@ -33,3 +33,15 @@ and typing the store would start earning its keep.
 
 Rejected: (a) one `Alert` type for both input and output — input alerts have no `triage`, and
 `extra="forbid"` makes a single permissive type lossy. (b) Fully typing the store — see above.
+
+## Addendum: the `decide` endpoint grew logic — resolved by extraction, not by typing the store
+
+The forecast above arrived: `POST /decision` encodes a real domain invariant (the disposition→STR
+rule) plus a `Decision` record, so it is no longer a pure pass-through. That did **not** force typing
+the store. Instead we kept the third path this ADR's seam-parse philosophy implies: the
+disposition→STR rule moved into a pure `decision.resolve_str_draft` (unit-tested off the store, like
+`confidence.py`), and the endpoint constructs a typed `schemas.Decision` at the seam (killing the
+drift where the previously-unused `Decision` model diverged from an inline `decidedAt` dict). The store
+stays `dict[str, dict]`. So "serving grew logic" was answered by concentrating that logic behind a
+small tested seam, which is cheaper than rewriting the store and its API tests — typing the *whole*
+store still hasn't earned its keep.
