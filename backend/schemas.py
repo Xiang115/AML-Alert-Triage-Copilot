@@ -21,6 +21,22 @@ class CamelModel(BaseModel):
     )
 
 
+class LLMResponse(BaseModel):
+    """Base for the shapes the agents parse out of *untrusted model output*.
+
+    Accepts camelCase (the keys the prompts ask for) and, unlike `CamelModel`,
+    *ignores* extra keys: a stray field the model invents should not fail the
+    parse — only a missing required field should (that triggers the retry in
+    `llm.complete_model`). Required fields are the model's contract; fields with
+    defaults are tolerated-if-absent."""
+
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        populate_by_name=True,
+        extra="ignore",
+    )
+
+
 class Account(CamelModel):
     account_id: str
     holder_name: str

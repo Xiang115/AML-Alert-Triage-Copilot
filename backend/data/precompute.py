@@ -24,7 +24,7 @@ _OUT = _DATA / "results.json"
 
 def _run_with_retry(alert: AlertInput, client, attempts: int = 3) -> TriageResult:
     """DeepSeek V4 occasionally returns an empty body (reasoning-token starvation);
-    one llm-level retry already runs inside complete_json — add a small outer retry
+    one llm-level retry already runs inside complete_model — add a small outer retry
     so a single flaky response doesn't abort a multi-alert batch."""
     last = None
     for _ in range(attempts):

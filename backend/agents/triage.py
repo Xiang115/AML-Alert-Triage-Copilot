@@ -7,10 +7,12 @@ the card and clamp the indicators so `source`/membership can't be hallucinated.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import config
 from agents.knowledge_base import get_card
-from llm import complete_json
-from schemas import MatchedTypology, TriageOutput, TypologyCard
+from llm import complete_model
+from schemas import LLMResponse, MatchedTypology, TriageOutput, TypologyCard
 
 _SYSTEM = (
     "You are an AML alert-triage analyst. Decide Escalate or Dismiss for the alert by "
@@ -20,6 +22,17 @@ _SYSTEM = (
     'the evidence), "citedTransactionIds" (ids supporting the call, [] if none), '
     '"recommendation" ("escalate"|"dismiss"), "explanation"}.'
 )
+
+
+class _TriageResponse(LLMResponse):
+    """The shape the Triage Agent prompt asks the model to return. Required fields
+    (code, recommendation) gate the retry; the rest tolerate absence with defaults."""
+
+    matched_typology_code: str
+    recommendation: Literal["escalate", "dismiss"]
+    fired_indicators: list[str] = []
+    cited_transaction_ids: list[str] = []
+    explanation: str = ""
 
 
 def _render_cards(cards: list[TypologyCard]) -> str:
@@ -38,19 +51,20 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
     # Feature-evidence (eval) prompts make V4 reason harder; the caller can raise
     # max_tokens so the visible JSON isn't truncated to empty by reasoning tokens.
     extra = {"max_tokens": max_tokens} if max_tokens is not None else {}
-    raw = complete_json(
+    parsed = complete_model(
         _SYSTEM,
         f"Candidate typologies:\n{_render_cards(cards)}\n\nAlert evidence:\n{evidence}",
         model or config.MODEL_WORKHORSE,
+        _TriageResponse,
         client=client,
         **extra,
     )
-    card = get_card(raw["matchedTypologyCode"])
-    fired = [i for i in raw.get("firedIndicators", []) if i in card.indicators]
+    card = get_card(parsed.matched_typology_code)
+    fired = [i for i in parsed.fired_indicators if i in card.indicators]
     return TriageOutput(
-        recommendation=raw["recommendation"],
+        recommendation=parsed.recommendation,
         matched_typology=MatchedTypology(code=card.code, name=card.name, source=card.source),
         fired_indicators=fired,
-        cited_transaction_ids=raw.get("citedTransactionIds", []),
-        explanation=raw.get("explanation", ""),
+        cited_transaction_ids=parsed.cited_transaction_ids,
+        explanation=parsed.explanation,
     )

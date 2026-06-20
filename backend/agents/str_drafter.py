@@ -10,10 +10,11 @@ from __future__ import annotations
 from datetime import datetime
 
 import config
-from llm import complete_json
+from llm import complete_model
 from schemas import (
     AlertInput,
     CitedTransaction,
+    LLMResponse,
     Period,
     STRDraft,
     TriageOutput,
@@ -27,6 +28,14 @@ _SYSTEM = (
     'Reply ONLY with JSON: {"activitySummary" (2-3 sentence plain-English account of the activity), '
     '"groundsForSuspicion" (list of short bullet strings)}.'
 )
+
+
+class _StrNarrative(LLMResponse):
+    """The two editable narrative fields the model writes (ADR-0006). Both required:
+    a draft missing either is incomplete and should trigger the retry."""
+
+    activity_summary: str
+    grounds_for_suspicion: list[str]
 
 
 def _cited(alert: AlertInput, ids: list[str]) -> list[CitedTransaction]:
@@ -53,13 +62,14 @@ def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard
     if triage_result.recommendation != "escalate":
         return None
 
-    raw = complete_json(
+    narrative = complete_model(
         _SYSTEM,
         f"Typology: {triage_result.matched_typology.name}\n"
         f"Indicators present: {triage_result.fired_indicators}\n"
         f"Triage explanation: {triage_result.explanation}\n"
         f"Account holder: {alert.account.holder_name}",
         model or config.MODEL_WORKHORSE,
+        _StrNarrative,
         client=client,
         max_tokens=3000,  # STR narrative is longer; leave room over reasoning tokens
     )
@@ -72,8 +82,8 @@ def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard
         subject=alert.account,
         typology=triage_result.matched_typology,
         period=Period(**{"from": min(times), "to": max(times)}),
-        activity_summary=raw["activitySummary"],
+        activity_summary=narrative.activity_summary,
         cited_transactions=cited,
-        grounds_for_suspicion=raw["groundsForSuspicion"],
+        grounds_for_suspicion=narrative.grounds_for_suspicion,
         recommended_action="Escalate to the Financial Intelligence and Enforcement Department (FIED).",
     )

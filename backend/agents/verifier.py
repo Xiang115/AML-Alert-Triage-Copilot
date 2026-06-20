@@ -10,8 +10,8 @@ Runs on the cheaper verifier model.
 from __future__ import annotations
 
 import config
-from llm import complete_json
-from schemas import TypologyCard, Verifier
+from llm import complete_model
+from schemas import LLMResponse, TypologyCard, Verifier
 
 _SYSTEM = (
     "You are a skeptical second-line AML QA reviewer. Independently re-examine the evidence and "
@@ -22,9 +22,17 @@ _SYSTEM = (
 )
 
 
+class _VerifyResponse(LLMResponse):
+    """The verifier's verdict shape. `agreesWithRecommendation` is required (it
+    drives the agreed/flagged status); the note is advisory."""
+
+    agrees_with_recommendation: bool
+    note: str = ""
+
+
 def verify(evidence: str, recommendation: str, card: TypologyCard, *, client=None,
            model: str | None = None) -> Verifier:
-    raw = complete_json(
+    parsed = complete_model(
         _SYSTEM,
         f"Recommendation to challenge: {recommendation}\n"
         f"Typology [{card.code}] {card.name}\n"
@@ -32,11 +40,12 @@ def verify(evidence: str, recommendation: str, card: TypologyCard, *, client=Non
         f"Benign look-alike: {card.benign_lookalike}\n\n"
         f"Evidence:\n{evidence}",
         model or config.MODEL_VERIFIER,
+        _VerifyResponse,
         client=client,
     )
-    agrees = bool(raw["agreesWithRecommendation"])
+    agrees = parsed.agrees_with_recommendation
     return Verifier(
         status="agreed" if agrees else "flagged",
         agrees_with_recommendation=agrees,
-        note=raw.get("note", ""),
+        note=parsed.note,
     )

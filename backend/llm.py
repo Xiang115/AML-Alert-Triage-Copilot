@@ -4,12 +4,16 @@ temperature 0 (ADR-0003). The client is injectable so tests run without tokens.
 
 from __future__ import annotations
 
-import json
 import logging
+from typing import TypeVar
+
+from pydantic import BaseModel, ValidationError
 
 import config
 
 logger = logging.getLogger("llm")
+
+T = TypeVar("T", bound=BaseModel)
 
 _client = None
 
@@ -37,16 +41,23 @@ def _default_client():
     return _client
 
 
-def complete_json(
+def complete_model(
     system: str,
     user: str,
     model: str,
+    response_model: type[T],
     *,
     client=None,
     max_tokens: int = 2048,
     temperature: float = 0.0,
-) -> dict:
-    """Call the model and parse a JSON object response. Retries once on invalid JSON.
+) -> T:
+    """Call the model and parse its reply into `response_model`, a validated instance.
+
+    This is the seam where *untrusted* model output crosses into the typed domain.
+    The retry loop covers both failure modes a model exhibits: invalid JSON, and
+    valid JSON of the wrong shape (a missing required field). Either retries once;
+    a clean `ValueError` is raised after the retry is exhausted, so callers never
+    have to handle a raw `KeyError`/`ValidationError` from the provider's reply.
 
     Note: DeepSeek V4 (pro/flash) emits hidden reasoning tokens that count against
     max_tokens — observed ~1500 on a full 5-card triage prompt. Budget generously or
@@ -58,7 +69,7 @@ def complete_json(
         {"role": "system", "content": system},
         {"role": "user", "content": user},
     ]
-    last_err = None
+    last_err: Exception | None = None
     for attempt in range(2):
         resp = client.chat.completions.create(
             model=model,
@@ -69,8 +80,13 @@ def complete_json(
         )
         content = resp.choices[0].message.content
         try:
-            return json.loads(content)
-        except (json.JSONDecodeError, TypeError) as e:
+            return response_model.model_validate_json(content)
+        except (ValidationError, ValueError, TypeError) as e:
             last_err = e
-            logger.warning("Model %s returned non-JSON on attempt %d: %s", model, attempt + 1, e)
-    raise ValueError(f"Model did not return valid JSON after retry: {last_err}")
+            logger.warning(
+                "Model %s reply failed %s validation on attempt %d: %s",
+                model, response_model.__name__, attempt + 1, e,
+            )
+    raise ValueError(
+        f"Model did not return a valid {response_model.__name__} after retry: {last_err}"
+    )
