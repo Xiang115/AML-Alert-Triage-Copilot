@@ -125,5 +125,63 @@
       { "transactionId": "DT-1025", "timestamp": "2026-06-14T14:30:00", "amount": 67.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88312", "channel": "card", "runningBalance": 12851.0, "flags": [] },
       { "transactionId": "DT-1026", "timestamp": "2026-06-14T17:00:00", "amount": 158.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Card payment - order #88355", "channel": "card", "runningBalance": 13009.0, "flags": [] }
     ]
+  },
+  {
+    "alertId": "DQ-010",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:37:00",
+    "riskScore": 84,
+    "trigger": "International wire throughput grossly inconsistent with the declared clerk profile and RM3,000 monthly income; no CDD refresh on file",
+    "account": { "accountId": "AC-4110", "holderName": "Nurul Aina binti Hamzah (declared: admin clerk, income RM3,000/mo)", "accountType": "personal", "openedAt": "2024-11-08T00:00:00" },
+    "transactionIds": ["DT-1027", "DT-1028", "DT-1029"],
+    "transactions": [
+      { "transactionId": "DT-1027", "timestamp": "2026-06-12T14:30:00", "amount": 150000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Falcon Trading FZE (Dubai)", "counterpartyAccount": "FT-30188", "counterpartyBank": "ENBD-AE", "channel": "international", "runningBalance": 150800.0, "flags": ["profile-mismatch", "cross-border"] },
+      { "transactionId": "DT-1028", "timestamp": "2026-06-12T17:05:00", "amount": 96000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Apex Commodities Holdings (Cayman)", "counterpartyAccount": "AC-77410", "counterpartyBank": "CAYB-KY", "channel": "international", "runningBalance": 54800.0, "flags": ["profile-mismatch", "cross-border"] },
+      { "transactionId": "DT-1029", "timestamp": "2026-06-13T10:15:00", "amount": 47000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Zheng Hai Long (individual)", "counterpartyAccount": "ZH-21556", "channel": "transfer", "runningBalance": 7800.0, "flags": ["profile-mismatch"] }
+    ]
+  },
+  {
+    "alertId": "DQ-011",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:41:00",
+    "riskScore": 36,
+    "trigger": "Recurring inbound international credit on a personal account flagged by the cross-border rule",
+    "account": { "accountId": "AC-4111", "holderName": "Yeoh Chen Howe (declared: software engineer, remote employment)", "accountType": "personal", "openedAt": "2021-09-14T00:00:00" },
+    "transactionIds": ["DT-1030", "DT-1031", "DT-1032"],
+    "transactions": [
+      { "transactionId": "DT-1030", "timestamp": "2026-06-13T09:05:00", "amount": 17500.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Atlassian Pty Ltd (Sydney) - Monthly Salary", "counterpartyAccount": "AT-50231", "counterpartyBank": "CBA-AU", "channel": "international", "runningBalance": 25700.0, "flags": ["cross-border"] },
+      { "transactionId": "DT-1031", "timestamp": "2026-06-14T08:30:00", "amount": 2200.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Lee Property Management - Rent", "channel": "transfer", "runningBalance": 23500.0, "flags": [] },
+      { "transactionId": "DT-1032", "timestamp": "2026-06-14T08:35:00", "amount": 3000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Maybank Unit Trust - Monthly Investment", "channel": "transfer", "runningBalance": 20500.0, "flags": [] }
+    ]
+  },
+  {
+    "alertId": "DQ-012",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:45:00",
+    "riskScore": 85,
+    "trigger": "Multiple inbound transfers from unrelated individuals consolidated and forwarded offshore within a day on a recently opened account",
+    "account": { "accountId": "AC-4112", "holderName": "Marcus Lim Jia Hao", "accountType": "personal", "openedAt": "2026-05-19T00:00:00" },
+    "transactionIds": ["DT-1033", "DT-1034", "DT-1035", "DT-1036", "DT-1037"],
+    "transactions": [
+      { "transactionId": "DT-1033", "timestamp": "2026-06-14T09:12:00", "amount": 3800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Ng Siew Chin", "counterpartyAccount": "NS-19023", "channel": "transfer", "runningBalance": 4200.0, "flags": ["fan-in"] },
+      { "transactionId": "DT-1034", "timestamp": "2026-06-14T10:01:00", "amount": 4200.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Ramasamy a/l Govindasamy", "counterpartyAccount": "RG-44120", "channel": "transfer", "runningBalance": 8400.0, "flags": ["fan-in"] },
+      { "transactionId": "DT-1035", "timestamp": "2026-06-14T10:54:00", "amount": 3500.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Tan Boon Hock", "counterpartyAccount": "TB-77219", "channel": "transfer", "runningBalance": 11900.0, "flags": ["fan-in"] },
+      { "transactionId": "DT-1036", "timestamp": "2026-06-14T11:46:00", "amount": 4000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Aishah binti Mohd Noor", "counterpartyAccount": "AM-30551", "channel": "transfer", "runningBalance": 15900.0, "flags": ["fan-in"] },
+      { "transactionId": "DT-1037", "timestamp": "2026-06-14T13:20:00", "amount": 15000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Golden Harvest Trading (offshore)", "counterpartyAccount": "GH-00471", "counterpartyBank": "BOC-CN", "channel": "international", "runningBalance": 900.0, "flags": ["fan-out", "balance-drain"] }
+    ]
+  },
+  {
+    "alertId": "DQ-013",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:49:00",
+    "riskScore": 39,
+    "trigger": "Large outbound international payments on a business account flagged by the cross-border rule",
+    "account": { "accountId": "AC-4113", "holderName": "Seri Maju Import-Export Sdn Bhd", "accountType": "business", "openedAt": "2017-04-12T00:00:00" },
+    "transactionIds": ["DT-1038", "DT-1039", "DT-1040"],
+    "transactions": [
+      { "transactionId": "DT-1038", "timestamp": "2026-06-12T11:20:00", "amount": 120000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Letter of Credit settlement - HSBC Trade Services", "counterpartyAccount": "LC-66002", "channel": "transfer", "runningBalance": 165000.0, "flags": [] },
+      { "transactionId": "DT-1039", "timestamp": "2026-06-13T15:40:00", "amount": 85000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Guangzhou Textile Mills Co - Invoice INV-2291", "counterpartyAccount": "GT-90233", "counterpartyBank": "ICBC-CN", "channel": "international", "runningBalance": 80000.0, "flags": ["cross-border"] },
+      { "transactionId": "DT-1040", "timestamp": "2026-06-13T16:10:00", "amount": 20000.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Royal Malaysian Customs - Import Duty", "channel": "transfer", "runningBalance": 60000.0, "flags": [] }
+    ]
   }
 ]
