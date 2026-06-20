@@ -9,9 +9,11 @@ interface StrEditorProps {
   grounds: string[]
   onAddGround: (text: string) => void
   onRemoveGround: (idx: number) => void
+  canExport: boolean
+  onExport: () => void
 }
 
-export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGround, onRemoveGround }: StrEditorProps) {
+export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGround, onRemoveGround, canExport, onExport }: StrEditorProps) {
   const [newGroundItem, setNewGroundItem] = useState('')
 
   const addGroundItem = () => {
@@ -95,6 +97,27 @@ export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGr
           <div className="label">Recommended action</div>
           <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{strDraft.recommendedAction}</p>
         </div>
+      </div>
+
+      {/* goAML export — the integration seam. Unlocks only after an escalate sign-off. */}
+      <div className="mt-4 shrink-0 border-t border-line pt-4">
+        {canExport ? (
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={onExport}
+              className="rounded-md bg-ink px-4 py-2.5 text-[13px] font-medium text-surface transition-opacity hover:opacity-90"
+            >
+              Export goAML STR
+            </button>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-soft">
+              <span className="text-verified">✓</span> goAML 4.x · schema-valid
+            </span>
+          </div>
+        ) : (
+          <p className="text-[12px] leading-relaxed text-ink-faint">
+            Approve this escalation to file. The goAML STR exports only after analyst sign-off.
+          </p>
+        )}
       </div>
     </section>
   )

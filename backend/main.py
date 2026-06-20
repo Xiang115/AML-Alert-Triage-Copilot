@@ -20,10 +20,11 @@ from typing import Literal
 from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from agents.pipeline import run_triage
 from decision import resolve_str_draft
+from goaml import GoamlConfig, to_goaml_str_xml
 from schemas import Alert, CamelModel, Decision, Metrics, STRDraft
 
 logger = logging.getLogger("api")
@@ -31,6 +32,9 @@ logger = logging.getLogger("api")
 _DATA = Path(__file__).resolve().parent / "data"
 _RESULTS = _DATA / "results.json"
 _METRICS = _DATA / "metrics.json"
+_GOAML_CONFIG = GoamlConfig.model_validate(
+    json.loads((_DATA / "goaml_config.json").read_text(encoding="utf-8"))
+)
 
 
 def _load_alerts() -> dict[str, dict]:
@@ -157,6 +161,36 @@ def decide(alert_id: str, body: DecisionRequest):
 
     _DECISIONS[alert_id] = decision.model_dump(by_alias=True, mode="json")
     return alert
+
+
+@app.get("/alerts/{alert_id}/str.xml")
+def export_goaml_str(alert_id: str):
+    """Export the approved STR as a schema-valid goAML STR report (the integration
+    seam). Gated on a *filed* disposition: an STR can only leave the building after
+    an analyst signs off on an escalation. The gate is recomputed live from the
+    current decision, so a later change-of-mind to dismiss revokes the export."""
+    _require_alert(alert_id)
+    decision = _DECISIONS.get(alert_id)
+    if decision is None:
+        raise ApiError(
+            409, "STR_NOT_ADJUDICATED",
+            "Alert has not been adjudicated; an STR cannot be filed until an analyst signs off.",
+        )
+    if decision["finalDisposition"] != "escalate":
+        raise ApiError(409, "STR_DISMISSED", "Alert was dismissed; there is no STR to file.")
+
+    alert = Alert.model_validate(_ALERTS[alert_id])
+    str_draft = alert.triage.str_draft
+    if str_draft is None:  # invariant: an escalate decision keeps the draft (decision.resolve_str_draft)
+        raise ApiError(409, "STR_DISMISSED", "No STR draft is present for this alert.")
+
+    xml = to_goaml_str_xml(
+        str_draft,
+        alert.transactions or [],
+        _GOAML_CONFIG,
+        submission_date=datetime.fromisoformat(decision["decidedAt"]),
+    )
+    return Response(content=xml, media_type="application/xml")
 
 
 @app.get("/metrics")

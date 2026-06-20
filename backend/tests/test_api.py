@@ -9,7 +9,9 @@ import json
 
 import pytest
 from fastapi.testclient import TestClient
+from lxml import etree
 
+import goaml
 import main
 from main import app, get_llm_client
 from schemas import Alert, TriageResult
@@ -133,6 +135,60 @@ def test_live_triage_falls_back_to_precomputed_on_provider_failure(raising_clien
 
 def test_live_triage_unknown_alert_returns_error_shaped_404():
     r = client.post("/alerts/NOPE/triage")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
+
+
+# --- GET /alerts/{id}/str.xml (goAML export) ---
+
+def _decide(alert_id, action, disposition):
+    return client.post(f"/alerts/{alert_id}/decision", json={"action": action, "finalDisposition": disposition})
+
+
+def test_export_blocked_until_adjudicated():
+    # No decision yet: nothing can be filed (no sign-off).
+    r = client.get("/alerts/DQ-001/str.xml")
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "STR_NOT_ADJUDICATED"
+
+
+def test_export_after_approve_escalate_returns_schema_valid_goaml():
+    _decide("DQ-001", "approve", "escalate")
+    r = client.get("/alerts/DQ-001/str.xml")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/xml")
+    root = etree.fromstring(r.content)
+    assert root.tag == "report" and root.findtext("report_code") == "STR"
+    assert goaml._schema().validate(root)  # the wire bytes really validate
+
+
+def test_override_to_escalate_can_file():
+    # The beat-3 hero path: analyst overrides a call up to escalate -> must file.
+    _decide("DQ-001", "override", "escalate")
+    r = client.get("/alerts/DQ-001/str.xml")
+    assert r.status_code == 200
+    assert etree.fromstring(r.content).findtext("report_code") == "STR"
+
+
+def test_export_blocked_when_dismissed():
+    _decide("DQ-001", "approve", "dismiss")
+    r = client.get("/alerts/DQ-001/str.xml")
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "STR_DISMISSED"
+
+
+def test_change_of_mind_to_dismiss_revokes_export():
+    # Gate is recomputed live from the current decision, never cached.
+    _decide("DQ-001", "approve", "escalate")
+    assert client.get("/alerts/DQ-001/str.xml").status_code == 200
+    _decide("DQ-001", "override", "dismiss")
+    r = client.get("/alerts/DQ-001/str.xml")
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "STR_DISMISSED"
+
+
+def test_export_unknown_alert_returns_error_shaped_404():
+    r = client.get("/alerts/NOPE/str.xml")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
 

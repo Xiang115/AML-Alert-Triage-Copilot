@@ -1568,7 +1568,7 @@
         "direction": "inbound",
         "counterpartyName": "Wong Siew Ling",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "MBB-MY",
         "channel": "transfer",
         "runningBalance": 4000.0,
         "flags": [
@@ -1583,7 +1583,7 @@
         "direction": "inbound",
         "counterpartyName": "Raj Kumar a/l Subramaniam",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "CIMB-MY",
         "channel": "transfer",
         "runningBalance": 4850.0,
         "flags": [
@@ -1598,7 +1598,7 @@
         "direction": "inbound",
         "counterpartyName": "Lim Hui Min",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "PBB-MY",
         "channel": "transfer",
         "runningBalance": 5750.0,
         "flags": [
@@ -1613,7 +1613,7 @@
         "direction": "inbound",
         "counterpartyName": "Tan Mei Yee",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "RHB-MY",
         "channel": "transfer",
         "runningBalance": 6600.0,
         "flags": [
@@ -1628,7 +1628,7 @@
         "direction": "inbound",
         "counterpartyName": "Goh Wei Liang",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "HLB-MY",
         "channel": "transfer",
         "runningBalance": 7450.0,
         "flags": [
@@ -1643,7 +1643,7 @@
         "direction": "outbound",
         "counterpartyName": "Ilmu Educational Supplies Sdn Bhd",
         "counterpartyAccount": "IL-44120",
-        "counterpartyBank": null,
+        "counterpartyBank": "MBB-MY",
         "channel": "transfer",
         "runningBalance": 5450.0,
         "flags": [
@@ -1816,7 +1816,7 @@
         "direction": "outbound",
         "counterpartyName": "ATM cash withdrawal",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "DEMOBANK-MY",
         "channel": "cash",
         "runningBalance": 500.0,
         "flags": []
@@ -1929,7 +1929,7 @@
         "direction": "inbound",
         "counterpartyName": "Goh Pei Shan",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "MBB-MY",
         "channel": "transfer",
         "runningBalance": 5100.0,
         "flags": [
@@ -1944,7 +1944,7 @@
         "direction": "inbound",
         "counterpartyName": "Ahmad Zaki bin Othman",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "BIMB-MY",
         "channel": "transfer",
         "runningBalance": 10100.0,
         "flags": [
@@ -1959,7 +1959,7 @@
         "direction": "inbound",
         "counterpartyName": "Chong Li Wei",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "CIMB-MY",
         "channel": "transfer",
         "runningBalance": 14950.0,
         "flags": [
@@ -1974,7 +1974,7 @@
         "direction": "inbound",
         "counterpartyName": "Siti Noraini binti Aziz",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "RHB-MY",
         "channel": "transfer",
         "runningBalance": 19900.0,
         "flags": [
@@ -1989,7 +1989,7 @@
         "direction": "inbound",
         "counterpartyName": "Daniel Tan Wei Sheng",
         "counterpartyAccount": null,
-        "counterpartyBank": null,
+        "counterpartyBank": "PBB-MY",
         "channel": "transfer",
         "runningBalance": 24700.0,
         "flags": [
