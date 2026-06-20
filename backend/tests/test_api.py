@@ -36,7 +36,8 @@ def test_get_alerts_returns_full_queue_camelcase_without_transactions():
     r = client.get("/alerts")
     assert r.status_code == 200
     data = r.json()
-    assert len(data) == 12  # 9 demo-queue + 3 hero
+    assert len(data) > 0  # the precomputed queue is non-empty
+    assert len(data) == len(main._ALERTS)  # returns the whole loaded queue, however many
     for item in data:
         assert "alertId" in item and "alert_id" not in item  # camelCase only
         assert item["transactions"] is None  # queue omits embedded transactions
