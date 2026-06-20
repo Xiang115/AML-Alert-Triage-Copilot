@@ -28,9 +28,9 @@ describe('TransactionTable', () => {
       <TransactionTable transactions={transactions} citedTransactionIds={['T-1']} />,
     )
     const rows = container.querySelectorAll('tbody tr')
-    expect(rows[0].className).toContain('border-teal-500/80') // cited
-    expect(rows[1].className).not.toContain('border-teal-500/80') // not cited
-    expect(rows[1].className).toContain('border-transparent')
+    expect(rows[0].className).toContain('border-l-ink') // cited
+    expect(rows[1].className).not.toContain('border-l-ink') // not cited
+    expect(rows[1].className).toContain('border-l-transparent')
   })
 
   it('renders the running-balance draining style when the balance is low', () => {
@@ -41,9 +41,9 @@ describe('TransactionTable', () => {
     const { container } = render(
       <TransactionTable transactions={transactions} citedTransactionIds={[]} />,
     )
-    const balanceSpans = container.querySelectorAll('tbody tr td:last-child span')
-    expect(balanceSpans[0].className).not.toContain('text-rose-450') // healthy balance
-    expect(balanceSpans[1].className).toContain('text-rose-450') // draining
+    const balanceSpans = container.querySelectorAll('tbody tr td:last-child > span')
+    expect(balanceSpans[0].className).not.toContain('text-escalate') // healthy balance
+    expect(balanceSpans[1].className).toContain('text-escalate') // draining
   })
 
   it('shows an empty-state row when there are no transactions', () => {

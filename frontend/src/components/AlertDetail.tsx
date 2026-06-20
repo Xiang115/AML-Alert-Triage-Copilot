@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { postDecision, postTriage } from '../api'
+import { finalDispositionFor } from '../decision'
 import type { Alert, STRDraft } from '../types'
 import { TriageCard } from './TriageCard'
 import { VerifierPanel } from './VerifierPanel'
@@ -60,13 +61,7 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
 
   // Handle analyst decision (Approve / Override)
   const handleDecision = async (action: 'approve' | 'override') => {
-    const originalRecommendation = alert.triage.recommendation
-    const finalDisposition =
-      action === 'approve'
-        ? originalRecommendation
-        : originalRecommendation === 'escalate'
-        ? 'dismiss'
-        : 'escalate'
+    const finalDisposition = finalDispositionFor(alert.triage.recommendation, action)
 
     let updatedStr: STRDraft | null = null
     if (finalDisposition === 'escalate' && alert.triage.strDraft) {
@@ -90,47 +85,30 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
   const showStrEditor = alert.triage.recommendation === 'escalate' && alert.triage.strDraft
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Alert Header Banner */}
-      <div className="p-4 border-b border-slate-900 bg-slate-950 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="rounded-lg bg-slate-900 p-2 border border-slate-800 text-slate-300">
-            <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Alert header */}
+      <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line bg-surface px-6 py-4">
+        <div>
+          <div className="flex items-baseline gap-2.5">
+            <h2 className="text-xl font-semibold tracking-tight text-ink">{alert.account.holderName}</h2>
+            <span className="font-mono text-[12px] text-ink-faint">{alert.alertId}</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-white">{alert.account.holderName}</h2>
-              <span className="font-mono text-2xs text-slate-500">{alert.alertId}</span>
-            </div>
-            <div className="mt-0.5 flex items-center gap-2 text-3xs text-slate-500 font-semibold uppercase tracking-wider">
-              <span>Acc: <span className="font-bold text-slate-300">{alert.account.accountId}</span></span>
-              <span className="h-0.5 w-0.5 rounded-full bg-slate-800"></span>
-              <span>{alert.account.accountType}</span>
-              <span className="h-0.5 w-0.5 rounded-full bg-slate-800"></span>
-              <span>Opened {alert.account.openedAt.substring(0, 10)}</span>
-            </div>
+          <div className="mt-1 font-mono text-[12px] text-ink-soft">
+            {alert.account.accountId} · {alert.account.accountType} · opened {alert.account.openedAt.substring(0, 10)}
           </div>
+          <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-ink-soft">{alert.trigger}</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <span className="block text-3xs font-extrabold uppercase tracking-widest text-slate-600">Trigger Event</span>
-            <span className="text-2xs font-semibold text-teal-400/90 mt-0.5">{alert.trigger}</span>
-          </div>
-          <span className="h-4 w-px bg-slate-900"></span>
-          <div className="text-center rounded-lg bg-slate-900/60 border border-slate-800 px-3 py-1">
-            <span className="block text-3xs font-extrabold uppercase tracking-widest text-slate-500">Risk</span>
-            <span className="text-xs font-black text-rose-400">{alert.riskScore}</span>
-          </div>
+        <div className="shrink-0 text-right">
+          <div className="label">Risk score</div>
+          <div className="mt-0.5 font-mono text-2xl font-semibold tabular-nums text-ink">{alert.riskScore}</div>
         </div>
-      </div>
+      </header>
 
-      {/* Scrollable Detail Body */}
-      <div className="flex-grow overflow-y-auto p-4 grid grid-cols-12 gap-4">
-        {/* Left Side: Triage, Verifier, and Transactions */}
-        <div className="col-span-7 space-y-4">
+      {/* Body */}
+      <div className="grid grow grid-cols-12 gap-5 overflow-y-auto bg-paper p-5">
+        {/* Left: triage, verifier, transactions */}
+        <div className="col-span-7 space-y-5">
           <TriageCard
             triage={alert.triage}
             isTriaging={isTriaging}
@@ -144,8 +122,8 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
           />
         </div>
 
-        {/* Right Side: STR Review and Decisions */}
-        <div className="col-span-5 flex flex-col space-y-4">
+        {/* Right: STR draft + decision */}
+        <div className="col-span-5 flex flex-col space-y-5">
           {showStrEditor && alert.triage.strDraft ? (
             <StrEditor
               strDraft={alert.triage.strDraft}
@@ -156,18 +134,11 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
               onRemoveGround={(idx) => setEditedGrounds(editedGrounds.filter((_, i) => i !== idx))}
             />
           ) : (
-            <section className="flex-grow rounded-xl border border-slate-900 bg-slate-950/20 p-4 flex flex-col items-center justify-center text-center space-y-3">
-              <div className="rounded-full bg-slate-900 p-2.5 border border-slate-800 text-slate-500">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-bold text-slate-300 text-2xs">No report draft required</h4>
-                <p className="mt-1 text-3xs text-slate-500 max-w-xs leading-relaxed">
-                  This alert is recommended for dismissal. Suspicious Transaction Reports are only drafted for escalations.
-                </p>
-              </div>
+            <section className="flex grow flex-col items-center justify-center rounded-lg border border-line bg-surface p-8 text-center">
+              <h4 className="text-[14px] font-semibold text-ink">No report required</h4>
+              <p className="mt-1.5 max-w-xs text-[13px] leading-relaxed text-ink-soft">
+                This alert is recommended for dismissal. A Suspicious Transaction Report is drafted only when an alert is escalated.
+              </p>
             </section>
           )}
 

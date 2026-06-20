@@ -2,6 +2,7 @@
 // without the backend running. Set VITE_MOCK=false to hit the live API.
 
 import type { Alert, AlertStatus, Metrics, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
+import { resolveStrDraft } from './decision'
 import alertsFixture from './fixtures/alerts.json'
 import metricsFixture from './fixtures/metrics.json'
 
@@ -69,7 +70,8 @@ export async function postDecision(
       status: nextStatus,
       triage: {
         ...mockAlerts[idx].triage,
-        strDraft: editedStrDraft !== undefined ? editedStrDraft : mockAlerts[idx].triage.strDraft,
+        // Apply the same disposition->STR rule the backend enforces.
+        strDraft: resolveStrDraft(finalDisposition, editedStrDraft, mockAlerts[idx].triage.strDraft),
       },
     }
     mockAlerts[idx] = updatedAlert

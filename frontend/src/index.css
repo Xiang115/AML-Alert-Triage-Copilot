@@ -1,5 +1,70 @@
 @import "tailwindcss";
 
-:root {
-  color-scheme: light dark;
+/* "Ledger desk" — light, ink-on-paper compliance console.
+   Color is reserved for signal (escalate / verified / flagged); the chrome is
+   ink, paper, and hairlines only. */
+@theme {
+  --color-paper: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #15181e;
+  --color-ink-soft: #565e6b;
+  --color-ink-faint: #8b929e;
+  --color-line: #e5e8ed;
+  --color-line-strong: #d2d7df;
+
+  --color-escalate: #a82a2a;
+  --color-escalate-soft: #faecec;
+  --color-verified: #1d7245;
+  --color-verified-soft: #e8f3ec;
+  --color-flag: #8a5d04;
+  --color-flag-soft: #f9efd7;
+
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* One visible keyboard-focus treatment everywhere. */
+  *:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* The one micro-label style, used consistently in place of the old dozen. */
+@utility label {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-faint);
 }

@@ -16,6 +16,6 @@ describe('App (smoke)', () => {
     expect(await screen.findByText('Tan Wei Ming')).toBeTruthy()
 
     // Nothing selected yet -> the empty-state prompt is shown.
-    expect(screen.getByText(/select an account alert from the queue/i)).toBeTruthy()
+    expect(screen.getByText(/choose an alert from the queue/i)).toBeTruthy()
   })
 })
