@@ -20,6 +20,19 @@ def test_triage_prompt_includes_benign_lookalike(make_client):
     assert card.benign_lookalike in user_msg
 
 
+def test_triage_retries_on_unknown_typology_code(make_client):
+    # A hallucinated code must fail validation and retry, not KeyError downstream.
+    bad = json.dumps({"matchedTypologyCode": "ZZ-99", "firedIndicators": [],
+                      "citedTransactionIds": [], "recommendation": "escalate", "explanation": "x"})
+    good = json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [],
+                       "citedTransactionIds": [], "recommendation": "escalate", "explanation": "x"})
+    fake = make_client([bad, good])
+    out = triage("evidence block", [get_card("PT-01")], client=fake)
+
+    assert out.matched_typology.code == "PT-01"
+    assert len(fake.calls) == 2  # retried after the unknown code
+
+
 def test_triage_resolves_card_and_clamps_indicators(make_client):
     card = get_card("PT-01")
     real_indicator = card.indicators[0]

@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import field_validator
+
 import config
-from agents.knowledge_base import get_card
+from agents.knowledge_base import get_card, load_cards
 from llm import complete_model
 from schemas import LLMResponse, MatchedTypology, TriageOutput, TypologyCard
 
@@ -34,6 +36,15 @@ class _TriageResponse(LLMResponse):
     fired_indicators: list[str] = []
     cited_transaction_ids: list[str] = []
     explanation: str = ""
+
+    @field_validator("matched_typology_code")
+    @classmethod
+    def _known_code(cls, v: str) -> str:
+        # Reject a hallucinated code at the seam so complete_model retries, rather
+        # than letting get_card raise KeyError deeper in the pipeline.
+        if v not in {c.code for c in load_cards()}:
+            raise ValueError(f"unknown typology code: {v}")
+        return v
 
 
 def _render_cards(cards: list[TypologyCard]) -> str:
