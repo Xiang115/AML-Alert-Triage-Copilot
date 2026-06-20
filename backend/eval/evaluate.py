@@ -62,19 +62,42 @@ def compute_metrics(
     baseline_min: float = _BASELINE_MIN,
     copilot_min: float = _COPILOT_MIN,
 ) -> dict:
-    """Pure metric math (ADR-0004). Returns the Metrics wire shape (camelCase)."""
-    total = len(predictions)
-    correct = sum(p == a for p, a in zip(predictions, actuals))
-    accuracy = correct / total if total else 0.0
+    """Pure metric math (ADR-0004). Returns the Metrics wire shape (camelCase).
 
-    pred_dismiss = [(p, a) for p, a in zip(predictions, actuals) if p == "dismiss"]
-    tn = sum(a == "dismiss" for _, a in pred_dismiss)
-    fp_reduction = tn / len(pred_dismiss) if pred_dismiss else 0.0
+    Positive class = escalate (label Report). We report the full confusion matrix
+    plus recall/precision/specificity because plain accuracy is misleading on an
+    imbalanced AML base rate: an always-dismiss model scores `baselineAccuracy`
+    while catching zero launderers (recall 0). The slide leads with workload +
+    catch-rate, not accuracy.
+    """
+    total = len(predictions)
+    pairs = list(zip(predictions, actuals))
+
+    tp = sum(p == "escalate" and a == "escalate" for p, a in pairs)
+    fp = sum(p == "escalate" and a == "dismiss" for p, a in pairs)
+    fn = sum(p == "dismiss" and a == "escalate" for p, a in pairs)
+    tn = sum(p == "dismiss" and a == "dismiss" for p, a in pairs)
+
+    def _safe(num: int, den: int) -> float:
+        return round(num / den, 4) if den else 0.0
+
+    accuracy = _safe(tp + tn, total)
+    # Always-dismiss baseline: correct exactly on the actual-dismiss rows (tn + fp).
+    baseline_accuracy = _safe(tn + fp, total)
+    recall = _safe(tp, tp + fn)
+    precision = _safe(tp, tp + fp)
+    specificity = _safe(tn, tn + fp)
+    fp_reduction = _safe(tn, tn + fn)
 
     return {
         "totalAlerts": total,
-        "accuracyVsLabels": round(accuracy, 4),
-        "falsePositiveReduction": round(fp_reduction, 4),
+        "accuracyVsLabels": accuracy,
+        "baselineAccuracy": baseline_accuracy,
+        "recall": recall,
+        "precision": precision,
+        "specificity": specificity,
+        "falsePositiveReduction": fp_reduction,
+        "confusionMatrix": {"tp": tp, "fp": fp, "fn": fn, "tn": tn},
         "avgReviewTimeBaselineMin": float(baseline_min),
         "avgReviewTimeWithCopilotMin": float(copilot_min),
     }

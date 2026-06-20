@@ -29,15 +29,23 @@ The copilot is built to sit *inside* a bank's compliance estate, not beside it. 
 
 Most AML demos stop at a drafted report; this one emits the regulator's actual filing artifact — schema-validated and human-gated. The reusable, deterministic serializer (`backend/goaml.py`) carries no LLM latency, so it is safe on the live demo path.
 
+### Accountability: Audit Trail & Filing Acknowledgement
+
+The bank stays the reporting institution of record, so every action is logged and every filing is acknowledged:
+
+- **Append-only audit trail** (`GET /audit`) — each analyst decision records the **AI's recommendation, confidence, and verifier status alongside the human disposition**, so an override is accountable after the fact. Overriding the AI **requires a reason**, captured as the reason-of-record; a change-of-mind appends a new entry rather than erasing the first. Surfaced in the console's **Audit Trail** tab — the record a regulator can replay.
+- **Filing acknowledgement** — filing an approved STR (`POST /alerts/{alertId}/str/submit`) validates the goAML report, records the filing in the trail, and returns a **FIU submission reference** (`MYFIU-2026-NNNNNN`, deterministic per alert for demo stability). The console closes the loop with a *Filed to goAML · accepted · ref …* confirmation. Decisions and filings are events in the one append-only trail.
+
 ---
 
 ## Key Features
 
 * **Adversarial QA Pushback**: The Verifier Agent challenges triage recommendations, flagging borderline cases (e.g., `HERO-001` Aisyah binti Kamal) for human review rather than automatic escalation, reducing compliance workload.
 * **Regulator-Ready goAML Export**: After analyst sign-off, the approved STR exports as schema-valid goAML XML — Bank Negara Malaysia's STR e-filing format — gated behind human approval and validated against the goAML schema before it leaves the system (see *Integration Seam* above).
+* **Append-Only Audit Trail & Filing Receipt**: Every decision and goAML filing lands in an append-only trail (`GET /audit` + an **Audit Trail** tab) that pairs the AI's recommendation with the human disposition; overriding the AI requires a recorded reason. Filing an STR returns a FIU acknowledgement reference, closing the loop.
 * **Slate & Mint (Cyber-Defense) Console**: A modern, clean, dark-themed interface built specifically for security and financial audit contexts. Includes left-border highlighting of cited transactions and adversarial warning banners.
 * **Demo-First Resilience**: Backend pre-loads 16 optimized demo/hero cases from `results.json` and serves them from memory. The live `/triage` route runs the real pipeline (Q&A only) and falls back to the precomputed result if the provider errors, so the filmed demo never breaks on camera (ADR-0003); it never mutates the precomputed source.
-* **Offline Evaluation Suite**: Measures `accuracyVsLabels` for real by running the live triage agent over a stratified **held-out** sample (default 60) of SynthAML alerts and comparing its recommendation to the Report/Dismiss labels (ADR-0004) — not a rule-based classifier. `falsePositiveReduction` is the share of recommended-dismiss alerts that are truly benign.
+* **Offline Evaluation Suite (honest, not cherry-picked)**: Runs the live triage agent over a stratified **held-out** sample of SynthAML alerts (frozen before any tuning) and reports the full picture — accuracy, recall, precision, and a confusion matrix (ADR-0004), not a single flattering number. Two things are stated plainly rather than hidden: (1) we **don't lead with accuracy**, because on this imbalanced base rate (~83% of alerts are dismiss) a do-nothing model that dismisses everything scores ~83% while catching zero criminals — so we headline **workload reduction** and the **human-in-the-loop safety net** instead; (2) the public dataset exposes only **aggregated, amount-less features** (no transaction amounts, running balances, or counterparties — the very signals the copilot reasons over in production, shown live in the demo), so the held-out numbers are a **conservative floor**, not the product's real ceiling.
 
 ---
 
@@ -102,7 +110,7 @@ The prelim prototype described above is complete. The roadmap below covers what 
 **Go-to-market:** land via the fixed-fee shadow-mode pilot, where the product proves time-saved on the buyer's *own* historical alerts before any workflow change — a low-risk entry for a risk-averse compliance buyer. Convert pilots to annual Team/Enterprise contracts; expand from one business unit to the rest of the institution.
 
 **Differentiation / moat:**
-- **Explainable and auditable by construction** — every recommendation is grounded in a named FATF/BNM typology card with cited transactions, and confidence is *computed* from indicator coverage (ADR-0007), not self-reported by the model. This is what makes it defensible to a regulator, unlike a black-box risk score.
+- **Explainable and auditable by construction** — every recommendation is grounded in a named FATF/BNM typology card with cited transactions, and confidence is *computed* from indicator coverage (ADR-0007), not self-reported by the model. Every decision and filing lands in an append-only audit trail (AI call vs human disposition, with a mandatory reason on override and a FIU filing reference), so the institution can replay exactly who decided what and why. This is what makes it defensible to a regulator, unlike a black-box risk score.
 - **The adversarial verifier** — an independent second agent that challenges the first call against each typology's distinguishing test is the differentiator that catches false escalations; it is the demo's "wow" and hard to replicate as a bolt-on.
 - **Emits the regulator's real wire format** — on analyst sign-off, the STR exports as schema-valid goAML XML (the format BNM's FIU ingests), human-gated and XSD-validated before release, with the reporting-entity registration as a per-FIU config swap. Most AML tools stop at a drafted report; emitting the actual, schema-conformant filing artifact is what turns "explainable triage" into a drop-in component of the bank's existing STR submission flow.
 - **Human-in-the-loop by design** — the analyst always approves or overrides, keeping the institution's regulatory accountability intact and easing adoption past compliance/legal sign-off.
@@ -126,7 +134,7 @@ The prelim prototype described above is complete. The roadmap below covers what 
 │   │   ├── goaml_config.json  # Per-FIU goAML registration (the (B)->(A) config swap)
 │   │   └── goaml_str.xsd       # Tightly-scoped goAML STR schema (export is validated against it)
 │   ├── eval/            # evaluate.py offline validation script
-│   ├── tests/           # 84 passing backend unit and integration tests
+│   ├── tests/           # 93 passing backend unit and integration tests
 │   ├── main.py          # FastAPI application entrypoint
 │   ├── goaml.py         # goAML STR export serializer (the integration seam)
 │   └── config.py        # Environment variables and runtime thresholds
@@ -145,8 +153,10 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
 * **`GET /alerts`**: Retrieves the queue list. Transactions are omitted to optimize payload size.
 * **`GET /alerts/{alertId}`**: Retrieves the detailed alert object, embedding transactions and precomputed triage.
 * **`POST /alerts/{alertId}/triage`**: Triggers a live multi-agent pipeline execution (Q&A only). Returns a fresh result without mutating the demo source; falls back to the precomputed triage on provider failure.
-* **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`) and STR edits in-memory.
+* **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`), an optional `note` (the reason-of-record, required by the UI on override), and STR edits in-memory; appends a decision event to the audit trail.
 * **`GET /alerts/{alertId}/str.xml`**: Exports the approved STR as a schema-valid goAML XML report (the integration seam). Gated on a recorded *escalate* sign-off, recomputed live — returns `409 STR_NOT_ADJUDICATED` before sign-off and `409 STR_DISMISSED` if the alert was dismissed.
+* **`POST /alerts/{alertId}/str/submit`**: Files the approved STR to goAML and returns a `SubmissionAck` (FIU reference + `accepted`). Same gate as the export; records a submission event in the audit trail.
+* **`GET /audit`**: Returns the append-only accountability trail (decision + submission events), newest first.
 * **`GET /metrics`**: Serves measured system accuracy and workload-reduction statistics (404 `METRICS_NOT_READY` until the eval suite has run).
 * **`POST /reset`**: Reloads the initial dataset state to clear in-memory decision edits.
 
