@@ -17,7 +17,8 @@ from schemas import LLMResponse, MatchedTypology, TriageOutput, TypologyCard
 _SYSTEM = (
     "You are an AML alert-triage analyst. Decide Escalate or Dismiss for the alert by "
     "matching it to exactly one of the candidate typology cards. Use each card's indicators "
-    "and distinguishing test. Reply ONLY with a JSON object: "
+    "and distinguishing test, and rule out the card's benign look-alike before escalating. "
+    "Reply ONLY with a JSON object: "
     '{"matchedTypologyCode", "firedIndicators" (subset of that card\'s indicators present in '
     'the evidence), "citedTransactionIds" (ids supporting the call, [] if none), '
     '"recommendation" ("escalate"|"dismiss"), "explanation"}.'
@@ -41,6 +42,7 @@ def _render_cards(cards: list[TypologyCard]) -> str:
         out.append(
             f"[{c.code}] {c.name} (source: {c.source})\n"
             f"  indicators: {c.indicators}\n"
+            f"  benign look-alike: {c.benign_lookalike}\n"
             f"  distinguishing test: {c.distinguishing_test}"
         )
     return "\n".join(out)
