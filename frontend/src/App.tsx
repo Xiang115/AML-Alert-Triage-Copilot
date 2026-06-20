@@ -31,9 +31,9 @@ export default function App() {
   }, [alerts, selectedAlertId])
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-200 antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-paper text-ink">
       {/* SIDEBAR */}
-      <aside className="flex w-80 flex-col border-r border-slate-900 bg-slate-950/60 backdrop-blur-xl">
+      <aside className="flex w-80 flex-col border-r border-line bg-surface">
         <BrandHeader />
         <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -52,12 +52,12 @@ export default function App() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-grow flex flex-col overflow-hidden bg-slate-950">
+      <main className="flex grow flex-col overflow-hidden">
         {activeTab === 'queue' ? (
           loadingDetail ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-600">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-500 border-t-transparent mb-2"></div>
-              <span className="text-2xs font-medium">Loading details...</span>
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-ink-faint">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-line-strong border-t-ink"></div>
+              <span className="text-[13px]">Loading alert…</span>
             </div>
           ) : selectedAlert ? (
             <AlertDetail key={selectedAlert.alertId} alert={selectedAlert} setAlert={setAlert} onReloadList={reloadList} />

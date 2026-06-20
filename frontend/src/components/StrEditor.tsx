@@ -22,86 +22,78 @@ export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGr
   }
 
   return (
-    <section className="flex-grow rounded-xl border border-slate-900 bg-slate-950/20 p-4 flex flex-col space-y-3 overflow-hidden">
-      <div className="flex items-center gap-1.5 border-b border-slate-900 pb-2 flex-shrink-0">
-        <svg className="h-3.5 w-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        <h3 className="text-2xs font-black uppercase tracking-wider text-rose-400">Draft STR</h3>
-        <Badge tone="bg-rose-500/10 text-rose-400 border border-rose-500/10 ml-auto">Draft</Badge>
+    <section className="flex grow flex-col overflow-hidden rounded-lg border border-line bg-surface p-5">
+      <div className="flex shrink-0 items-center justify-between">
+        <h3 className="label">Suspicious transaction report</h3>
+        <Badge tone="bg-paper text-ink-soft">Draft</Badge>
       </div>
 
-      {/* Scrollable Form Body */}
-      <div className="flex-grow overflow-y-auto space-y-3.5 pr-1 text-2xs">
-        {/* Static Metadata */}
-        <div className="grid grid-cols-2 gap-3 rounded bg-slate-950/60 p-2.5 border border-slate-900">
+      <div className="mt-4 grow space-y-5 overflow-y-auto pr-1">
+        {/* Metadata */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <span className="text-3xs font-bold uppercase tracking-wider text-slate-500">Institution</span>
-            <div className="font-semibold text-slate-400 mt-0.5">{strDraft.reportingInstitution}</div>
+            <div className="label">Institution</div>
+            <div className="mt-1 text-[13px] text-ink">{strDraft.reportingInstitution}</div>
           </div>
           <div>
-            <span className="text-3xs font-bold uppercase tracking-wider text-slate-500">Report Date</span>
-            <div className="font-semibold text-slate-400 mt-0.5">{strDraft.reportDate.substring(0, 10)}</div>
+            <div className="label">Report date</div>
+            <div className="mt-1 font-mono text-[13px] text-ink">{strDraft.reportDate.substring(0, 10)}</div>
           </div>
         </div>
 
-        {/* Activity Summary (Minimalist Writing-Desk Style) */}
+        {/* Narrative */}
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-3xs font-bold uppercase tracking-wider text-slate-500">Narrative Description</span>
-            <span className="text-3xs text-slate-500">Drafted by AI</span>
+          <div className="mb-1.5 flex items-baseline justify-between">
+            <span className="label">Narrative</span>
+            <span className="text-[11px] text-ink-faint">Drafted by AI · editable</span>
           </div>
           <textarea
             value={summary}
             onChange={(e) => onSummaryChange(e.target.value)}
             rows={4}
-            className="w-full rounded border border-slate-900 bg-slate-950/60 p-2 text-2xs leading-relaxed text-slate-300 outline-none focus:border-teal-500 transition-colors"
+            className="w-full resize-none rounded-md border border-line bg-surface p-3 text-[13px] leading-relaxed text-ink outline-none focus:border-ink"
           />
         </div>
 
-        {/* Grounds for Suspicion */}
-        <div className="space-y-1.5">
-          <span className="text-3xs font-bold uppercase tracking-wider text-slate-500">Grounds for Suspicion</span>
-          <ul className="space-y-1">
+        {/* Grounds for suspicion */}
+        <div>
+          <div className="label mb-1.5">Grounds for suspicion</div>
+          <ul className="space-y-1.5">
             {grounds.map((g, idx) => (
-              <li key={idx} className="flex items-start justify-between gap-2 rounded bg-slate-950/20 border border-slate-900 px-2.5 py-1.5">
-                <span className="font-medium text-slate-400 leading-normal">{g}</span>
+              <li key={idx} className="flex items-start justify-between gap-3 border-l-2 border-line py-0.5 pl-3">
+                <span className="text-[13px] leading-relaxed text-ink">{g}</span>
                 <button
                   onClick={() => onRemoveGround(idx)}
-                  className="text-slate-600 hover:text-rose-400 transition-colors"
+                  aria-label="Remove ground"
+                  className="shrink-0 text-[12px] text-ink-faint hover:text-escalate"
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  Remove
                 </button>
               </li>
             ))}
           </ul>
-          {/* Add grounds item input */}
-          <div className="flex gap-2">
+          <div className="mt-2 flex gap-2">
             <input
               type="text"
               value={newGroundItem}
               onChange={(e) => setNewGroundItem(e.target.value)}
-              placeholder="Add reason..."
+              placeholder="Add a ground…"
               onKeyDown={(e) => e.key === 'Enter' && addGroundItem()}
-              className="flex-grow rounded border border-slate-900 bg-slate-950/60 px-2.5 py-1 text-2xs text-slate-355 outline-none focus:border-teal-500 transition-colors"
+              className="grow rounded-md border border-line bg-surface px-3 py-1.5 text-[13px] text-ink outline-none placeholder:text-ink-faint focus:border-ink"
             />
             <button
               onClick={addGroundItem}
-              className="rounded border border-slate-800 bg-slate-900 hover:bg-slate-800 px-2.5 text-slate-400 text-3xs font-bold cursor-pointer transition-colors"
+              className="rounded-md border border-line px-3 text-[13px] font-medium text-ink-soft hover:border-ink hover:text-ink"
             >
               Add
             </button>
           </div>
         </div>
 
-        {/* Recommended Action */}
+        {/* Recommended action */}
         <div>
-          <span className="text-3xs font-bold uppercase tracking-wider text-slate-500">Action Plan</span>
-          <div className="mt-0.5 font-semibold text-slate-400 bg-slate-950/60 p-2.5 border border-slate-900 rounded leading-relaxed">
-            {strDraft.recommendedAction}
-          </div>
+          <div className="label">Recommended action</div>
+          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{strDraft.recommendedAction}</p>
         </div>
       </div>
     </section>

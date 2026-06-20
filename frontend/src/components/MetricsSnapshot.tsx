@@ -1,25 +1,23 @@
 // NOTE: these figures are hardcoded (pre-existing), unlike the live MetricsDashboard
 // which reads from /metrics. Left as-is to preserve behaviour during decomposition.
+const ROWS = [
+  { label: 'Accuracy', value: '94.2%', tone: 'text-ink' },
+  { label: 'FP reduction', value: '68.0%', tone: 'text-ink' },
+  { label: 'Review time saved', value: '−77%', tone: 'text-verified' },
+]
+
 export function MetricsSnapshot() {
   return (
-    <div className="p-4 space-y-4 text-2xs text-slate-400">
-      <div className="rounded-lg bg-slate-950/40 p-3.5 border border-slate-900">
-        <div className="text-slate-500 font-bold uppercase tracking-wider text-3xs">Triage Desk Health</div>
-        <div className="mt-2.5 space-y-2 font-medium">
-          <div className="flex justify-between border-b border-slate-900/50 pb-1.5">
-            <span>Accuracy:</span>
-            <strong className="text-slate-200">94.2%</strong>
+    <div className="px-5 py-5">
+      <div className="label mb-3">Triage desk health</div>
+      <dl className="space-y-2.5">
+        {ROWS.map((row) => (
+          <div key={row.label} className="flex items-baseline justify-between border-b border-line pb-2 last:border-0">
+            <dt className="text-[13px] text-ink-soft">{row.label}</dt>
+            <dd className={`font-mono text-[13px] font-medium tabular-nums ${row.tone}`}>{row.value}</dd>
           </div>
-          <div className="flex justify-between border-b border-slate-900/50 pb-1.5">
-            <span>FP Reduction:</span>
-            <strong className="text-slate-200">68.0%</strong>
-          </div>
-          <div className="flex justify-between">
-            <span>Review Savings:</span>
-            <strong className="text-emerald-400">-77% Time</strong>
-          </div>
-        </div>
-      </div>
+        ))}
+      </dl>
     </div>
   )
 }
