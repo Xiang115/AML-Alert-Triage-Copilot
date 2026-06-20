@@ -62,19 +62,27 @@ def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard
     if triage_result.recommendation != "escalate":
         return None
 
+    cited = _cited(alert, triage_result.cited_transaction_ids)
+    txn_lines = "\n".join(
+        f"  {t.transaction_id} | {t.timestamp} | {t.amount} {t.currency} | "
+        f"{t.counterparty_name} | runningBalance {t.running_balance}"
+        for t in cited
+    )
+
     narrative = complete_model(
         _SYSTEM,
         f"Typology: {triage_result.matched_typology.name}\n"
         f"Indicators present: {triage_result.fired_indicators}\n"
         f"Triage explanation: {triage_result.explanation}\n"
-        f"Account holder: {alert.account.holder_name}",
+        f"Account holder: {alert.account.holder_name}\n"
+        f"Cited transactions (id | time | amount | counterparty | runningBalance):\n{txn_lines}\n"
+        f"Narrative hints: {card.str_narrative_hints}",
         model or config.MODEL_WORKHORSE,
         _StrNarrative,
         client=client,
         max_tokens=3000,  # STR narrative is longer; leave room over reasoning tokens
     )
 
-    cited = _cited(alert, triage_result.cited_transaction_ids)
     times = [t.timestamp for t in cited] or [datetime.now()]
     return STRDraft(
         report_date=datetime.now(),

@@ -29,6 +29,18 @@ def test_no_str_draft_on_dismiss(make_client):
     assert fake.calls == []  # no LLM call when dismissing
 
 
+def test_str_prompt_includes_cited_transactions_and_card_hints(make_client):
+    # The narrative must be grounded in the real figures + the card's authored hints,
+    # not just the indicator labels.
+    fake = make_client([json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]})])
+    card = get_card("PT-01")
+    draft_str(_alert(), _triage("escalate"), card, client=fake)
+
+    user_msg = fake.calls[0]["messages"][1]["content"]
+    assert "T-1001" in user_msg  # a cited transaction id, i.e. the real figures are present
+    assert card.str_narrative_hints[0] in user_msg  # the card's authored narrative hints
+
+
 def test_str_draft_structured_object_on_escalate(make_client):
     model_out = json.dumps(
         {
