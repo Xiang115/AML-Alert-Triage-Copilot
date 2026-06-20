@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { exportGoamlStr, postDecision, postTriage } from '../api'
+import { exportGoamlStr, postDecision, postTriage, submitGoamlStr } from '../api'
 import { finalDispositionFor } from '../decision'
-import type { Alert, STRDraft } from '../types'
+import type { Alert, STRDraft, SubmissionAck } from '../types'
 import { TriageCard } from './TriageCard'
 import { VerifierPanel } from './VerifierPanel'
 import { TransactionTable } from './TransactionTable'
@@ -33,6 +33,7 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
   const [editedGrounds, setEditedGrounds] = useState<string[]>(
     alert.triage.strDraft ? [...alert.triage.strDraft.groundsForSuspicion] : [],
   )
+  const [ack, setAck] = useState<SubmissionAck | null>(null)
 
   // Execute Live Triage Endpoint (for Q&A WOW factor)
   const handleLiveTriage = async () => {
@@ -60,7 +61,7 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
   }
 
   // Handle analyst decision (Approve / Override)
-  const handleDecision = async (action: 'approve' | 'override') => {
+  const handleDecision = async (action: 'approve' | 'override', note: string) => {
     const finalDisposition = finalDispositionFor(alert.triage.recommendation, action)
 
     let updatedStr: STRDraft | null = null
@@ -73,7 +74,8 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
     }
 
     try {
-      const updatedAlert = await postDecision(alert.alertId, action, finalDisposition, updatedStr)
+      const updatedAlert = await postDecision(alert.alertId, action, finalDisposition, updatedStr, note)
+      setAck(null)  // a new decision supersedes any prior filing acknowledgement
       setAlert(updatedAlert)
       onReloadList()
     } catch (err) {
@@ -82,11 +84,12 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
     }
   }
 
-  // Export the regulator-ready goAML STR. Hits the live backend (always real bytes);
-  // the backend re-checks the escalate-sign-off gate, mirrored here by `canExport`.
+  // Export the regulator-ready goAML STR and file it: download the XML for the
+  // analyst's records, then submit to goAML and surface the FIU acknowledgement.
   const handleExport = async () => {
     try {
       await exportGoamlStr(alert.alertId)
+      setAck(await submitGoamlStr(alert.alertId))
     } catch (err) {
       console.error(err)
       window.alert('goAML export failed. The export hits the live backend — ensure it is running and the alert was approved to escalate.')
@@ -148,6 +151,7 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
               onRemoveGround={(idx) => setEditedGrounds(editedGrounds.filter((_, i) => i !== idx))}
               canExport={canExport}
               onExport={handleExport}
+              ack={ack}
             />
           ) : (
             <section className="flex grow flex-col items-center justify-center rounded-lg border border-line bg-surface p-8 text-center">
@@ -159,8 +163,8 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
           )}
 
           <DecisionPanel
-            onApprove={() => handleDecision('approve')}
-            onOverride={() => handleDecision('override')}
+            onApprove={(note) => handleDecision('approve', note)}
+            onOverride={(note) => handleDecision('override', note)}
           />
         </div>
       </div>

@@ -1,4 +1,4 @@
-export type Tab = 'queue' | 'metrics'
+export type Tab = 'queue' | 'metrics' | 'audit'
 
 interface TabNavProps {
   activeTab: Tab
@@ -8,6 +8,7 @@ interface TabNavProps {
 const TABS: { id: Tab; label: string }[] = [
   { id: 'queue', label: 'Alert Queue' },
   { id: 'metrics', label: 'System Performance' },
+  { id: 'audit', label: 'Audit Trail' },
 ]
 
 export function TabNav({ activeTab, onTabChange }: TabNavProps) {

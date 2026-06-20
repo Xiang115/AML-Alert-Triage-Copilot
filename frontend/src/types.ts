@@ -97,3 +97,23 @@ export interface Metrics {
   avgReviewTimeBaselineMin: number
   avgReviewTimeWithCopilotMin: number
 }
+
+export interface SubmissionAck {
+  alertId: string
+  submissionRef: string
+  status: 'accepted'
+  submittedAt: string
+}
+
+export interface AuditEntry {
+  alertId: string
+  event: 'decision' | 'submission'
+  at: string
+  action?: DecisionAction | null
+  aiRecommendation?: Recommendation | null
+  finalDisposition?: Recommendation | null
+  confidence?: number | null
+  verifierStatus?: VerifierStatus | null
+  note?: string | null
+  submissionRef?: string | null
+}

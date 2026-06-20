@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from lxml import etree
 
-from goaml import GoamlConfig, to_goaml_str_xml
+from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
 from schemas import (
     Account,
     CitedTransaction,
@@ -138,3 +138,11 @@ def test_rejects_a_draft_with_no_cited_transactions():
     # The XSD requires >= 1 <transaction>; an empty draft must raise, not emit.
     with pytest.raises(ValueError, match="XSD validation"):
         to_goaml_str_xml(_draft([]), [], _CONFIG, submission_date=datetime(2026, 6, 20, 12, 0))
+
+
+def test_submission_reference_is_deterministic_and_fiu_formatted():
+    # Demo-stable (ADR-0003): the same alert always files under the same FIU ref.
+    ref = submission_reference("DQ-001")
+    assert ref == submission_reference("DQ-001")
+    assert ref != submission_reference("DQ-002")
+    assert ref.startswith("MYFIU-2026-")

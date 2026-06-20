@@ -15,6 +15,7 @@ literal per-FIU conformance without code changes.
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -53,6 +54,13 @@ class GoamlConfig(BaseModel):
     local_country_code: str
     funds_code: str
     reporting_person: ReportingPerson
+
+
+def submission_reference(alert_id: str) -> str:
+    """A demo-stable FIU acknowledgement reference for a filed STR (ADR-0003):
+    deterministic in the alert id, so re-filing the same alert yields the same ref."""
+    seq = int(hashlib.sha256(alert_id.encode()).hexdigest(), 16) % 1_000_000
+    return f"MYFIU-2026-{seq:06d}"
 
 
 @lru_cache(maxsize=1)

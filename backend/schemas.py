@@ -158,7 +158,33 @@ class Decision(CamelModel):
     action: Literal["approve", "override"]
     final_disposition: Literal["escalate", "dismiss"]
     edited_str_draft: STRDraft | None = None
+    note: str | None = None  # analyst's reason — captured especially on override
     decided_at: datetime
+
+
+class AuditEntry(CamelModel):
+    """One append-only event in the accountability trail. `event` discriminates:
+    a `decision` pairs the AI's call with the human disposition; a `submission`
+    records a goAML filing. Fields not relevant to the event are null."""
+    alert_id: str
+    event: Literal["decision", "submission"]
+    at: datetime
+    # decision events
+    action: Literal["approve", "override"] | None = None
+    ai_recommendation: Literal["escalate", "dismiss"] | None = None
+    final_disposition: Literal["escalate", "dismiss"] | None = None
+    confidence: float | None = None
+    verifier_status: Literal["agreed", "flagged"] | None = None
+    note: str | None = None
+    # submission events
+    submission_ref: str | None = None
+
+
+class SubmissionAck(CamelModel):
+    alert_id: str
+    submission_ref: str
+    status: Literal["accepted"]
+    submitted_at: datetime
 
 
 class Metrics(CamelModel):

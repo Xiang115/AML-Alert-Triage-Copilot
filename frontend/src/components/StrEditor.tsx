@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { STRDraft } from '../types'
+import type { STRDraft, SubmissionAck } from '../types'
 import { Badge } from './ui/Badge'
 
 interface StrEditorProps {
@@ -11,9 +11,10 @@ interface StrEditorProps {
   onRemoveGround: (idx: number) => void
   canExport: boolean
   onExport: () => void
+  ack: SubmissionAck | null
 }
 
-export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGround, onRemoveGround, canExport, onExport }: StrEditorProps) {
+export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGround, onRemoveGround, canExport, onExport, ack }: StrEditorProps) {
   const [newGroundItem, setNewGroundItem] = useState('')
 
   const addGroundItem = () => {
@@ -101,13 +102,20 @@ export function StrEditor({ strDraft, summary, onSummaryChange, grounds, onAddGr
 
       {/* goAML export — the integration seam. Unlocks only after an escalate sign-off. */}
       <div className="mt-4 shrink-0 border-t border-line pt-4">
-        {canExport ? (
+        {ack ? (
+          <div className="rounded-md border border-verified bg-verified-soft px-3 py-2.5">
+            <div className="flex items-center gap-1.5 text-[12px] font-medium text-verified">
+              <span>✓</span> Filed to goAML · accepted
+            </div>
+            <div className="mt-0.5 font-mono text-[11px] text-ink-soft">ref {ack.submissionRef}</div>
+          </div>
+        ) : canExport ? (
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={onExport}
               className="rounded-md bg-ink px-4 py-2.5 text-[13px] font-medium text-surface transition-opacity hover:opacity-90"
             >
-              Export goAML STR
+              Export &amp; file goAML STR
             </button>
             <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-soft">
               <span className="text-verified">✓</span> goAML 4.x · schema-valid
