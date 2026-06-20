@@ -33,6 +33,34 @@ def test_triage_retries_on_unknown_typology_code(make_client):
     assert len(fake.calls) == 2  # retried after the unknown code
 
 
+def test_triage_no_match_sentinel_is_one_call_dismiss(make_client):
+    # "NONE" means no typology fit — a reasoned dismiss in ONE call (no retry).
+    fake = make_client([json.dumps({
+        "matchedTypologyCode": "NONE", "firedIndicators": [], "citedTransactionIds": [],
+        "recommendation": "dismiss", "explanation": "nothing matched",
+    })])
+    out = triage("evidence block", [get_card("PT-01")], client=fake)
+
+    assert out.recommendation == "dismiss"
+    assert out.matched_typology.code == "NONE"
+    assert out.fired_indicators == []
+    assert len(fake.calls) == 1  # did NOT retry
+
+
+def test_triage_empty_code_normalises_to_no_match_without_retry(make_client):
+    # An empty/missing code is the model saying "nothing matched" — not a failure
+    # to retry. (A *hallucinated* code still retries — see the test above.)
+    fake = make_client([json.dumps({
+        "matchedTypologyCode": "", "citedTransactionIds": [],
+        "recommendation": "escalate", "explanation": "x",
+    })])
+    out = triage("evidence block", [get_card("PT-01")], client=fake)
+
+    assert out.matched_typology.code == "NONE"
+    assert out.recommendation == "dismiss"  # forced: nothing to escalate without a typology
+    assert len(fake.calls) == 1
+
+
 def test_triage_resolves_card_and_clamps_indicators(make_client):
     card = get_card("PT-01")
     real_indicator = card.indicators[0]

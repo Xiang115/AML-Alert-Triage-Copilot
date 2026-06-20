@@ -187,9 +187,23 @@ class SubmissionAck(CamelModel):
     submitted_at: datetime
 
 
+class ConfusionMatrix(CamelModel):
+    """Counts on the held-out eval (positive class = escalate / label Report)."""
+    tp: int
+    fp: int
+    fn: int
+    tn: int
+
+
 class Metrics(CamelModel):
     total_alerts: int
     accuracy_vs_labels: float
+    # Always-dismiss accuracy — the "accuracy is a trap" reference (ADR-0004).
+    baseline_accuracy: float
+    recall: float  # catch-rate on true Reports = TP/(TP+FN)
+    precision: float  # escalate precision = TP/(TP+FP)
+    specificity: float  # TN/(TN+FP)
     false_positive_reduction: float
+    confusion_matrix: ConfusionMatrix
     avg_review_time_baseline_min: float
     avg_review_time_with_copilot_min: float

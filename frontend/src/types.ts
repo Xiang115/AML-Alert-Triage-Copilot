@@ -90,10 +90,22 @@ export interface Alert {
   transactions: Transaction[] | null
 }
 
+export interface ConfusionMatrix {
+  tp: number
+  fp: number
+  fn: number
+  tn: number
+}
+
 export interface Metrics {
   totalAlerts: number
   accuracyVsLabels: number
+  baselineAccuracy: number
+  recall: number
+  precision: number
+  specificity: number
   falsePositiveReduction: number
+  confusionMatrix: ConfusionMatrix
   avgReviewTimeBaselineMin: number
   avgReviewTimeWithCopilotMin: number
 }

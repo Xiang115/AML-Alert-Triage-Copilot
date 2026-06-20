@@ -14,9 +14,9 @@ from agents.confidence import compute_confidence
 from agents.evidence import render_alert_evidence
 from agents.knowledge_base import get_card, select_cards
 from agents.str_drafter import draft_str
-from agents.triage import triage
+from agents.triage import NO_MATCH_CODE, triage
 from agents.verifier import verify
-from schemas import AlertInput, TriageResult
+from schemas import AlertInput, TriageResult, Verifier
 
 
 def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
@@ -24,6 +24,26 @@ def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
     cards = select_cards(alert)
 
     tri = triage(evidence, cards, client=client)
+
+    if tri.matched_typology.code == NO_MATCH_CODE:
+        # No typology matched → confident dismiss; no card to verify or draft against.
+        return TriageResult(
+            alert_id=alert.alert_id,
+            recommendation="dismiss",
+            confidence=compute_confidence(0, 0, "dismiss", verifier_flagged=False),
+            explanation=tri.explanation,
+            matched_typology=tri.matched_typology,
+            cited_transaction_ids=[],
+            verifier=Verifier(
+                status="agreed",
+                agrees_with_recommendation=True,
+                note="No candidate typology matched the evidence; no laundering pattern to escalate.",
+            ),
+            str_draft=None,
+            model=config.MODEL_WORKHORSE,
+            generated_at=datetime.now(),
+        )
+
     card = get_card(tri.matched_typology.code)
 
     ver = verify(evidence, tri.recommendation, card, client=client)
