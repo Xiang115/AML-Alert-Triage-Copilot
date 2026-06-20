@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  goAML STR report schema — TIGHTLY SCOPED to the transaction-based STR report
+  this copilot emits. Every element declared here is one we actually populate
+  (see plan-goaml-integration.md, decision #9).
+
+  Provenance: element names, nesting, and the (t_from|t_from_my_client),
+  (t_to|t_to_my_client) transaction party model are taken from the published
+  goAML XML reporting schema (UNODC goAML 4.x report.xsd), narrowed to the STR
+  transaction report. Per-FIU values (rentity_id, indicator code lists) are
+  configuration (data/goaml_config.json), not schema — swapping a real FIU's
+  registration promotes this from a faithful derivation (B) to literal
+  conformance (A) without code changes.
+
+  No targetNamespace: goAML report instances are emitted in the no-namespace
+  form, so instance documents stay prefix-free.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified">
+
+  <!-- An account as it appears on one side of a transaction. -->
+  <xs:complexType name="t_account">
+    <xs:sequence>
+      <xs:element name="institution_name" type="xs:string"/>
+      <xs:element name="account" type="xs:string"/>
+      <xs:element name="account_name" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Originating party. Shared by <t_from> (third party) and
+       <t_from_my_client> (the reporting bank's own customer). -->
+  <xs:complexType name="t_from">
+    <xs:sequence>
+      <xs:element name="from_funds_code" type="xs:string"/>
+      <xs:element name="from_country" type="xs:string"/>
+      <xs:element name="from_account" type="t_account"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Beneficiary party. Shared by <t_to> and <t_to_my_client>. -->
+  <xs:complexType name="t_to">
+    <xs:sequence>
+      <xs:element name="to_funds_code" type="xs:string"/>
+      <xs:element name="to_country" type="xs:string"/>
+      <xs:element name="to_account" type="t_account"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- One movement. The my_client variant marks the side that is the
+       reporting institution's own customer (the subject of the STR). -->
+  <xs:complexType name="transaction">
+    <xs:sequence>
+      <xs:element name="transactionnumber" type="xs:string"/>
+      <xs:element name="date_transaction" type="xs:dateTime"/>
+      <xs:element name="transmode_code" type="xs:string"/>
+      <xs:element name="amount_local" type="xs:decimal"/>
+      <xs:choice>
+        <xs:element name="t_from" type="t_from"/>
+        <xs:element name="t_from_my_client" type="t_from"/>
+      </xs:choice>
+      <xs:choice>
+        <xs:element name="t_to" type="t_to"/>
+        <xs:element name="t_to_my_client" type="t_to"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="reporting_person">
+    <xs:sequence>
+      <xs:element name="first_name" type="xs:string"/>
+      <xs:element name="last_name" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="report_indicators">
+    <xs:sequence>
+      <xs:element name="indicator" type="xs:string" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="report">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="rentity_id" type="xs:integer"/>
+        <xs:element name="submission_code" type="xs:string"/>
+        <xs:element name="report_code" type="xs:string"/>
+        <xs:element name="entity_reference" type="xs:string"/>
+        <xs:element name="submission_date" type="xs:dateTime"/>
+        <xs:element name="currency_code_local" type="xs:string"/>
+        <xs:element name="reporting_person" type="reporting_person"/>
+        <xs:element name="reason" type="xs:string"/>
+        <xs:element name="action" type="xs:string"/>
+        <xs:element name="transaction" type="transaction" maxOccurs="unbounded"/>
+        <xs:element name="report_indicators" type="report_indicators"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

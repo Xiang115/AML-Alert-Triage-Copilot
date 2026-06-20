@@ -87,6 +87,24 @@ export async function postDecision(
   return r.json()
 }
 
+// goAML STR export (the integration seam). Always hits the live backend — the XML
+// is the real serializer's XSD-validated output, not a mock. The backend gates this
+// on an escalate sign-off, so it 409s unless the alert was approved/overridden to
+// escalate (mirrored by `canExport` in the UI). Triggers a file download.
+export async function exportGoamlStr(alertId: string): Promise<void> {
+  const r = await fetch(new URL(`/alerts/${alertId}/str.xml`, BASE))
+  if (!r.ok) throw new Error(`GET /alerts/${alertId}/str.xml ${r.status}`)
+  const blob = await r.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `goAML-STR-${alertId}.xml`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export async function getMetrics(): Promise<Metrics> {
   if (MOCK) return metricsFixture as Metrics
   const r = await fetch(new URL('/metrics', BASE))

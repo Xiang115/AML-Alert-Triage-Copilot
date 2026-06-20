@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { postDecision, postTriage } from '../api'
+import { exportGoamlStr, postDecision, postTriage } from '../api'
 import { finalDispositionFor } from '../decision'
 import type { Alert, STRDraft } from '../types'
 import { TriageCard } from './TriageCard'
@@ -82,7 +82,21 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
     }
   }
 
+  // Export the regulator-ready goAML STR. Hits the live backend (always real bytes);
+  // the backend re-checks the escalate-sign-off gate, mirrored here by `canExport`.
+  const handleExport = async () => {
+    try {
+      await exportGoamlStr(alert.alertId)
+    } catch (err) {
+      console.error(err)
+      window.alert('goAML export failed. The export hits the live backend — ensure it is running and the alert was approved to escalate.')
+    }
+  }
+
   const showStrEditor = alert.triage.recommendation === 'escalate' && alert.triage.strDraft
+  // Mirrors the backend gate: a filed STR exists only after an escalate sign-off
+  // (status leaves "pending" and the disposition kept the draft).
+  const canExport = alert.status !== 'pending' && !!alert.triage.strDraft
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -132,6 +146,8 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
               grounds={editedGrounds}
               onAddGround={(text) => setEditedGrounds([...editedGrounds, text])}
               onRemoveGround={(idx) => setEditedGrounds(editedGrounds.filter((_, i) => i !== idx))}
+              canExport={canExport}
+              onExport={handleExport}
             />
           ) : (
             <section className="flex grow flex-col items-center justify-center rounded-lg border border-line bg-surface p-8 text-center">

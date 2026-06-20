@@ -1,0 +1,13 @@
+{
+  "rentityId": 1000234,
+  "entityReference": "DEMOBANK-MY-AMLCFT",
+  "submissionCode": "E",
+  "reportCode": "STR",
+  "currencyCodeLocal": "MYR",
+  "localCountryCode": "MY",
+  "fundsCode": "K",
+  "reportingPerson": {
+    "firstName": "Compliance",
+    "lastName": "Officer"
+  }
+}

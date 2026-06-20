@@ -9,3 +9,4 @@ pytest
 # --- used from later phases ---
 openai         # DeepSeek via its OpenAI-compatible endpoint (Phase 2)
 pandas         # SynthAML loader (Phase 1)
+lxml           # goAML STR export: build + XSD-validate the report (goaml.py)
