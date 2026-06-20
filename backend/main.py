@@ -22,7 +22,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from agents.pipeline import run_triage
-from schemas import Alert, CamelModel, Metrics, STRDraft
+from decision import resolve_str_draft
+from schemas import Alert, CamelModel, Decision, Metrics, STRDraft
 
 logger = logging.getLogger("api")
 
@@ -117,22 +118,21 @@ def live_triage(alert_id: str, client=Depends(get_llm_client)):
 def decide(alert_id: str, body: DecisionRequest):
     """Analyst approve/override → updates status (+ STR per disposition), returns the Alert."""
     alert = _require_alert(alert_id)
-    alert["status"] = "approved" if body.action == "approve" else "overridden"
+    decision = Decision(
+        alert_id=alert_id,
+        action=body.action,
+        final_disposition=body.final_disposition,
+        edited_str_draft=body.edited_str_draft,
+        decided_at=datetime.now(),
+    )
 
-    # Reflect the analyst's STR decision on the record (reset via POST /reset restores it).
-    if body.final_disposition == "escalate":
-        if body.edited_str_draft is not None:
-            alert["triage"]["strDraft"] = body.edited_str_draft.model_dump(by_alias=True, mode="json")
-    else:
-        alert["triage"]["strDraft"] = None
+    alert["status"] = "approved" if decision.action == "approve" else "overridden"
+    # The disposition->STR invariant lives in decision.resolve_str_draft (reset restores it).
+    alert["triage"]["strDraft"] = resolve_str_draft(
+        alert["triage"]["strDraft"], decision.final_disposition, decision.edited_str_draft
+    )
 
-    _DECISIONS[alert_id] = {
-        "alertId": alert_id,
-        "action": body.action,
-        "finalDisposition": body.final_disposition,
-        "editedStrDraft": alert["triage"]["strDraft"],
-        "decidedAt": datetime.now().isoformat(),
-    }
+    _DECISIONS[alert_id] = decision.model_dump(by_alias=True, mode="json")
     return alert
 
 
