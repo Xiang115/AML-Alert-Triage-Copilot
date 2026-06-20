@@ -15,74 +15,6 @@
       "DT-1001",
       "DT-1002"
     ],
-    "triage": {
-      "alertId": "DQ-001",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "The account exhibits classic pass-through behavior: RM52,000 received from a logistics company and RM51,500 sent to a money changer within 2.5 hours, leaving a negligible balance. The account is newly opened (April 2026) and had minimal prior activity. There is no apparent commercial rationale for a personal account to receive and rapidly forward funds between these entities.",
-      "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "DT-1001",
-        "DT-1002"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "The rapid inbound from a logistics company and outbound to a money changer on a recently opened personal account lacks commercial rationale and shows irregular timing and diverse counterparties, consistent with pass-through laundering."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:40:19.748636",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-4101",
-          "holderName": "Tan Wei Ming",
-          "accountType": "personal",
-          "openedAt": "2026-04-20T00:00:00"
-        },
-        "typology": {
-          "code": "PT-01",
-          "name": "Pass-through / Rapid Movement",
-          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-        },
-        "period": {
-          "from": "2026-06-14T09:40:00",
-          "to": "2026-06-14T11:55:00"
-        },
-        "activitySummary": "Account holder Tan Wei Ming's newly opened personal account received RM52,000 from a logistics company, then within 2.5 hours sent RM51,500 to a money changer, leaving a negligible balance. There was minimal prior activity and no funds were retained for any stated purpose.",
-        "citedTransactions": [
-          {
-            "transactionId": "DT-1001",
-            "timestamp": "2026-06-14T09:40:00",
-            "amount": 52000.0,
-            "currency": "MYR",
-            "counterpartyName": "Evergreen Logistics Ltd",
-            "runningBalance": 52600.0
-          },
-          {
-            "transactionId": "DT-1002",
-            "timestamp": "2026-06-14T11:55:00",
-            "amount": 51500.0,
-            "currency": "MYR",
-            "counterpartyName": "MaxCash Money Changer",
-            "runningBalance": 1100.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Inbound credit followed by outbound debit of a similar amount within a short window (2.5 hours)",
-          "Running balance spikes on inbound then drains back to near zero",
-          "Little to no funds retained; no spending consistent with the stated purpose of the account",
-          "Account is newly opened (April 2026) and had minimal prior activity",
-          "No apparent commercial rationale for a personal account to receive and rapidly forward funds between a logistics company and a money changer"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:40:19.748678"
-    },
     "transactions": [
       {
         "transactionId": "DT-1001",
@@ -115,7 +47,75 @@
           "balance-drain"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-001",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "The alert matches PT-01 pass-through/rapid movement: a single inbound of MYR 52,000 from a logistics company is followed within hours by MYR 51,500 out to a money changer, draining the balance. The account is personal, recently opened, and lacks any commercial rationale for such flows, distinguishing it from a benign business sweep.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1001",
+        "DT-1002"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "The transactions show irregular timing and diverse counterparties with no commercial rationale for a personal account, satisfying the distinguishing test for pass-through laundering."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T16:59:26.386049",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4101",
+          "holderName": "Tan Wei Ming",
+          "accountType": "personal",
+          "openedAt": "2026-04-20T00:00:00"
+        },
+        "typology": {
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2026-06-14T09:40:00",
+          "to": "2026-06-14T11:55:00"
+        },
+        "activitySummary": "On 14 June 2026, the personal account of Tan Wei Ming received MYR 52,000 from Evergreen Logistics Ltd at 09:40, followed by an outgoing transfer of MYR 51,500 to MaxCash Money Changer at 11:55, leaving a balance of MYR 1,100. The account exhibited pass-through behavior with virtually the entire inbound amount swiftly transferred out, and no retained funds or activity consistent with personal use.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1001",
+            "timestamp": "2026-06-14T09:40:00",
+            "amount": 52000.0,
+            "currency": "MYR",
+            "counterpartyName": "Evergreen Logistics Ltd",
+            "runningBalance": 52600.0
+          },
+          {
+            "transactionId": "DT-1002",
+            "timestamp": "2026-06-14T11:55:00",
+            "amount": 51500.0,
+            "currency": "MYR",
+            "counterpartyName": "MaxCash Money Changer",
+            "runningBalance": 1100.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Inbound credit of MYR 52,000 followed by outbound debit of MYR 51,500 within 2 hours, consistent with rapid movement/pass-through typology.",
+          "Account balance spiked to MYR 52,600 and then drained to MYR 1,100, indicating no intent to retain funds.",
+          "The account is a personal account recently opened, with no apparent economic purpose for receiving a large sum from a logistics company and sending it to a money changer.",
+          "Transactions lack any obvious commercial or personal rationale; the flow appears structured to move funds quickly through the account.",
+          "Counterparties involved (a logistics company and a money changer) are inconsistent with a personal account and may indicate layering or integration of illicit funds."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T16:59:26.386119"
+    }
   },
   {
     "alertId": "DQ-002",
@@ -134,30 +134,6 @@
       "DT-1004",
       "DT-1005"
     ],
-    "triage": {
-      "alertId": "DQ-002",
-      "recommendation": "dismiss",
-      "confidence": 0.75,
-      "explanation": "The inbound credits are legitimate card POS settlements typical for a kopitiam business, and the outbound transfer is a sweep to the same entity's operating account. The running balance does not drain to zero, the account is not newly opened or dormant, and the activity aligns with commercial rationale. This is consistent with a benign commercial sweep, not pass-through laundering.",
-      "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "DT-1003",
-        "DT-1004",
-        "DT-1005"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "The evidence shows a business receiving card settlement payments from two terminals and sweeping most funds to its own operating account, matching the benign look-alike of regular sweeps with commercial rationale."
-      },
-      "strDraft": null,
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:41:00.058482"
-    },
     "transactions": [
       {
         "transactionId": "DT-1003",
@@ -198,7 +174,31 @@
         "runningBalance": 2700.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-002",
+      "recommendation": "dismiss",
+      "confidence": 0.75,
+      "explanation": "The account is a business (Kopitiam Aroma Sdn Bhd) receiving card POS settlements and then sweeping to its operating account. This is characteristic of a benign daily sweep, a look-alike of pass-through activity. The movement retains some funds, and the pattern aligns with commercial rationale. No other typology indicators are present.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1003",
+        "DT-1004",
+        "DT-1005"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Transactions show daily card settlement sweeps to own operating account, consistent with benign business pattern."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T16:59:50.364589"
+    }
   },
   {
     "alertId": "DQ-003",
@@ -216,74 +216,6 @@
       "DT-1006",
       "DT-1007"
     ],
-    "triage": {
-      "alertId": "DQ-003",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "Account dormant ~16 months, no CDD refresh, large inbound followed by rapid near-total outbound, no retained funds, inconsistent with personal account history.",
-      "matchedTypology": {
-        "code": "DA-01",
-        "name": "Dormant-then-Active",
-        "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "DT-1006",
-        "DT-1007"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "No documented rationale or CDD update, and rapid onward movement of nearly all funds indicates suspicious reactivation."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:41:47.250922",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-4103",
-          "holderName": "Sarah Lee Mei Fong",
-          "accountType": "personal",
-          "openedAt": "2020-05-03T00:00:00"
-        },
-        "typology": {
-          "code": "DA-01",
-          "name": "Dormant-then-Active",
-          "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
-        },
-        "period": {
-          "from": "2026-06-13T10:20:00",
-          "to": "2026-06-13T14:05:00"
-        },
-        "activitySummary": "The account of Sarah Lee Mei Fong remained dormant for approximately 16 months before receiving a large deposit. Almost immediately after the funds arrived, nearly the entire balance was transferred out, leaving minimal residual funds.",
-        "citedTransactions": [
-          {
-            "transactionId": "DT-1006",
-            "timestamp": "2026-06-13T10:20:00",
-            "amount": 80000.0,
-            "currency": "MYR",
-            "counterpartyName": "Horizon Capital Partners",
-            "runningBalance": 80120.0
-          },
-          {
-            "transactionId": "DT-1007",
-            "timestamp": "2026-06-13T14:05:00",
-            "amount": 79500.0,
-            "currency": "MYR",
-            "counterpartyName": "Lin Zhi Hao",
-            "runningBalance": 620.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Account dormant ~16 months then suddenly active with large throughput",
-          "No KYC/CDD refresh conducted upon reactivation",
-          "Large inbound funds rapidly followed by near-total outbound transfer",
-          "Activity profile inconsistent with account's historical personal use",
-          "No legitimate economic purpose apparent as funds were not retained"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:41:47.250939"
-    },
     "transactions": [
       {
         "transactionId": "DT-1006",
@@ -316,7 +248,75 @@
           "balance-drain"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-003",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "Account dormant ~16 months until sudden 80,000 MYR inbound from Horizon Capital Partners, then 79,500 MYR outbound to Lin Zhi Hao within hours, leaving minimal balance. No CDD refresh on file and no documented rationale for the activity. This matches the Dormant-then-Active typology with rapid onward movement, and no evidence of benign seasonal or one-off legitimate transaction.",
+      "matchedTypology": {
+        "code": "DA-01",
+        "name": "Dormant-then-Active",
+        "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1006",
+        "DT-1007"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows no documented rationale or CDD update, with rapid onward movement of funds immediately after dormancy, consistent with suspicious reactivation."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:00:11.402351",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4103",
+          "holderName": "Sarah Lee Mei Fong",
+          "accountType": "personal",
+          "openedAt": "2020-05-03T00:00:00"
+        },
+        "typology": {
+          "code": "DA-01",
+          "name": "Dormant-then-Active",
+          "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2026-06-13T10:20:00",
+          "to": "2026-06-13T14:05:00"
+        },
+        "activitySummary": "The account of Sarah Lee Mei Fong lay dormant for approximately 16 months until 13 June 2026, when it received MYR 80,000 from Horizon Capital Partners. Within four hours, MYR 79,500 was transferred out to Lin Zhi Hao, leaving a minimal residual balance. This sudden, high-value activity starkly contrasts with the account's prior inactivity and lacks any apparent legitimate purpose.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1006",
+            "timestamp": "2026-06-13T10:20:00",
+            "amount": 80000.0,
+            "currency": "MYR",
+            "counterpartyName": "Horizon Capital Partners",
+            "runningBalance": 80120.0
+          },
+          {
+            "transactionId": "DT-1007",
+            "timestamp": "2026-06-13T14:05:00",
+            "amount": 79500.0,
+            "currency": "MYR",
+            "counterpartyName": "Lin Zhi Hao",
+            "runningBalance": 620.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Account dormant for ~16 months before sudden large transactions",
+          "No KYC/CDD refresh performed upon reactivation",
+          "Funds moved almost entirely out within hours of receipt",
+          "Activity profile inconsistent with account's historical behavior",
+          "No documented rationale for the anomalous transactions"
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:00:11.402392"
+    }
   },
   {
     "alertId": "DQ-004",
@@ -334,29 +334,6 @@
       "DT-1008",
       "DT-1009"
     ],
-    "triage": {
-      "alertId": "DQ-004",
-      "recommendation": "dismiss",
-      "confidence": 0.75,
-      "explanation": "Dormant account reactivated by a single large inbound credit from solicitors for property sale proceeds, followed by a stamp duty payment. The rationale is documented, funds are largely retained, and the activity is consistent with a legitimate property transaction. No indicators of suspicious rapid onward movement or lack of explanation.",
-      "matchedTypology": {
-        "code": "DA-01",
-        "name": "Dormant-then-Active",
-        "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "DT-1008",
-        "DT-1009"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "The evidence shows a documented property sale proceeds rationale with funds used for stamp duty, satisfying the benign look-alike."
-      },
-      "strDraft": null,
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:42:44.712056"
-    },
     "transactions": [
       {
         "transactionId": "DT-1008",
@@ -384,7 +361,30 @@
         "runningBalance": 345740.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-004",
+      "recommendation": "dismiss",
+      "confidence": 0.75,
+      "explanation": "The account was dormant and received a large inbound credit from a solicitor for property sale proceeds. A subsequent outbound for stamp duty is consistent with a genuine property transaction. Funds are mostly retained, and there is a clear documented rationale. No rapid onward movement or lack of explanation, matching the benign look-alike for DA-01 (genuine one-off large transaction with supporting documentation).",
+      "matchedTypology": {
+        "code": "DA-01",
+        "name": "Dormant-then-Active",
+        "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1008",
+        "DT-1009"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows documented rationale (property sale proceeds from solicitors) and funds used for related expense (stamp duty), matching benign reactivation."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:00:36.880986"
+    }
   },
   {
     "alertId": "DQ-005",
@@ -404,91 +404,6 @@
       "DT-1012",
       "DT-1013"
     ],
-    "triage": {
-      "alertId": "DQ-005",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "Three cash deposits of RM24,200, RM23,800, and RM24,100 were made on consecutive days at different branches, all just below the RM25,000 CTR threshold. The aggregated amount of RM72,100 is substantial and was quickly moved out in a single transfer, consistent with structuring to avoid reporting and subsequent layering.",
-      "matchedTypology": {
-        "code": "ST-01",
-        "name": "Structuring / Smurfing",
-        "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
-      },
-      "citedTransactionIds": [
-        "DT-1010",
-        "DT-1011",
-        "DT-1012",
-        "DT-1013"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Cash deposits just below RM25,000 on consecutive days at different branches followed by a large outbound transfer strongly indicate structuring, with no documented commercial reason or consistent counterparties."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:43:18.708433",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-4105",
-          "holderName": "Daniel Choo Kah Wai",
-          "accountType": "personal",
-          "openedAt": "2025-12-10T00:00:00"
-        },
-        "typology": {
-          "code": "ST-01",
-          "name": "Structuring / Smurfing",
-          "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
-        },
-        "period": {
-          "from": "2026-06-10T13:20:00",
-          "to": "2026-06-12T16:30:00"
-        },
-        "activitySummary": "Daniel Choo Kah Wai made three cash deposits over three consecutive days at different branches. Each deposit was just under the RM25,000 threshold, totaling RM72,100. The funds were then quickly transferred out in a single transaction.",
-        "citedTransactions": [
-          {
-            "transactionId": "DT-1010",
-            "timestamp": "2026-06-10T13:20:00",
-            "amount": 24200.0,
-            "currency": "MYR",
-            "counterpartyName": "Cash deposit - Branch Bukit Bintang",
-            "runningBalance": 24500.0
-          },
-          {
-            "transactionId": "DT-1011",
-            "timestamp": "2026-06-11T15:40:00",
-            "amount": 23800.0,
-            "currency": "MYR",
-            "counterpartyName": "Cash deposit - Branch Cheras",
-            "runningBalance": 48300.0
-          },
-          {
-            "transactionId": "DT-1012",
-            "timestamp": "2026-06-12T10:05:00",
-            "amount": 24100.0,
-            "currency": "MYR",
-            "counterpartyName": "Cash deposit - Branch Petaling Jaya",
-            "runningBalance": 72400.0
-          },
-          {
-            "transactionId": "DT-1013",
-            "timestamp": "2026-06-12T16:30:00",
-            "amount": 70000.0,
-            "currency": "MYR",
-            "counterpartyName": "Sterling Overseas Trading",
-            "runningBalance": 2400.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Multiple cash deposits structured just below the CTR threshold",
-          "Deposits made on consecutive days at different branches to avoid same-day aggregation",
-          "Total aggregated amount is substantial (RM72,100)",
-          "Funds quickly transferred out after accumulation, indicative of layering"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:43:18.708450"
-    },
     "transactions": [
       {
         "transactionId": "DT-1010",
@@ -550,7 +465,83 @@
           "balance-drain"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-005",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "Three consecutive daily cash deposits of RM24,200, RM23,800, and RM24,100—all just below the RM25,000 CTR threshold—were made at different branches (Bukit Bintang, Cheras, Petaling Jaya). These represent classic structuring to avoid reporting requirements. The subsequent rapid onward transfer of RM70,000 to an overseas entity further supports layering, but the structuring pattern alone warrants escalation.",
+      "matchedTypology": {
+        "code": "ST-01",
+        "name": "Structuring / Smurfing",
+        "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
+      },
+      "citedTransactionIds": [
+        "DT-1010",
+        "DT-1011",
+        "DT-1012"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Cash deposits just below RM25k threshold on consecutive days across different branches, followed by a large outbound transfer, with no documented commercial reason, consistent with structuring to avoid CTR."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:01:10.550263",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4105",
+          "holderName": "Daniel Choo Kah Wai",
+          "accountType": "personal",
+          "openedAt": "2025-12-10T00:00:00"
+        },
+        "typology": {
+          "code": "ST-01",
+          "name": "Structuring / Smurfing",
+          "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
+        },
+        "period": {
+          "from": "2026-06-10T13:20:00",
+          "to": "2026-06-12T10:05:00"
+        },
+        "activitySummary": "Account holder Daniel Choo Kah Wai made three cash deposits over three consecutive days: RM24,200 on 10 June 2026 at Bukit Bintang branch, RM23,800 on 11 June at Cheras branch, and RM24,100 on 12 June at Petaling Jaya branch. These deposits are all just below the RM25,000 Cash Transaction Reporting threshold, aggregating to RM72,100, and suggest deliberate structuring to evade regulatory detection.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1010",
+            "timestamp": "2026-06-10T13:20:00",
+            "amount": 24200.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - Branch Bukit Bintang",
+            "runningBalance": 24500.0
+          },
+          {
+            "transactionId": "DT-1011",
+            "timestamp": "2026-06-11T15:40:00",
+            "amount": 23800.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - Branch Cheras",
+            "runningBalance": 48300.0
+          },
+          {
+            "transactionId": "DT-1012",
+            "timestamp": "2026-06-12T10:05:00",
+            "amount": 24100.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - Branch Petaling Jaya",
+            "runningBalance": 72400.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Three cash deposits of RM24,200, RM23,800, and RM24,100 on consecutive days—all narrowly below the RM25,000 CTR threshold.",
+          "Deposits spread across three different branches (Bukit Bintang, Cheras, Petaling Jaya) to avoid same-day aggregation.",
+          "Aggregate cash deposited totals RM72,100, a substantial amount inconsistent with normal personal banking activity.",
+          "Immediate onward transfer of RM70,000 to an overseas entity indicates potential layering of illicit funds."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:01:10.550303"
+    }
   },
   {
     "alertId": "DQ-006",
@@ -571,32 +562,6 @@
       "DT-1017b",
       "DT-1018b"
     ],
-    "triage": {
-      "alertId": "DQ-006",
-      "recommendation": "dismiss",
-      "confidence": 0.0,
-      "explanation": "The cash deposits are consistent with a retail business depositing daily takings, which provides a documented commercial reason. The amounts, although just under the CTR threshold, appear to reflect genuine daily sales rather than deliberate structuring. The account maintains a running balance and makes supplier payments commensurate with a retail operation. No evidence of suspicious avoidance behavior.",
-      "matchedTypology": {
-        "code": "ST-01",
-        "name": "Structuring / Smurfing",
-        "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
-      },
-      "citedTransactionIds": [
-        "DT-1014",
-        "DT-1015",
-        "DT-1017b",
-        "DT-1018b",
-        "DT-1016"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "The daily cash deposits are consistent with routine business takings for a retail account, not structuring, as there is no deliberate splitting across persons or days beyond normal operations."
-      },
-      "strDraft": null,
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:52:42.285403"
-    },
     "transactions": [
       {
         "transactionId": "DT-1014",
@@ -671,7 +636,93 @@
         "runningBalance": 111700.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-006",
+      "recommendation": "escalate",
+      "confidence": 0.59,
+      "explanation": "Daily cash deposits of RM21,500–22,900 are consistently just below the RM25,000 CTR threshold, with no evidence of a documented commercial necessity for this sub-threshold clustering. The pattern across four consecutive days aggregates to a substantial RM88,600, indicative of deliberate structuring to avoid cash transaction reporting, despite the retail business profile.",
+      "matchedTypology": {
+        "code": "ST-01",
+        "name": "Structuring / Smurfing",
+        "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
+      },
+      "citedTransactionIds": [
+        "DT-1014",
+        "DT-1015",
+        "DT-1017b",
+        "DT-1018b"
+      ],
+      "verifier": {
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "The cash deposits are consistent daily retail takings from a single branch, with documented commercial reason (daily sales) and no spreading across persons or counterparties, matching the benign look-alike rather than structuring."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:02:08.746453",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4106",
+          "holderName": "Sunrise Mart Sdn Bhd",
+          "accountType": "business",
+          "openedAt": "2018-07-05T00:00:00"
+        },
+        "typology": {
+          "code": "ST-01",
+          "name": "Structuring / Smurfing",
+          "source": "FATF Recommendations (2012), R.20; BNM AMLA 2001; CTR threshold RM25,000"
+        },
+        "period": {
+          "from": "2026-06-10T18:30:00",
+          "to": "2026-06-13T18:28:00"
+        },
+        "activitySummary": "Sunrise Mart Sdn Bhd deposited RM22,400, RM21,800, RM22,900, and RM21,500 in cash on June 10, 11, 12, and 13, 2026 respectively, all just below the RM25,000 currency transaction reporting threshold. The aggregate of RM88,600 over four consecutive days, combined with the lack of documented commercial necessity for these sub-threshold amounts, suggests deliberate structuring to avoid regulatory reporting.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1014",
+            "timestamp": "2026-06-10T18:30:00",
+            "amount": 22400.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral",
+            "runningBalance": 64200.0
+          },
+          {
+            "transactionId": "DT-1015",
+            "timestamp": "2026-06-11T18:25:00",
+            "amount": 21800.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral",
+            "runningBalance": 86000.0
+          },
+          {
+            "transactionId": "DT-1017b",
+            "timestamp": "2026-06-12T18:35:00",
+            "amount": 22900.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral",
+            "runningBalance": 108900.0
+          },
+          {
+            "transactionId": "DT-1018b",
+            "timestamp": "2026-06-13T18:28:00",
+            "amount": 21500.0,
+            "currency": "MYR",
+            "counterpartyName": "Cash deposit - daily takings, Branch KL Sentral",
+            "runningBalance": 130400.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Four consecutive daily cash deposits ranging from RM21,500 to RM22,900, consistently just below the RM25,000 CTR threshold.",
+          "Aggregate cash deposited over four days totals RM88,600, a substantial sum inconsistent with a retail business's typical single-day cash takings profile.",
+          "No evidence provided that daily takings naturally fall just under the reporting threshold; pattern indicates intentional structuring.",
+          "Deposits were performed at the same branch (KL Sentral) on consecutive days, risking detection through same-day aggregation but still avoiding the daily limit.",
+          "The account holder did not present any documented justification for splitting deposits instead of making a single reportable transaction."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:02:08.746494"
+    }
   },
   {
     "alertId": "DQ-007",
@@ -690,26 +741,6 @@
       "DT-1018",
       "DT-1019"
     ],
-    "triage": {
-      "alertId": "DQ-007",
-      "recommendation": "dismiss",
-      "confidence": 1.0,
-      "explanation": "Alert shows a single payroll credit followed by routine bill payments over a day later; amounts are not similar, balance is retained, and no rapid pass-through pattern is present.",
-      "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "The evidence shows a personal account receiving salary and making regular bill payments, which is consistent with benign look-alike activity, not the irregular timing and diverse counterparties characteristic of pass-through laundering."
-      },
-      "strDraft": null,
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:44:14.772128"
-    },
     "transactions": [
       {
         "transactionId": "DT-1017",
@@ -750,7 +781,31 @@
         "runningBalance": 6950.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-007",
+      "recommendation": "dismiss",
+      "confidence": 1.0,
+      "explanation": "The inbound is payroll from Meridian Tech, followed by outbound rent and utilities. Amounts are not similar, balance not drained to zero, account not new. No indicators of pass-through laundering; transactions are consistent with a personal account salary and living expenses.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1017",
+        "DT-1018",
+        "DT-1019"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Transactions show regular salary receipt and bill payments, consistent with benign personal account use, not irregular pass-through laundering."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:02:29.681202"
+    }
   },
   {
     "alertId": "DQ-008",
@@ -768,75 +823,6 @@
       "DT-1020",
       "DT-1021"
     ],
-    "triage": {
-      "alertId": "DQ-008",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "New account (opened 2026-05-28) receives MYR 38,000 and within 42 minutes sends MYR 37,800 to a virtual asset exchange, retaining minimal balance. The rapid, irregular movement with no apparent commercial purpose matches the pass-through typology, likely layering through crypto.",
-      "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "DT-1020",
-        "DT-1021"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Distinguishing test satisfied: irregular timing (single rapid transfer), diverse counterparties (individual sender to virtual asset exchange), and no commercial rationale for a personal account."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:44:57.468258",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-4108",
-          "holderName": "Jason Foo Chee Keong",
-          "accountType": "personal",
-          "openedAt": "2026-05-28T00:00:00"
-        },
-        "typology": {
-          "code": "PT-01",
-          "name": "Pass-through / Rapid Movement",
-          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-        },
-        "period": {
-          "from": "2026-06-14T15:10:00",
-          "to": "2026-06-14T15:52:00"
-        },
-        "activitySummary": "The account, opened on 2026-05-28, received a single inbound transfer of MYR 38,000. Within 42 minutes, MYR 37,800 was sent to a virtual asset exchange, leaving a minimal balance. The rapid, near-total movement of funds with no other activity suggests the account is being used solely to facilitate a pass-through transaction.",
-        "citedTransactions": [
-          {
-            "transactionId": "DT-1020",
-            "timestamp": "2026-06-14T15:10:00",
-            "amount": 38000.0,
-            "currency": "MYR",
-            "counterpartyName": "Chong Wai H* (individual)",
-            "runningBalance": 38300.0
-          },
-          {
-            "transactionId": "DT-1021",
-            "timestamp": "2026-06-14T15:52:00",
-            "amount": 37800.0,
-            "currency": "MYR",
-            "counterpartyName": "LunoX Digital Asset Exchange",
-            "runningBalance": 500.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Newly opened account (opened 2026-05-28) receives a significant credit.",
-          "Inbound credit of MYR 38,000 followed by outbound debit of MYR 37,800 within 42 minutes.",
-          "Outbound funds directed to a virtual asset exchange, a higher-risk destination.",
-          "Minimal residual balance (MYR 200) indicates no intent to use the account for normal banking.",
-          "No spending or activity consistent with the account’s stated purpose.",
-          "Pattern matches pass-through / rapid movement typology, often associated with layering."
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:44:57.468274"
-    },
     "transactions": [
       {
         "transactionId": "DT-1020",
@@ -869,7 +855,75 @@
           "balance-drain"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-008",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "The account, opened only 17 days prior, received MYR 38,000 from an individual and within 42 minutes forwarded MYR 37,800 to a virtual-asset exchange, retaining only MYR 500. This rapid pass-through pattern, with no commercial rationale for a personal account, matches all indicators of the PT-01 typology and is inconsistent with a benign sweep.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1020",
+        "DT-1021"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows irregular timing, individual counterparty, and no commercial rationale for personal account; funds rapidly moved to crypto exchange, satisfying pass-through laundering indicators."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:02:56.791064",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4108",
+          "holderName": "Jason Foo Chee Keong",
+          "accountType": "personal",
+          "openedAt": "2026-05-28T00:00:00"
+        },
+        "typology": {
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2026-06-14T15:10:00",
+          "to": "2026-06-14T15:52:00"
+        },
+        "activitySummary": "On 2026-06-14, the account received MYR 38,000 from Chong Wai H* and within 42 minutes transferred MYR 37,800 to LunoX Digital Asset Exchange. The running balance spiked to MYR 38,300 then fell to MYR 500, indicating a pass-through with no economic purpose.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1020",
+            "timestamp": "2026-06-14T15:10:00",
+            "amount": 38000.0,
+            "currency": "MYR",
+            "counterpartyName": "Chong Wai H* (individual)",
+            "runningBalance": 38300.0
+          },
+          {
+            "transactionId": "DT-1021",
+            "timestamp": "2026-06-14T15:52:00",
+            "amount": 37800.0,
+            "currency": "MYR",
+            "counterpartyName": "LunoX Digital Asset Exchange",
+            "runningBalance": 500.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Inbound credit of MYR 38,000 followed within 42 minutes by outbound debit of MYR 37,800, a near-identical amount.",
+          "Running balance spiked and then fell to near zero, with only MYR 500 retained.",
+          "Account opened 17 days prior, and the activity shows no economic rationale for a personal account.",
+          "Funds were rapidly moved to a virtual-asset exchange, a high-risk channel for obfuscation.",
+          "Pattern matches the PT-01 (Pass-through / Rapid Movement) typology, inconsistent with benign account usage."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:02:56.791104"
+    }
   },
   {
     "alertId": "DQ-009",
@@ -890,26 +944,6 @@
       "DT-1025",
       "DT-1026"
     ],
-    "triage": {
-      "alertId": "DQ-009",
-      "recommendation": "dismiss",
-      "confidence": 0.75,
-      "explanation": "The alert captures a typical day of a Lazada reseller receiving customer card payments for orders. The inbound payments are consistent with business activity, funds are retained in the account, and there is no outbound forwarding. This passes the distinguishing test for merchants receiving payments for goods/services, not mule consolidation.",
-      "matchedTypology": {
-        "code": "FI-01",
-        "name": "Fan-in / Fan-out (Consolidation)",
-        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
-      },
-      "citedTransactionIds": [],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Evidence shows a business account receiving payments for orders with retained balance, consistent with a legitimate merchant, not mule consolidation."
-      },
-      "strDraft": null,
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:45:30.528620"
-    },
     "transactions": [
       {
         "transactionId": "DT-1022",
@@ -976,7 +1010,534 @@
         "runningBalance": 13009.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "DQ-009",
+      "recommendation": "dismiss",
+      "confidence": 0.75,
+      "explanation": "The account is a business 'Lazada Reseller - Chai Boutique' receiving small card payments with order numbers, consistent with a legitimate merchant. No outbound forwarding observed; balances are retained. This matches the benign look-alike for fan-in (merchant receiving customer payments), so the alert is dismissed.",
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "DT-1022",
+        "DT-1023",
+        "DT-1024",
+        "DT-1025",
+        "DT-1026"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows a business account receiving card payments for goods/services, consistent with benign merchant activity, not mule consolidation."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:03:18.199755"
+    }
+  },
+  {
+    "alertId": "DQ-010",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:37:00",
+    "riskScore": 84,
+    "trigger": "International wire throughput grossly inconsistent with the declared clerk profile and RM3,000 monthly income; no CDD refresh on file",
+    "account": {
+      "accountId": "AC-4110",
+      "holderName": "Nurul Aina binti Hamzah (declared: admin clerk, income RM3,000/mo)",
+      "accountType": "personal",
+      "openedAt": "2024-11-08T00:00:00"
+    },
+    "transactionIds": [
+      "DT-1027",
+      "DT-1028",
+      "DT-1029"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DT-1027",
+        "timestamp": "2026-06-12T14:30:00",
+        "amount": 150000.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Falcon Trading FZE (Dubai)",
+        "counterpartyAccount": "FT-30188",
+        "counterpartyBank": "ENBD-AE",
+        "channel": "international",
+        "runningBalance": 150800.0,
+        "flags": [
+          "profile-mismatch",
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "DT-1028",
+        "timestamp": "2026-06-12T17:05:00",
+        "amount": 96000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Apex Commodities Holdings (Cayman)",
+        "counterpartyAccount": "AC-77410",
+        "counterpartyBank": "CAYB-KY",
+        "channel": "international",
+        "runningBalance": 54800.0,
+        "flags": [
+          "profile-mismatch",
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "DT-1029",
+        "timestamp": "2026-06-13T10:15:00",
+        "amount": 47000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Zheng Hai Long (individual)",
+        "counterpartyAccount": "ZH-21556",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 7800.0,
+        "flags": [
+          "profile-mismatch"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "DQ-010",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "Account holder is an admin clerk with declared monthly income of RM3,000, yet the account received an international wire of RM150,000 from Falcon Trading FZE (Dubai) and quickly sent out funds to Apex Commodities Holdings (Cayman) and an individual, leaving minimal balance. The throughput vastly exceeds expected activity, transaction types (heavy international wires on a personal account) are inconsistent with the profile, counterparties and geographies (Dubai, Cayman, individual) have no apparent link to the account holder's occupation or circumstances, and no CDD refresh or documented rationale exists to explain this activity. All KYC-01 indicators are present, ruling out the benign look-alike of a documented change in circumstances.",
+      "matchedTypology": {
+        "code": "KYC-01",
+        "name": "KYC Profile Mismatch",
+        "source": "FATF Recommendations (2012), R.10 (CDD); BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1027",
+        "DT-1028",
+        "DT-1029"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "The inbound and outbound wires are grossly inconsistent with the declared admin clerk salary of RM3,000/month, and there is no documented explanation or updated CDD on file."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:03:51.385743",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4110",
+          "holderName": "Nurul Aina binti Hamzah (declared: admin clerk, income RM3,000/mo)",
+          "accountType": "personal",
+          "openedAt": "2024-11-08T00:00:00"
+        },
+        "typology": {
+          "code": "KYC-01",
+          "name": "KYC Profile Mismatch",
+          "source": "FATF Recommendations (2012), R.10 (CDD); BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2026-06-12T14:30:00",
+          "to": "2026-06-13T10:15:00"
+        },
+        "activitySummary": "The account, held by an administrative clerk with a declared monthly income of RM3,000, received an international wire of RM150,000 from Falcon Trading FZE in Dubai. Within 24 hours, nearly all funds were quickly transferred out to Apex Commodities Holdings in the Cayman Islands and to an individual, leaving a minimal balance. No CDD refresh or documentation exists to explain this anomalous high-value cross-border activity.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1027",
+            "timestamp": "2026-06-12T14:30:00",
+            "amount": 150000.0,
+            "currency": "MYR",
+            "counterpartyName": "Falcon Trading FZE (Dubai)",
+            "runningBalance": 150800.0
+          },
+          {
+            "transactionId": "DT-1028",
+            "timestamp": "2026-06-12T17:05:00",
+            "amount": 96000.0,
+            "currency": "MYR",
+            "counterpartyName": "Apex Commodities Holdings (Cayman)",
+            "runningBalance": 54800.0
+          },
+          {
+            "transactionId": "DT-1029",
+            "timestamp": "2026-06-13T10:15:00",
+            "amount": 47000.0,
+            "currency": "MYR",
+            "counterpartyName": "Zheng Hai Long (individual)",
+            "runningBalance": 7800.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Throughput (RM150,000) far exceeds declared monthly income of RM3,000 with no documentation to support a change in circumstances.",
+          "Transaction types (heavy international wires on a personal account) are inconsistent with the account type.",
+          "Counterparties in Dubai and Cayman Islands, and an individual, are inconsistent with customer’s profile as a local admin clerk.",
+          "Stated occupation does not explain the large, rapid cross-border transfers, and no supporting rationale has been recorded."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:03:51.385780"
+    }
+  },
+  {
+    "alertId": "DQ-011",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:41:00",
+    "riskScore": 36,
+    "trigger": "Recurring inbound international credit on a personal account flagged by the cross-border rule",
+    "account": {
+      "accountId": "AC-4111",
+      "holderName": "Yeoh Chen Howe (declared: software engineer, remote employment)",
+      "accountType": "personal",
+      "openedAt": "2021-09-14T00:00:00"
+    },
+    "transactionIds": [
+      "DT-1030",
+      "DT-1031",
+      "DT-1032"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DT-1030",
+        "timestamp": "2026-06-13T09:05:00",
+        "amount": 17500.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Atlassian Pty Ltd (Sydney) - Monthly Salary",
+        "counterpartyAccount": "AT-50231",
+        "counterpartyBank": "CBA-AU",
+        "channel": "international",
+        "runningBalance": 25700.0,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "DT-1031",
+        "timestamp": "2026-06-14T08:30:00",
+        "amount": 2200.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Lee Property Management - Rent",
+        "counterpartyAccount": null,
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 23500.0,
+        "flags": []
+      },
+      {
+        "transactionId": "DT-1032",
+        "timestamp": "2026-06-14T08:35:00",
+        "amount": 3000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Maybank Unit Trust - Monthly Investment",
+        "counterpartyAccount": null,
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 20500.0,
+        "flags": []
+      }
+    ],
+    "triage": {
+      "alertId": "DQ-011",
+      "recommendation": "dismiss",
+      "confidence": 1.0,
+      "explanation": "The alert shows a monthly salary credit from Atlassian Pty Ltd, consistent with the customer's declared occupation as a software engineer with remote employment. Outbound transactions are for rent and investment, retaining a balance. No KYC profile mismatch indicators are present; the activity is explainable and documentable, matching the benign look-alike of genuine salary receipts. Dismiss.",
+      "matchedTypology": {
+        "code": "KYC-01",
+        "name": "KYC Profile Mismatch",
+        "source": "FATF Recommendations (2012), R.10 (CDD); BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "The inbound salary from Atlassian is consistent with the declared software engineer profile and is explainable as remote employment salary, satisfying the distinguishing test for a genuine profile change."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:04:19.701231"
+    }
+  },
+  {
+    "alertId": "DQ-012",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:45:00",
+    "riskScore": 85,
+    "trigger": "Multiple inbound transfers from unrelated individuals consolidated and forwarded offshore within a day on a recently opened account",
+    "account": {
+      "accountId": "AC-4112",
+      "holderName": "Marcus Lim Jia Hao",
+      "accountType": "personal",
+      "openedAt": "2026-05-19T00:00:00"
+    },
+    "transactionIds": [
+      "DT-1033",
+      "DT-1034",
+      "DT-1035",
+      "DT-1036",
+      "DT-1037"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DT-1033",
+        "timestamp": "2026-06-14T09:12:00",
+        "amount": 3800.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Ng Siew Chin",
+        "counterpartyAccount": "NS-19023",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 4200.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "DT-1034",
+        "timestamp": "2026-06-14T10:01:00",
+        "amount": 4200.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Ramasamy a/l Govindasamy",
+        "counterpartyAccount": "RG-44120",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 8400.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "DT-1035",
+        "timestamp": "2026-06-14T10:54:00",
+        "amount": 3500.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Tan Boon Hock",
+        "counterpartyAccount": "TB-77219",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 11900.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "DT-1036",
+        "timestamp": "2026-06-14T11:46:00",
+        "amount": 4000.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Aishah binti Mohd Noor",
+        "counterpartyAccount": "AM-30551",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 15900.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "DT-1037",
+        "timestamp": "2026-06-14T13:20:00",
+        "amount": 15000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Golden Harvest Trading (offshore)",
+        "counterpartyAccount": "GH-00471",
+        "counterpartyBank": "BOC-CN",
+        "channel": "international",
+        "runningBalance": 900.0,
+        "flags": [
+          "fan-out",
+          "balance-drain"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "DQ-012",
+      "recommendation": "escalate",
+      "confidence": 0.75,
+      "explanation": "The account shows a classic fan-in pattern: multiple inbound transfers from four unrelated individuals (Ng Siew Chin, Ramasamy a/l Govindasamy, Tan Boon Hock, Aishah binti Mohd Noor) on the same day, aggregated to a total of 15,500 MYR, then immediately forwarded as a single 15,000 MYR outbound to an offshore company (Golden Harvest Trading). This is inconsistent with a personal account and lacks commercial rationale, indicating possible money mule activity.",
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "DT-1033",
+        "DT-1034",
+        "DT-1035",
+        "DT-1036",
+        "DT-1037"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows a personal account with rapid consolidation of unrelated inbound payments totaling 15,500 MYR followed by an outbound transfer of 15,000 MYR to an offshore entity, matching the mule consolidation pattern rather than a legitimate merchant."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:04:53.888089",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-4112",
+          "holderName": "Marcus Lim Jia Hao",
+          "accountType": "personal",
+          "openedAt": "2026-05-19T00:00:00"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2026-06-14T09:12:00",
+          "to": "2026-06-14T13:20:00"
+        },
+        "activitySummary": "On 14 June 2026, Marcus Lim Jia Hao received four inbound transfers totaling 15,500 MYR from four unrelated individuals within a two-hour period. Shortly after, a single outbound transfer of 15,000 MYR was made to an offshore company, Golden Harvest Trading, leaving a residual balance. This pattern of rapid consolidation and onward transmission lacks an apparent legitimate purpose for a personal account.",
+        "citedTransactions": [
+          {
+            "transactionId": "DT-1033",
+            "timestamp": "2026-06-14T09:12:00",
+            "amount": 3800.0,
+            "currency": "MYR",
+            "counterpartyName": "Ng Siew Chin",
+            "runningBalance": 4200.0
+          },
+          {
+            "transactionId": "DT-1034",
+            "timestamp": "2026-06-14T10:01:00",
+            "amount": 4200.0,
+            "currency": "MYR",
+            "counterpartyName": "Ramasamy a/l Govindasamy",
+            "runningBalance": 8400.0
+          },
+          {
+            "transactionId": "DT-1035",
+            "timestamp": "2026-06-14T10:54:00",
+            "amount": 3500.0,
+            "currency": "MYR",
+            "counterpartyName": "Tan Boon Hock",
+            "runningBalance": 11900.0
+          },
+          {
+            "transactionId": "DT-1036",
+            "timestamp": "2026-06-14T11:46:00",
+            "amount": 4000.0,
+            "currency": "MYR",
+            "counterpartyName": "Aishah binti Mohd Noor",
+            "runningBalance": 15900.0
+          },
+          {
+            "transactionId": "DT-1037",
+            "timestamp": "2026-06-14T13:20:00",
+            "amount": 15000.0,
+            "currency": "MYR",
+            "counterpartyName": "Golden Harvest Trading (offshore)",
+            "runningBalance": 900.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple inbound transfers from four unrelated individuals in a short timeframe",
+          "Immediate consolidation and forwarding of aggregated funds to an offshore entity",
+          "No apparent relationship between senders and account holder",
+          "Transaction pattern inconsistent with a personal account and indicative of money mule activity"
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:04:53.888129"
+    }
+  },
+  {
+    "alertId": "DQ-013",
+    "status": "pending",
+    "createdAt": "2026-06-15T08:49:00",
+    "riskScore": 39,
+    "trigger": "Large outbound international payments on a business account flagged by the cross-border rule",
+    "account": {
+      "accountId": "AC-4113",
+      "holderName": "Seri Maju Import-Export Sdn Bhd",
+      "accountType": "business",
+      "openedAt": "2017-04-12T00:00:00"
+    },
+    "transactionIds": [
+      "DT-1038",
+      "DT-1039",
+      "DT-1040"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DT-1038",
+        "timestamp": "2026-06-12T11:20:00",
+        "amount": 120000.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Letter of Credit settlement - HSBC Trade Services",
+        "counterpartyAccount": "LC-66002",
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 165000.0,
+        "flags": []
+      },
+      {
+        "transactionId": "DT-1039",
+        "timestamp": "2026-06-13T15:40:00",
+        "amount": 85000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Guangzhou Textile Mills Co - Invoice INV-2291",
+        "counterpartyAccount": "GT-90233",
+        "counterpartyBank": "ICBC-CN",
+        "channel": "international",
+        "runningBalance": 80000.0,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "DT-1040",
+        "timestamp": "2026-06-13T16:10:00",
+        "amount": 20000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Royal Malaysian Customs - Import Duty",
+        "counterpartyAccount": null,
+        "counterpartyBank": null,
+        "channel": "transfer",
+        "runningBalance": 60000.0,
+        "flags": []
+      }
+    ],
+    "triage": {
+      "alertId": "DQ-013",
+      "recommendation": "dismiss",
+      "confidence": 0.75,
+      "explanation": "The transactions reflect a legitimate import cycle for Seri Maju Import-Export Sdn Bhd: an LC settlement from HSBC Trade Services preceded payment to Guangzhou Textile Mills and customs duty. The timing and counterparties have a clear commercial rationale, funds are partially retained, and the account is an established business. This matches the benign look-alike of high-turnover trade settlement, not pass-through laundering.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "DT-1038",
+        "DT-1039",
+        "DT-1040"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "The evidence shows inbound from trade settlement and outbounds to a supplier and customs, consistent with legitimate import-export activity, not irregular pass-through laundering."
+      },
+      "strDraft": null,
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:05:22.953565"
+    }
   },
   {
     "alertId": "HERO-001",
@@ -998,109 +1559,6 @@
       "HT-1005",
       "HT-1006"
     ],
-    "triage": {
-      "alertId": "HERO-001",
-      "recommendation": "escalate",
-      "confidence": 0.59,
-      "explanation": "Alert matches fan-in/fan-out typology: multiple inbound transfers from unrelated individuals with no apparent relationship to the account holder, followed by a large outbound transfer to a company, inconsistent with a personal account profile. This pattern suggests consolidation and onward movement of funds, typical of mule activity.",
-      "matchedTypology": {
-        "code": "FI-01",
-        "name": "Fan-in / Fan-out (Consolidation)",
-        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
-      },
-      "citedTransactionIds": [
-        "HT-1001",
-        "HT-1002",
-        "HT-1003",
-        "HT-1004",
-        "HT-1005",
-        "HT-1006"
-      ],
-      "verifier": {
-        "status": "flagged",
-        "agreesWithRecommendation": false,
-        "note": "The account is personal, not business, and the outbound payment is partial, not rapid full forwarding, which aligns with the benign look-alike of a legitimate collection for goods/services."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:46:40.852885",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-5001",
-          "holderName": "Aisyah binti Kamal",
-          "accountType": "personal",
-          "openedAt": "2023-08-14T00:00:00"
-        },
-        "typology": {
-          "code": "FI-01",
-          "name": "Fan-in / Fan-out (Consolidation)",
-          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
-        },
-        "period": {
-          "from": "2026-06-02T19:20:00",
-          "to": "2026-06-14T11:30:00"
-        },
-        "activitySummary": "Aisyah binti Kamal's personal account received numerous small inbound credits from multiple unrelated individuals over a short period, with no apparent connection to the account holder. The funds were then aggregated and transferred onward in a single large outbound payment to a company, inconsistent with the account's typical activity and profile.",
-        "citedTransactions": [
-          {
-            "transactionId": "HT-1001",
-            "timestamp": "2026-06-02T19:20:00",
-            "amount": 850.0,
-            "currency": "MYR",
-            "counterpartyName": "Wong Siew Ling",
-            "runningBalance": 4000.0
-          },
-          {
-            "transactionId": "HT-1002",
-            "timestamp": "2026-06-05T20:05:00",
-            "amount": 850.0,
-            "currency": "MYR",
-            "counterpartyName": "Raj Kumar a/l Subramaniam",
-            "runningBalance": 4850.0
-          },
-          {
-            "transactionId": "HT-1003",
-            "timestamp": "2026-06-08T18:45:00",
-            "amount": 900.0,
-            "currency": "MYR",
-            "counterpartyName": "Lim Hui Min",
-            "runningBalance": 5750.0
-          },
-          {
-            "transactionId": "HT-1004",
-            "timestamp": "2026-06-11T21:10:00",
-            "amount": 850.0,
-            "currency": "MYR",
-            "counterpartyName": "Tan Mei Yee",
-            "runningBalance": 6600.0
-          },
-          {
-            "transactionId": "HT-1005",
-            "timestamp": "2026-06-13T17:30:00",
-            "amount": 850.0,
-            "currency": "MYR",
-            "counterpartyName": "Goh Wei Liang",
-            "runningBalance": 7450.0
-          },
-          {
-            "transactionId": "HT-1006",
-            "timestamp": "2026-06-14T11:30:00",
-            "amount": 2000.0,
-            "currency": "MYR",
-            "counterpartyName": "Ilmu Educational Supplies Sdn Bhd",
-            "runningBalance": 5450.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Multiple inbound credits from many unrelated individuals over a short period",
-          "Funds aggregated then forwarded onward in one large outbound transfer",
-          "Senders have no apparent relationship to the account holder",
-          "Amounts and frequency inconsistent with the account holder's profile"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:46:40.852901"
-    },
     "transactions": [
       {
         "transactionId": "HT-1001",
@@ -1192,7 +1650,112 @@
           "fan-out"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "HERO-001",
+      "recommendation": "escalate",
+      "confidence": 0.59,
+      "explanation": "Personal account receives multiple inbound transfers from five unrelated individuals (Wong Siew Ling, Raj Kumar, Lim Hui Min, Tan Mei Yee, Goh Wei Liang) between 02–13 June 2026, each 850–900 MYR, totaling 4,300 MYR. Funds are aggregated then partially forwarded via a 2,000 MYR outbound to a company (Ilmu Educational Supplies Sdn Bhd). This matches the fan-in/fan-out consolidation typology—unrelated senders, no commercial rationale for a personal account, rapid forwarding, and amounts inconsistent with a personal salary or typical use. Benign look-alike (merchant/crowdfunding) is ruled out as there is no evidence of goods/services, no business account type, and the outbound is to a third-party company, not operating expenses.",
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "HT-1001",
+        "HT-1002",
+        "HT-1003",
+        "HT-1004",
+        "HT-1005",
+        "HT-1006"
+      ],
+      "verifier": {
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "The evidence shows partial forwarding to a company, retained balance, and consistent amounts over several days, more consistent with a legitimate merchant or crowdfunding account than mule consolidation."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:06:00.470869",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-5001",
+          "holderName": "Aisyah binti Kamal",
+          "accountType": "personal",
+          "openedAt": "2023-08-14T00:00:00"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2026-06-02T19:20:00",
+          "to": "2026-06-14T11:30:00"
+        },
+        "activitySummary": "The personal account of Aisyah binti Kamal received five inward transfers from unrelated individuals—Wong Siew Ling, Raj Kumar, Lim Hui Min, Tan Mei Yee, and Goh Wei Liang—totaling MYR 4,300 between 2 and 13 June 2026. The aggregated funds were partially forwarded via a single MYR 2,000 outbound transfer to Ilmu Educational Supplies Sdn Bhd on 14 June 2026. This pattern lacks apparent economic or personal rationale and is inconsistent with the account holder's expected profile.",
+        "citedTransactions": [
+          {
+            "transactionId": "HT-1001",
+            "timestamp": "2026-06-02T19:20:00",
+            "amount": 850.0,
+            "currency": "MYR",
+            "counterpartyName": "Wong Siew Ling",
+            "runningBalance": 4000.0
+          },
+          {
+            "transactionId": "HT-1002",
+            "timestamp": "2026-06-05T20:05:00",
+            "amount": 850.0,
+            "currency": "MYR",
+            "counterpartyName": "Raj Kumar a/l Subramaniam",
+            "runningBalance": 4850.0
+          },
+          {
+            "transactionId": "HT-1003",
+            "timestamp": "2026-06-08T18:45:00",
+            "amount": 900.0,
+            "currency": "MYR",
+            "counterpartyName": "Lim Hui Min",
+            "runningBalance": 5750.0
+          },
+          {
+            "transactionId": "HT-1004",
+            "timestamp": "2026-06-11T21:10:00",
+            "amount": 850.0,
+            "currency": "MYR",
+            "counterpartyName": "Tan Mei Yee",
+            "runningBalance": 6600.0
+          },
+          {
+            "transactionId": "HT-1005",
+            "timestamp": "2026-06-13T17:30:00",
+            "amount": 850.0,
+            "currency": "MYR",
+            "counterpartyName": "Goh Wei Liang",
+            "runningBalance": 7450.0
+          },
+          {
+            "transactionId": "HT-1006",
+            "timestamp": "2026-06-14T11:30:00",
+            "amount": 2000.0,
+            "currency": "MYR",
+            "counterpartyName": "Ilmu Educational Supplies Sdn Bhd",
+            "runningBalance": 5450.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple inbound credits from five unrelated individuals with no discernible relationship to the account holder",
+          "Funds aggregated over a short period (12 days) and then partially consolidated into one large outbound transfer",
+          "Onward transfer to a third-party company (Ilmu Educational Supplies Sdn Bhd) with no evident link to the account holder or personal purpose",
+          "Transaction amounts and frequency do not match the profile of a typical personal account (e.g., salary or regular expense patterns)",
+          "No underlying goods, services, or crowdfunding activity identified to explain the movement of funds",
+          "The account holder's personal running balance and activity suggest a layering or consolidation scheme rather than genuine personal transactions"
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:06:00.470906"
+    }
   },
   {
     "alertId": "HERO-002",
@@ -1211,84 +1774,6 @@
       "HT-2002",
       "HT-2003"
     ],
-    "triage": {
-      "alertId": "HERO-002",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "The account, opened recently by a student with no income, received a large international wire (MYR 95,000) and within two hours transferred most of it (MYR 88,000) to an unconnected offshore entity, with the remaining balance quickly withdrawn via ATM. This matches pass-through laundering: funds rapidly moved, little retained, no commercial rationale, and account profile inconsistent with activity.",
-      "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-      },
-      "citedTransactionIds": [
-        "HT-2001",
-        "HT-2002",
-        "HT-2003"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Transactions show irregular timing, diverse counterparties, and no commercial rationale for a student with zero income, satisfying pass-through laundering typology."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:47:28.854219",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-5002",
-          "holderName": "Muhammad Faiz bin Razak (declared: full-time student, income RM0)",
-          "accountType": "personal",
-          "openedAt": "2026-02-02T00:00:00"
-        },
-        "typology": {
-          "code": "PT-01",
-          "name": "Pass-through / Rapid Movement",
-          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-        },
-        "period": {
-          "from": "2026-06-11T14:00:00",
-          "to": "2026-06-12T10:15:00"
-        },
-        "activitySummary": "The account, opened recently by a university student with no declared income, received an international wire transfer of MYR 95,000. Within two hours, MYR 88,000 was transferred out to an unrelated offshore entity, and the remaining balance was quickly withdrawn via ATM, leaving the account near zero.",
-        "citedTransactions": [
-          {
-            "transactionId": "HT-2001",
-            "timestamp": "2026-06-11T14:00:00",
-            "amount": 95000.0,
-            "currency": "MYR",
-            "counterpartyName": "Gulf Star Remittance (Dubai)",
-            "runningBalance": 95300.0
-          },
-          {
-            "transactionId": "HT-2002",
-            "timestamp": "2026-06-11T16:20:00",
-            "amount": 88000.0,
-            "currency": "MYR",
-            "counterpartyName": "Apex OTC Trading (Cayman)",
-            "runningBalance": 7300.0
-          },
-          {
-            "transactionId": "HT-2003",
-            "timestamp": "2026-06-12T10:15:00",
-            "amount": 6800.0,
-            "currency": "MYR",
-            "counterpartyName": "ATM cash withdrawal",
-            "runningBalance": 500.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Recently opened account with no prior history",
-          "Account holder profile (student, zero income) inconsistent with high-value international transaction",
-          "Inbound wire of MYR 95,000 immediately followed by outbound transfer of MYR 88,000 within 2 hours",
-          "Rapid movement of funds with minimal retention, typical of pass-through laundering",
-          "Outbound transfer to an offshore entity with no apparent connection to the account holder",
-          "Remaining funds rapidly depleted via ATM withdrawal, suggesting layering"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:47:28.854235"
-    },
     "transactions": [
       {
         "transactionId": "HT-2001",
@@ -1336,7 +1821,84 @@
         "runningBalance": 500.0,
         "flags": []
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "HERO-002",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "Account received RM95k from Dubai and within 2 hours sent RM88k to Cayman, leaving minimal balance, with a later cash withdrawal. The rapid pass-through pattern, zero income student profile, absence of commercial rationale, and newly opened account match PT-01 indicators. Benign look-alike (business sweeps) ruled out due to irregular counterparties and personal account type.",
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+      },
+      "citedTransactionIds": [
+        "HT-2001",
+        "HT-2002",
+        "HT-2003"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "The evidence shows irregular timing and diverse counterparties (Dubai, Cayman, ATM) with no commercial rationale for a student with zero income, consistent with pass-through laundering rather than benign sweeps."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:06:59.312552",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-5002",
+          "holderName": "Muhammad Faiz bin Razak (declared: full-time student, income RM0)",
+          "accountType": "personal",
+          "openedAt": "2026-02-02T00:00:00"
+        },
+        "typology": {
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2026-06-11T14:00:00",
+          "to": "2026-06-12T10:15:00"
+        },
+        "activitySummary": "On 11 June 2026, the account received RM95,000 from a Dubai-based remittance company and within two hours sent RM88,000 to a Cayman Islands entity. The following day, RM6,800 was withdrawn as cash, leaving a negligible balance of RM500. The account holder, a full-time student with no income, exhibits a classic pass-through pattern with no economic rationale.",
+        "citedTransactions": [
+          {
+            "transactionId": "HT-2001",
+            "timestamp": "2026-06-11T14:00:00",
+            "amount": 95000.0,
+            "currency": "MYR",
+            "counterpartyName": "Gulf Star Remittance (Dubai)",
+            "runningBalance": 95300.0
+          },
+          {
+            "transactionId": "HT-2002",
+            "timestamp": "2026-06-11T16:20:00",
+            "amount": 88000.0,
+            "currency": "MYR",
+            "counterpartyName": "Apex OTC Trading (Cayman)",
+            "runningBalance": 7300.0
+          },
+          {
+            "transactionId": "HT-2003",
+            "timestamp": "2026-06-12T10:15:00",
+            "amount": 6800.0,
+            "currency": "MYR",
+            "counterpartyName": "ATM cash withdrawal",
+            "runningBalance": 500.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Large inbound transfer (RM95k) from Dubai followed by rapid outbound transfer (RM88k) to Cayman Islands within 2 hours.",
+          "Account balance returned to near zero after an additional cash withdrawal, leaving only RM500.",
+          "No legitimate economic purpose for a zero-income student to conduct high-value international transfers.",
+          "Account is newly opened and shows pass-through/rapid movement indicators consistent with money laundering typology PT-01.",
+          "Counterparties (Gulf Star Remittance, Apex OTC Trading) are irregular and unrelated to the account holder's profile."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:06:59.312591"
+    }
   },
   {
     "alertId": "HERO-003",
@@ -1358,111 +1920,6 @@
       "HT-3005",
       "HT-3006"
     ],
-    "triage": {
-      "alertId": "HERO-003",
-      "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "Alert shows classic fan-in/consolidation pattern: five inbound transfers from unrelated individuals within three hours, aggregated to RM24,500, then immediately forwarded as a single RM24,000 outbound transfer to an offshore entity, leaving minimal balance. The account is a newly opened personal account, consistent with a mule account receiving and forwarding scam proceeds.",
-      "matchedTypology": {
-        "code": "FI-01",
-        "name": "Fan-in / Fan-out (Consolidation)",
-        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
-      },
-      "citedTransactionIds": [
-        "HT-3001",
-        "HT-3002",
-        "HT-3003",
-        "HT-3004",
-        "HT-3005",
-        "HT-3006"
-      ],
-      "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Evidence shows personal account receiving rapid inbound transfers from unrelated individuals and forwarding nearly all funds offshore, matching mule consolidation pattern."
-      },
-      "strDraft": {
-        "reportDate": "2026-06-18T15:48:09.073369",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "AC-5003",
-          "holderName": "Kevin Ng Jun Hao",
-          "accountType": "personal",
-          "openedAt": "2026-05-30T00:00:00"
-        },
-        "typology": {
-          "code": "FI-01",
-          "name": "Fan-in / Fan-out (Consolidation)",
-          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
-        },
-        "period": {
-          "from": "2026-06-14T09:05:00",
-          "to": "2026-06-14T13:40:00"
-        },
-        "activitySummary": "Kevin Ng Jun Hao's newly opened personal account received five inbound transfers from seemingly unrelated individuals totaling RM24,500 within a three-hour period. Funds were immediately consolidated and a single outbound transfer of RM24,000 was sent to an offshore entity, leaving a minimal balance.",
-        "citedTransactions": [
-          {
-            "transactionId": "HT-3001",
-            "timestamp": "2026-06-14T09:05:00",
-            "amount": 4900.0,
-            "currency": "MYR",
-            "counterpartyName": "Goh Pei Shan",
-            "runningBalance": 5100.0
-          },
-          {
-            "transactionId": "HT-3002",
-            "timestamp": "2026-06-14T09:48:00",
-            "amount": 5000.0,
-            "currency": "MYR",
-            "counterpartyName": "Ahmad Zaki bin Othman",
-            "runningBalance": 10100.0
-          },
-          {
-            "transactionId": "HT-3003",
-            "timestamp": "2026-06-14T10:33:00",
-            "amount": 4850.0,
-            "currency": "MYR",
-            "counterpartyName": "Chong Li Wei",
-            "runningBalance": 14950.0
-          },
-          {
-            "transactionId": "HT-3004",
-            "timestamp": "2026-06-14T11:12:00",
-            "amount": 4950.0,
-            "currency": "MYR",
-            "counterpartyName": "Siti Noraini binti Aziz",
-            "runningBalance": 19900.0
-          },
-          {
-            "transactionId": "HT-3005",
-            "timestamp": "2026-06-14T11:58:00",
-            "amount": 4800.0,
-            "currency": "MYR",
-            "counterpartyName": "Daniel Tan Wei Sheng",
-            "runningBalance": 24700.0
-          },
-          {
-            "transactionId": "HT-3006",
-            "timestamp": "2026-06-14T13:40:00",
-            "amount": 24000.0,
-            "currency": "MYR",
-            "counterpartyName": "Hai Feng Trading (offshore)",
-            "runningBalance": 700.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Multiple inbound credits from unrelated individuals in a short timeframe (five transfers in three hours)",
-          "Funds were aggregated and then forwarded in one large outbound transfer, consistent with layering",
-          "Senders have no apparent relationship to the account holder",
-          "Transaction pattern and volume are inconsistent with a personal account profile, especially for a newly opened account",
-          "Immediate transfer of nearly the entire balance to an offshore entity suggests funds are being moved to another jurisdiction quickly",
-          "Behavior is indicative of a mule account used to receive and onward transmit suspected scam proceeds"
-        ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
-      },
-      "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-18T15:48:09.073385"
-    },
     "transactions": [
       {
         "transactionId": "HT-3001",
@@ -1555,6 +2012,110 @@
           "balance-drain"
         ]
       }
-    ]
+    ],
+    "triage": {
+      "alertId": "HERO-003",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "Five inbound transfers from unrelated individuals within ~3 hours, followed by a single outbound transfer to an offshore party, leaving minimal balance. This fan-in consolidation pattern on a personal account is inconsistent with legitimate merchant activity and matches mule consolidation indicators.",
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "HT-3001",
+        "HT-3002",
+        "HT-3003",
+        "HT-3004",
+        "HT-3005",
+        "HT-3006"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Evidence shows personal account, unrelated individual senders, rapid consolidation and near-full forwarding to offshore party, matching mule consolidation pattern."
+      },
+      "strDraft": {
+        "reportDate": "2026-06-20T17:07:39.082240",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "AC-5003",
+          "holderName": "Kevin Ng Jun Hao",
+          "accountType": "personal",
+          "openedAt": "2026-05-30T00:00:00"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2026-06-14T09:05:00",
+          "to": "2026-06-14T13:40:00"
+        },
+        "activitySummary": "Kevin Ng Jun Hao's personal account received five inbound transfers from five different individuals totaling MYR 24,700 within a three-hour period on 14 June 2026. Shortly after, a single outbound transfer of MYR 24,000 was made to Hai Feng Trading, an offshore entity, leaving a low balance of MYR 700. The rapid succession of unrelated credits followed by a consolidation and send-out is highly anomalous for the account's typical usage and suggests potential money mule activity.",
+        "citedTransactions": [
+          {
+            "transactionId": "HT-3001",
+            "timestamp": "2026-06-14T09:05:00",
+            "amount": 4900.0,
+            "currency": "MYR",
+            "counterpartyName": "Goh Pei Shan",
+            "runningBalance": 5100.0
+          },
+          {
+            "transactionId": "HT-3002",
+            "timestamp": "2026-06-14T09:48:00",
+            "amount": 5000.0,
+            "currency": "MYR",
+            "counterpartyName": "Ahmad Zaki bin Othman",
+            "runningBalance": 10100.0
+          },
+          {
+            "transactionId": "HT-3003",
+            "timestamp": "2026-06-14T10:33:00",
+            "amount": 4850.0,
+            "currency": "MYR",
+            "counterpartyName": "Chong Li Wei",
+            "runningBalance": 14950.0
+          },
+          {
+            "transactionId": "HT-3004",
+            "timestamp": "2026-06-14T11:12:00",
+            "amount": 4950.0,
+            "currency": "MYR",
+            "counterpartyName": "Siti Noraini binti Aziz",
+            "runningBalance": 19900.0
+          },
+          {
+            "transactionId": "HT-3005",
+            "timestamp": "2026-06-14T11:58:00",
+            "amount": 4800.0,
+            "currency": "MYR",
+            "counterpartyName": "Daniel Tan Wei Sheng",
+            "runningBalance": 24700.0
+          },
+          {
+            "transactionId": "HT-3006",
+            "timestamp": "2026-06-14T13:40:00",
+            "amount": 24000.0,
+            "currency": "MYR",
+            "counterpartyName": "Hai Feng Trading (offshore)",
+            "runningBalance": 700.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple (five) inbound credits from unrelated individuals within a short timeframe (approx. 3 hours).",
+          "Funds were aggregated and then forwarded onward in a single large outbound transfer to an offshore entity.",
+          "The senders (Goh Pei Shan, Ahmad Zaki bin Othman, Chong Li Wei, Siti Noraini binti Aziz, Daniel Tan Wei Sheng) have no apparent relationship to account holder Kevin Ng Jun Hao.",
+          "Transaction amounts and frequency are inconsistent with the account holder’s profile as a personal account with no known business activity.",
+          "The outbound beneficiary, Hai Feng Trading, is an offshore entity with no known nexus to the account holder, raising cross-border risk concerns."
+        ],
+        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+      },
+      "model": "deepseek-v4-pro",
+      "generatedAt": "2026-06-20T17:07:39.082278"
+    }
   }
 ]
