@@ -43,6 +43,9 @@ def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     assert out.recommendation == "escalate"
     assert out.matched_typology.code == "PT-01"
     assert out.confidence == 0.5  # 2 of 4 indicators, escalate, not flagged
+    # The coverage behind the score is serialized for the UI (ADR-0007).
+    assert out.indicator_coverage.fired == two
+    assert out.indicator_coverage.indicators == get_card("PT-01").indicators
     assert out.verifier.status == "agreed"
     assert out.str_draft is not None
     assert out.cited_transaction_ids == ["T-1001", "T-1002"]

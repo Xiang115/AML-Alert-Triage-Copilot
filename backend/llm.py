@@ -58,7 +58,7 @@ def complete_model(
     response_model: type[T],
     *,
     client=None,
-    max_tokens: int = 2048,
+    max_tokens: int = 4096,
     temperature: float = 0.0,
 ) -> T:
     """Call the model and parse its reply into `response_model`, a validated instance.
@@ -70,9 +70,10 @@ def complete_model(
     have to handle a raw `KeyError`/`ValidationError` from the provider's reply.
 
     Note: DeepSeek V4 (pro/flash) emits hidden reasoning tokens that count against
-    max_tokens — observed ~1500 on a full 5-card triage prompt. Budget generously or
-    the visible JSON gets truncated to empty; the 2048 default leaves headroom. STR
-    drafting (longer output) should pass a higher max_tokens.
+    max_tokens — observed ~1500 on a full 5-card triage prompt, and occasionally more,
+    which truncates the visible JSON to empty (an EOF parse error mid-batch). Budget
+    generously; the 4096 default leaves headroom for reasoning + the JSON. STR drafting
+    (longer output) should pass a higher max_tokens.
     """
     client = client or _default_client()
     messages = [

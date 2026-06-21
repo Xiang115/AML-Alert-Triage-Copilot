@@ -39,6 +39,13 @@ export interface Verifier {
   note: string
 }
 
+// The evidence behind `confidence` (ADR-0007): the matched typology's full
+// indicator set and the subset that fired. Both empty when no typology matched.
+export interface IndicatorCoverage {
+  indicators: string[]
+  fired: string[]
+}
+
 export interface Period {
   from: string
   to: string
@@ -72,6 +79,7 @@ export interface TriageResult {
   explanation: string
   matchedTypology: MatchedTypology
   citedTransactionIds: string[]
+  indicatorCoverage: IndicatorCoverage
   verifier: Verifier
   strDraft: STRDraft | null
   model: string

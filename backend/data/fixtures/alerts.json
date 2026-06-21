@@ -11,35 +11,119 @@
       "accountType": "personal",
       "openedAt": "2025-11-02T00:00:00"
     },
-    "transactionIds": ["T-1001", "T-1002"],
+    "transactionIds": [
+      "T-1001",
+      "T-1002"
+    ],
     "triage": {
       "alertId": "ALERT-001",
       "recommendation": "escalate",
       "confidence": 0.86,
       "explanation": "RM48,000 received from Golden Trade Ltd and RM47,800 sent on to QuickCash Exchange within 2.5 hours, draining the balance to near zero. Consistent with pass-through/rapid-movement (PT-01).",
-      "matchedTypology": { "code": "PT-01", "name": "Pass-through / Rapid Movement", "source": "FATF R.20; BNM AML/CFT" },
-      "citedTransactionIds": ["T-1001", "T-1002"],
-      "verifier": { "status": "agreed", "agreesWithRecommendation": true, "note": "No commercial rationale; balance returns to ~0. Distinguishing test for a benign sweep is not met (irregular timing, unrelated counterparties)." },
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF R.20; BNM AML/CFT"
+      },
+      "citedTransactionIds": [
+        "T-1001",
+        "T-1002"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "No commercial rationale; balance returns to ~0. Distinguishing test for a benign sweep is not met (irregular timing, unrelated counterparties)."
+      },
       "strDraft": {
         "reportDate": "2026-06-10T09:00:00",
         "reportingInstitution": "Demo Bank Berhad",
-        "subject": { "accountId": "AC-1001", "holderName": "Lim Wei Jie", "accountType": "personal", "openedAt": "2025-11-02T00:00:00" },
-        "typology": { "code": "PT-01", "name": "Pass-through / Rapid Movement", "source": "FATF R.20; BNM AML/CFT" },
-        "period": { "from": "2026-06-10T09:12:00", "to": "2026-06-10T11:40:00" },
+        "subject": {
+          "accountId": "AC-1001",
+          "holderName": "Lim Wei Jie",
+          "accountType": "personal",
+          "openedAt": "2025-11-02T00:00:00"
+        },
+        "typology": {
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF R.20; BNM AML/CFT"
+        },
+        "period": {
+          "from": "2026-06-10T09:12:00",
+          "to": "2026-06-10T11:40:00"
+        },
         "activitySummary": "On 10 June 2026 the account received RM48,000 from Golden Trade Ltd and transferred RM47,800 to QuickCash Exchange within approximately 2.5 hours, leaving a residual balance of RM450.",
         "citedTransactions": [
-          { "transactionId": "T-1001", "timestamp": "2026-06-10T09:12:00", "amount": 48000.0, "currency": "MYR", "counterpartyName": "Golden Trade Ltd", "runningBalance": 48250.0 },
-          { "transactionId": "T-1002", "timestamp": "2026-06-10T11:40:00", "amount": 47800.0, "currency": "MYR", "counterpartyName": "QuickCash Exchange", "runningBalance": 450.0 }
+          {
+            "transactionId": "T-1001",
+            "timestamp": "2026-06-10T09:12:00",
+            "amount": 48000.0,
+            "currency": "MYR",
+            "counterpartyName": "Golden Trade Ltd",
+            "runningBalance": 48250.0
+          },
+          {
+            "transactionId": "T-1002",
+            "timestamp": "2026-06-10T11:40:00",
+            "amount": 47800.0,
+            "currency": "MYR",
+            "counterpartyName": "QuickCash Exchange",
+            "runningBalance": 450.0
+          }
         ],
-        "groundsForSuspicion": ["No economic purpose for the account holder profile", "Balance drained to near zero immediately after credit", "Counterparties unrelated to the account holder"],
+        "groundsForSuspicion": [
+          "No economic purpose for the account holder profile",
+          "Balance drained to near zero immediately after credit",
+          "Counterparties unrelated to the account holder"
+        ],
         "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
       },
       "model": "deepseek-precomputed",
-      "generatedAt": "2026-06-10T09:00:00"
+      "generatedAt": "2026-06-10T09:00:00",
+      "indicatorCoverage": {
+        "indicators": [
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
+          "Little to no funds retained; no spending consistent with the stated purpose of the account",
+          "Often a newly opened or recently dormant account"
+        ],
+        "fired": [
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
+          "Little to no funds retained; no spending consistent with the stated purpose of the account"
+        ]
+      }
     },
     "transactions": [
-      { "transactionId": "T-1001", "timestamp": "2026-06-10T09:12:00", "amount": 48000.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Golden Trade Ltd", "counterpartyAccount": "GT-77120", "channel": "transfer", "runningBalance": 48250.0, "flags": ["rapid-movement"] },
-      { "transactionId": "T-1002", "timestamp": "2026-06-10T11:40:00", "amount": 47800.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "QuickCash Exchange", "counterpartyAccount": "QC-30551", "channel": "transfer", "runningBalance": 450.0, "flags": ["rapid-movement", "balance-drain"] }
+      {
+        "transactionId": "T-1001",
+        "timestamp": "2026-06-10T09:12:00",
+        "amount": 48000.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Golden Trade Ltd",
+        "counterpartyAccount": "GT-77120",
+        "channel": "transfer",
+        "runningBalance": 48250.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      },
+      {
+        "transactionId": "T-1002",
+        "timestamp": "2026-06-10T11:40:00",
+        "amount": 47800.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Exchange",
+        "counterpartyAccount": "QC-30551",
+        "channel": "transfer",
+        "runningBalance": 450.0,
+        "flags": [
+          "rapid-movement",
+          "balance-drain"
+        ]
+      }
     ]
   },
   {
@@ -54,37 +138,145 @@
       "accountType": "personal",
       "openedAt": "2024-03-18T00:00:00"
     },
-    "transactionIds": ["T-2001", "T-2002", "T-2003", "T-2004"],
+    "transactionIds": [
+      "T-2001",
+      "T-2002",
+      "T-2003",
+      "T-2004"
+    ],
     "triage": {
       "alertId": "ALERT-002",
       "recommendation": "escalate",
       "confidence": 0.62,
       "explanation": "Three inbound transfers from unrelated individuals (RM9,500 / RM8,700 / RM9,100) consolidated and forwarded as RM26,800 to BizPay Holdings. Matches fan-in/fan-out consolidation (FI-01).",
-      "matchedTypology": { "code": "FI-01", "name": "Fan-in / Fan-out (Consolidation)", "source": "FATF R.20; BNM AML/CFT" },
-      "citedTransactionIds": ["T-2001", "T-2002", "T-2003", "T-2004"],
-      "verifier": { "status": "flagged", "agreesWithRecommendation": false, "note": "Evidence does not clearly satisfy the FI-01 distinguishing test: senders could be customers of a small home business and the onward payment a supplier settlement. Forcing human review before escalation." },
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF R.20; BNM AML/CFT"
+      },
+      "citedTransactionIds": [
+        "T-2001",
+        "T-2002",
+        "T-2003",
+        "T-2004"
+      ],
+      "verifier": {
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Evidence does not clearly satisfy the FI-01 distinguishing test: senders could be customers of a small home business and the onward payment a supplier settlement. Forcing human review before escalation."
+      },
       "strDraft": {
         "reportDate": "2026-06-11T09:15:00",
         "reportingInstitution": "Demo Bank Berhad",
-        "subject": { "accountId": "AC-2087", "holderName": "Nurul Aina binti Hassan", "accountType": "personal", "openedAt": "2024-03-18T00:00:00" },
-        "typology": { "code": "FI-01", "name": "Fan-in / Fan-out (Consolidation)", "source": "FATF R.20; BNM AML/CFT" },
-        "period": { "from": "2026-06-11T10:02:00", "to": "2026-06-11T14:50:00" },
+        "subject": {
+          "accountId": "AC-2087",
+          "holderName": "Nurul Aina binti Hassan",
+          "accountType": "personal",
+          "openedAt": "2024-03-18T00:00:00"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF R.20; BNM AML/CFT"
+        },
+        "period": {
+          "from": "2026-06-11T10:02:00",
+          "to": "2026-06-11T14:50:00"
+        },
         "activitySummary": "On 11 June 2026 the account received three transfers totalling RM27,300 from three apparently unrelated individuals and forwarded RM26,800 to BizPay Holdings the same afternoon.",
         "citedTransactions": [
-          { "transactionId": "T-2001", "timestamp": "2026-06-11T10:02:00", "amount": 9500.0, "currency": "MYR", "counterpartyName": "Tan Choon Keat", "runningBalance": 9740.0 },
-          { "transactionId": "T-2004", "timestamp": "2026-06-11T14:50:00", "amount": 26800.0, "currency": "MYR", "counterpartyName": "BizPay Holdings", "runningBalance": 510.0 }
+          {
+            "transactionId": "T-2001",
+            "timestamp": "2026-06-11T10:02:00",
+            "amount": 9500.0,
+            "currency": "MYR",
+            "counterpartyName": "Tan Choon Keat",
+            "runningBalance": 9740.0
+          },
+          {
+            "transactionId": "T-2004",
+            "timestamp": "2026-06-11T14:50:00",
+            "amount": 26800.0,
+            "currency": "MYR",
+            "counterpartyName": "BizPay Holdings",
+            "runningBalance": 510.0
+          }
         ],
-        "groundsForSuspicion": ["Inbound funds from multiple unrelated parties", "Rapid consolidation and onward transfer", "Activity inconsistent with a personal account profile"],
+        "groundsForSuspicion": [
+          "Inbound funds from multiple unrelated parties",
+          "Rapid consolidation and onward transfer",
+          "Activity inconsistent with a personal account profile"
+        ],
         "recommendedAction": "Hold for analyst review; escalate to FIED only if the small-business explanation is not substantiated."
       },
       "model": "deepseek-precomputed",
-      "generatedAt": "2026-06-11T09:15:00"
+      "generatedAt": "2026-06-11T09:15:00",
+      "indicatorCoverage": {
+        "indicators": [
+          "Multiple inbound credits from many unrelated individuals over a short period",
+          "Funds aggregated then forwarded onward in one or few large outbound transfers",
+          "Senders have no apparent relationship to the account holder",
+          "Amounts and frequency inconsistent with the account holder's profile"
+        ],
+        "fired": [
+          "Multiple inbound credits from many unrelated individuals over a short period",
+          "Funds aggregated then forwarded onward in one or few large outbound transfers"
+        ]
+      }
     },
     "transactions": [
-      { "transactionId": "T-2001", "timestamp": "2026-06-11T10:02:00", "amount": 9500.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Tan Choon Keat", "channel": "transfer", "runningBalance": 9740.0, "flags": ["fan-in"] },
-      { "transactionId": "T-2002", "timestamp": "2026-06-11T11:18:00", "amount": 8700.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "R. Devi", "channel": "transfer", "runningBalance": 18440.0, "flags": ["fan-in"] },
-      { "transactionId": "T-2003", "timestamp": "2026-06-11T12:33:00", "amount": 9100.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Ong Mei Ling", "channel": "transfer", "runningBalance": 27540.0, "flags": ["fan-in"] },
-      { "transactionId": "T-2004", "timestamp": "2026-06-11T14:50:00", "amount": 26800.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "BizPay Holdings", "channel": "transfer", "runningBalance": 510.0, "flags": ["fan-out"] }
+      {
+        "transactionId": "T-2001",
+        "timestamp": "2026-06-11T10:02:00",
+        "amount": 9500.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Tan Choon Keat",
+        "channel": "transfer",
+        "runningBalance": 9740.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "T-2002",
+        "timestamp": "2026-06-11T11:18:00",
+        "amount": 8700.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "R. Devi",
+        "channel": "transfer",
+        "runningBalance": 18440.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "T-2003",
+        "timestamp": "2026-06-11T12:33:00",
+        "amount": 9100.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Ong Mei Ling",
+        "channel": "transfer",
+        "runningBalance": 27540.0,
+        "flags": [
+          "fan-in"
+        ]
+      },
+      {
+        "transactionId": "T-2004",
+        "timestamp": "2026-06-11T14:50:00",
+        "amount": 26800.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "BizPay Holdings",
+        "channel": "transfer",
+        "runningBalance": 510.0,
+        "flags": [
+          "fan-out"
+        ]
+      }
     ]
   },
   {
@@ -99,23 +291,84 @@
       "accountType": "business",
       "openedAt": "2021-07-05T00:00:00"
     },
-    "transactionIds": ["T-3001", "T-3002", "T-3003"],
+    "transactionIds": [
+      "T-3001",
+      "T-3002",
+      "T-3003"
+    ],
     "triage": {
       "alertId": "ALERT-003",
       "recommendation": "dismiss",
       "confidence": 0.78,
       "explanation": "Repeated cash deposits just under RM25,000 superficially resemble structuring (ST-01), but the account is an established retail business with consistent daily takings and a retained, growing balance. Benign high-turnover business.",
-      "matchedTypology": { "code": "ST-01", "name": "Structuring / Smurfing", "source": "FATF R.20; BNM AMLA 2001" },
-      "citedTransactionIds": ["T-3001", "T-3002", "T-3003"],
-      "verifier": { "status": "agreed", "agreesWithRecommendation": true, "note": "Distinguishing test for ST-01 is not met: consistent counterparty pattern, documented retail activity, funds retained rather than forwarded. Dismiss is appropriate." },
+      "matchedTypology": {
+        "code": "ST-01",
+        "name": "Structuring / Smurfing",
+        "source": "FATF R.20; BNM AMLA 2001"
+      },
+      "citedTransactionIds": [
+        "T-3001",
+        "T-3002",
+        "T-3003"
+      ],
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "note": "Distinguishing test for ST-01 is not met: consistent counterparty pattern, documented retail activity, funds retained rather than forwarded. Dismiss is appropriate."
+      },
       "strDraft": null,
       "model": "deepseek-precomputed",
-      "generatedAt": "2026-06-09T09:00:00"
+      "generatedAt": "2026-06-09T09:00:00",
+      "indicatorCoverage": {
+        "indicators": [
+          "Multiple CASH deposits clustered just under the RM25,000 CTR threshold",
+          "Repeated similar sub-threshold amounts over a short period",
+          "Spread across DAYS, BRANCHES, or multiple PERSONS (smurfing) to defeat same-day aggregation",
+          "Total aggregated value is substantial"
+        ],
+        "fired": [
+          "Multiple CASH deposits clustered just under the RM25,000 CTR threshold"
+        ]
+      }
     },
     "transactions": [
-      { "transactionId": "T-3001", "timestamp": "2026-06-08T18:30:00", "amount": 22400.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - Branch KL Sentral", "channel": "cash", "runningBalance": 51200.0, "flags": ["sub-threshold"] },
-      { "transactionId": "T-3002", "timestamp": "2026-06-09T18:25:00", "amount": 21800.0, "currency": "MYR", "direction": "inbound", "counterpartyName": "Cash deposit - Branch KL Sentral", "channel": "cash", "runningBalance": 73000.0, "flags": ["sub-threshold"] },
-      { "transactionId": "T-3003", "timestamp": "2026-06-09T19:10:00", "amount": 3200.0, "currency": "MYR", "direction": "outbound", "counterpartyName": "Daikin Supplies Sdn Bhd", "channel": "transfer", "runningBalance": 69800.0, "flags": [] }
+      {
+        "transactionId": "T-3001",
+        "timestamp": "2026-06-08T18:30:00",
+        "amount": 22400.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Cash deposit - Branch KL Sentral",
+        "channel": "cash",
+        "runningBalance": 51200.0,
+        "flags": [
+          "sub-threshold"
+        ]
+      },
+      {
+        "transactionId": "T-3002",
+        "timestamp": "2026-06-09T18:25:00",
+        "amount": 21800.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Cash deposit - Branch KL Sentral",
+        "channel": "cash",
+        "runningBalance": 73000.0,
+        "flags": [
+          "sub-threshold"
+        ]
+      },
+      {
+        "transactionId": "T-3003",
+        "timestamp": "2026-06-09T19:10:00",
+        "amount": 3200.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Daikin Supplies Sdn Bhd",
+        "channel": "transfer",
+        "runningBalance": 69800.0,
+        "flags": []
+      }
     ]
   }
 ]

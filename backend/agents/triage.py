@@ -24,8 +24,11 @@ NO_MATCH_CODE = "NONE"
 
 _SYSTEM = (
     "You are an AML alert-triage analyst. Decide Escalate or Dismiss for the alert by "
-    "matching it to exactly one of the candidate typology cards. Use each card's indicators "
-    "and distinguishing test, and rule out the card's benign look-alike before escalating. "
+    "matching it to exactly one of the candidate typology cards. Escalate when the card's "
+    "indicators are present in the evidence — match on the pattern. An independent second-line "
+    "verifier separately tests benign look-alikes and the distinguishing test, so do NOT dismiss "
+    "merely because a benign explanation is possible: escalate the pattern match and let the "
+    "verifier challenge it. "
     "If NONE of the candidate typologies fit the evidence, do not force a match: return "
     f'matchedTypologyCode "{NO_MATCH_CODE}" with recommendation "dismiss". '
     "Reply ONLY with a JSON object: "
@@ -68,13 +71,14 @@ class _TriageResponse(LLMResponse):
 
 
 def _render_cards(cards: list[TypologyCard]) -> str:
+    # Triage matches on indicators only. The benign look-alike + distinguishing test
+    # are deliberately withheld here and given to the verifier alone (ADR-0001), so the
+    # two agents don't run the same discrimination and the verifier isn't redundant.
     out = []
     for c in cards:
         out.append(
             f"[{c.code}] {c.name} (source: {c.source})\n"
-            f"  indicators: {c.indicators}\n"
-            f"  benign look-alike: {c.benign_lookalike}\n"
-            f"  distinguishing test: {c.distinguishing_test}"
+            f"  indicators: {c.indicators}"
         )
     return "\n".join(out)
 

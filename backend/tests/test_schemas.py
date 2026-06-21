@@ -42,6 +42,7 @@ def _camel_triage(recommendation="escalate", with_str_draft=True):
         "explanation": "Classic pass-through.",
         "matchedTypology": typ,
         "citedTransactionIds": ["T1", "T2"],
+        "indicatorCoverage": {"indicators": ["a", "b", "c"], "fired": ["a", "b"]},
         "verifier": {"status": "flagged", "agreesWithRecommendation": False, "note": "Could be a sweep."},
         "strDraft": str_draft,
         "model": "deepseek",
