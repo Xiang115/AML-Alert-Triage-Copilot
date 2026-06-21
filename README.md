@@ -15,8 +15,8 @@ The system is split into a React-based analyst console and a Python FastAPI back
 
 ### Multi-Agent Pipeline Mechanics
 1. **Knowledge Retrieval**: Fetches relevant typology guidance (e.g., pass-through, structuring, dormant accounts) from a curated local knowledge base.
-2. **Triage Agent (DeepSeek-v4-pro)**: Evaluates the alert history and account profiles to recommend escalation or dismissal, calculating a confidence metric based on indicator coverage.
-3. **Verifier Agent (DeepSeek-v4-flash)**: Acts as an adversarial challenger. It tests the triage recommendation against specific typology distinguishing tests (e.g., distinguishing a benign business sweep from a pass-through laundering flow) to prevent false-positive escalations.
+2. **Triage Agent (DeepSeek-v4-pro)**: Matches the alert's transactions against each typology's indicators and recommends escalate/dismiss **on the pattern**. Confidence is *computed* from how many of the typology's indicators actually fired (ADR-0007), and the console surfaces that coverage as a **per-indicator checklist** beneath the score — so the number reads as earned evidence (4 of 6 red flags fired), not a figure the model asserted.
+3. **Verifier Agent (DeepSeek-v4-flash)**: The **sole adversarial discriminator**. Triage matches the pattern; the verifier independently re-reads the raw evidence and challenges the call against the typology's *distinguishing test* and *benign look-alike* (e.g., a benign business sweep vs. a pass-through laundering flow), flagging borderline escalations for human review. Keeping this discrimination out of triage — rather than having both agents second-guess the same benign look-alikes — is what makes the verifier a meaningful second line instead of a redundant echo, and it is what lets the verifier reliably catch the wrong calls that triage deliberately surfaces.
 4. **STR Draft Generator (DeepSeek-v4-pro)**: Generates a structured Suspicious Activity Report narrative including the activity summary and grounds for suspicion.
 
 ### Integration Seam: goAML STR Export
@@ -41,6 +41,7 @@ The bank stays the reporting institution of record, so every action is logged an
 ## Key Features
 
 * **Adversarial QA Pushback**: The Verifier Agent challenges triage recommendations, flagging borderline cases (e.g., `HERO-001` Aisyah binti Kamal) for human review rather than automatic escalation, reducing compliance workload.
+* **Evidence-Backed Confidence**: The confidence score is *computed* from typology indicator coverage (ADR-0007), and the console renders the exact indicators that fired as a **checklist** beneath the score — the analyst sees *why* the copilot is N% confident (which red flags fired and which did not), not just the number.
 * **Regulator-Ready goAML Export**: After analyst sign-off, the approved STR exports as schema-valid goAML XML — Bank Negara Malaysia's STR e-filing format — gated behind human approval and validated against the goAML schema before it leaves the system (see *Integration Seam* above).
 * **Append-Only Audit Trail & Filing Receipt**: Every decision and goAML filing lands in an append-only trail (`GET /audit` + an **Audit Trail** tab) that pairs the AI's recommendation with the human disposition; overriding the AI requires a recorded reason. Filing an STR returns a FIU acknowledgement reference, closing the loop.
 * **Slate & Mint (Cyber-Defense) Console**: A modern, clean, dark-themed interface built specifically for security and financial audit contexts. Includes left-border highlighting of cited transactions and adversarial warning banners.
@@ -134,7 +135,7 @@ The prelim prototype described above is complete. The roadmap below covers what 
 │   │   ├── goaml_config.json  # Per-FIU goAML registration (the (B)->(A) config swap)
 │   │   └── goaml_str.xsd       # Tightly-scoped goAML STR schema (export is validated against it)
 │   ├── eval/            # evaluate.py offline validation script
-│   ├── tests/           # 93 passing backend unit and integration tests
+│   ├── tests/           # 99 passing backend unit and integration tests
 │   ├── main.py          # FastAPI application entrypoint
 │   ├── goaml.py         # goAML STR export serializer (the integration seam)
 │   └── config.py        # Environment variables and runtime thresholds
