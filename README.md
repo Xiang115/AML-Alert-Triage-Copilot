@@ -1,8 +1,13 @@
 # AML Alert-Triage Copilot
 
-NexHack 2026 — Track 2: FinTech & Cyber-Defense Engineering
+NexHack 2026 — Track 2: Fintech Risk & Fraud Intelligence
 
 The AML Alert-Triage Copilot is a multi-agent system designed to assist banking anti-money laundering (AML) compliance analysts in triaging suspicious transaction alerts. Leveraging DeepSeek-v4 language models, the copilot analyzes transaction typologies, runs an adversarial verifier to challenge false-positive escalations, drafts structured Suspicious Activity Reports (STR), and reports workload-reduction metrics on a held-out synthetic transaction dataset. Once an analyst signs off on an escalation, the approved STR exports as a **schema-valid goAML XML** — the wire format Bank Negara Malaysia's Financial Intelligence Unit ingests — so the copilot is a drop-in component of the bank's existing STR submission flow, not a standalone tool.
+
+> **📦 Prelim submission links**
+> - 📺 **7-min demo video:** _placeholder — add YouTube URL before the 26 Jun submission_
+> - 📊 **Pitch deck:** _placeholder — attach `docs/pitch-deck.pdf` (or link the slides used in the video)_
+> - 💻 **GitHub repository:** https://github.com/Xiang115/AML-Alert-Triage-Copilot
 
 ---
 
