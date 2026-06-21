@@ -80,7 +80,7 @@ def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard
         model or config.MODEL_WORKHORSE,
         _StrNarrative,
         client=client,
-        max_tokens=3000,  # STR narrative is longer; leave room over reasoning tokens
+        max_tokens=8192,  # STR narrative + reasoning tokens; sized well above the burst
     )
 
     times = [t.timestamp for t in cited] or [datetime.now()]

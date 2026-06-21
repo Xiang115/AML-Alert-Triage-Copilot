@@ -125,6 +125,8 @@ def _predict(row: pd.Series, cards: list[dict]) -> str:
 
 
 def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
+    import llm
+    llm.use_offline_timeout()  # long timeout: don't abort+retry valid slow reasoning calls
     for p in (_HOLDOUT_IDS, _FEATURES, _ALERTS):
         if not p.exists():
             print(f"Missing required input: {p}")

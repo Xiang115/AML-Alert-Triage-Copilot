@@ -19,6 +19,11 @@ MODEL_VERIFIER = os.getenv("MODEL_VERIFIER", "deepseek-v4-flash")
 # and aborts a call that exceeds TIMEOUT_SECONDS rather than hanging on camera.
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "3"))
+# Offline build tools (precompute, eval) make many reasoning-model calls; a longer
+# timeout there lets a valid slow call finish instead of aborting and wasting a full
+# retry. The live /triage path keeps the short LLM_TIMEOUT_SECONDS so it fast-fails to
+# the precomputed fallback on camera (ADR-0003), rather than hanging on a spinner.
+OFFLINE_LLM_TIMEOUT_SECONDS = float(os.getenv("OFFLINE_LLM_TIMEOUT_SECONDS", "180"))
 
 # Verifier flags / triage forces human review below this confidence (ADR-0007).
 REVIEW_THRESHOLD = float(os.getenv("REVIEW_THRESHOLD", "0.6"))

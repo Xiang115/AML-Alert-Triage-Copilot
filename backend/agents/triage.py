@@ -88,9 +88,14 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
     # Feature-evidence (eval) prompts make V4 reason harder; the caller can raise
     # max_tokens so the visible JSON isn't truncated to empty by reasoning tokens.
     extra = {"max_tokens": max_tokens} if max_tokens is not None else {}
+    # The instructions + candidate cards are identical on every call (select_cards
+    # returns all cards in stable order), so they go in the system message as one stable
+    # prefix that DeepSeek prompt-caches; only the per-alert evidence varies in the user
+    # message. Keeps the big static block out of the billed/processed tokens per call.
+    system = f"{_SYSTEM}\n\nCandidate typologies (match the alert to exactly one):\n{_render_cards(cards)}"
     parsed = complete_model(
-        _SYSTEM,
-        f"Candidate typologies:\n{_render_cards(cards)}\n\nAlert evidence:\n{evidence}",
+        system,
+        f"Alert evidence:\n{evidence}",
         model or config.MODEL_WORKHORSE,
         _TriageResponse,
         client=client,
