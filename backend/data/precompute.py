@@ -58,6 +58,8 @@ def _load_inputs() -> list[dict]:
 
 
 def main() -> None:
+    import llm
+    llm.use_offline_timeout()  # long timeout: don't abort+retry valid slow reasoning calls
     alerts = _load_inputs()
     print(f"Precomputing triage for {len(alerts)} alerts (live DeepSeek calls)...")
     results = build_results(alerts)

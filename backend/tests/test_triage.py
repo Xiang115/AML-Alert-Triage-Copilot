@@ -18,10 +18,12 @@ def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_c
     })])
     triage("evidence block", [card], client=fake)
 
+    system_msg = fake.calls[0]["messages"][0]["content"]
     user_msg = fake.calls[0]["messages"][1]["content"]
-    assert str(card.indicators) in user_msg  # indicators ARE shown
-    assert card.benign_lookalike not in user_msg
-    assert card.distinguishing_test not in user_msg
+    assert str(card.indicators) in system_msg  # indicators ARE shown (in the cached prefix)
+    whole = system_msg + user_msg
+    assert card.benign_lookalike not in whole
+    assert card.distinguishing_test not in whole
 
 
 def test_triage_retries_on_unknown_typology_code(make_client):

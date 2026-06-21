@@ -26,19 +26,32 @@ def _make_openai(**kwargs):
     return OpenAI(**kwargs)
 
 
+def _build_client(timeout: float):
+    return _make_openai(
+        api_key=config.DEEPSEEK_API_KEY,
+        base_url=config.DEEPSEEK_BASE_URL,
+        timeout=timeout,
+        max_retries=config.LLM_MAX_RETRIES,
+    )
+
+
 def _default_client():
     """Memoized real client, hardened for the live /triage run: a per-request
     timeout so a slow provider can't hang the demo, and bounded SDK retries
     (exponential backoff on network/429/5xx) so a transient blip self-heals."""
     global _client
     if _client is None:
-        _client = _make_openai(
-            api_key=config.DEEPSEEK_API_KEY,
-            base_url=config.DEEPSEEK_BASE_URL,
-            timeout=config.LLM_TIMEOUT_SECONDS,
-            max_retries=config.LLM_MAX_RETRIES,
-        )
+        _client = _build_client(config.LLM_TIMEOUT_SECONDS)
     return _client
+
+
+def use_offline_timeout() -> None:
+    """Switch the shared client to the longer OFFLINE timeout (config) for build tools
+    (precompute, eval). Those make many reasoning-model calls where the short live
+    timeout would abort valid-but-slow calls and waste a full retry. Call once at the
+    start of an offline run; the live /triage path keeps the short timeout."""
+    global _client
+    _client = _build_client(config.OFFLINE_LLM_TIMEOUT_SECONDS)
 
 
 def _log_cache_usage(resp, model: str) -> None:
@@ -58,7 +71,7 @@ def complete_model(
     response_model: type[T],
     *,
     client=None,
-    max_tokens: int = 4096,
+    max_tokens: int = 8192,
     temperature: float = 0.0,
 ) -> T:
     """Call the model and parse its reply into `response_model`, a validated instance.
@@ -70,10 +83,11 @@ def complete_model(
     have to handle a raw `KeyError`/`ValidationError` from the provider's reply.
 
     Note: DeepSeek V4 (pro/flash) emits hidden reasoning tokens that count against
-    max_tokens — observed ~1500 on a full 5-card triage prompt, and occasionally more,
-    which truncates the visible JSON to empty (an EOF parse error mid-batch). Budget
-    generously; the 4096 default leaves headroom for reasoning + the JSON. STR drafting
-    (longer output) should pass a higher max_tokens.
+    max_tokens — observed ~1500 on a full 5-card triage prompt, and occasionally far
+    more, which truncates the visible JSON to empty (an EOF parse error) and forces a
+    full retry — the main source of wasted calls. Budget generously: the 8192 default is
+    a CAP, not a cost (the model only generates what it needs), so sizing it well above
+    the reasoning burst removes the truncation-retries without changing reasoning quality.
     """
     client = client or _default_client()
     messages = [
