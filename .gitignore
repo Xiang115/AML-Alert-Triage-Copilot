@@ -22,3 +22,11 @@ __pycache__/
 # Node / frontend
 frontend/node_modules/
 frontend/dist/
+
+# Internal docs — keep local, not on GitHub
+CLAUDE.md
+CONTEXT.md
+docs/NexHack2026.md
+
+# CI workflows — keep local, not on GitHub
+.github/workflows/
