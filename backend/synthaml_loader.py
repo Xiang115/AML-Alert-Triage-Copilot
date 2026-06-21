@@ -34,9 +34,44 @@ FEATURE_COLUMNS = [
     "sizeStd",
     "sizeMax",
     "netFlow",
+    # Timestamp-based pattern features (the only typology signals real SynthAML can
+    # express — no counterparty, no currency amounts). They map the aggregate row back
+    # to the two detectable typologies so triage has something to fire on (ADR-0005).
+    "medianCreditToDebitHours",  # PT-01 pass-through: in then straight back out
+    "postDormancyBurstFrac",     # DA-01 dormant-then-active: woke up and burst
 ]
 
 _DAY = 86400.0
+
+
+def _median_credit_to_debit_hours(ts: np.ndarray, entry: np.ndarray, default: float) -> float:
+    """Pass-through signal (PT-01): FIFO-pair each credit with the next debit and take
+    the median hours between. Small => funds move in and straight back out. `default`
+    (the full span) stands in when nothing pairs, i.e. no rapid turnover."""
+    from collections import deque
+
+    pending: deque = deque()
+    gaps: list[float] = []
+    for t, e in zip(ts, entry):
+        if e == "Credit":
+            pending.append(t)
+        elif pending:
+            c = pending.popleft()
+            gaps.append((t - c) / np.timedelta64(1, "h"))
+    return float(np.median(gaps)) if gaps else float(default)
+
+
+def _post_dormancy_burst_frac(ts: np.ndarray, n: int) -> float:
+    """Dormant-then-active signal (DA-01): fraction of transactions within 7 days after
+    the single largest inactivity gap. High (paired with a large maxDormancyGapDays) =>
+    a long-quiet account suddenly bursting back to life."""
+    if n < 2:
+        return 0.0
+    diffs = np.diff(ts) / np.timedelta64(1, "D")
+    reactivation = ts[int(np.argmax(diffs)) + 1]
+    window_end = reactivation + np.timedelta64(7, "D")
+    post = int(((ts >= reactivation) & (ts <= window_end)).sum())
+    return post / n
 
 
 def _features_for_alert(g: pd.DataFrame) -> dict:
@@ -48,6 +83,11 @@ def _features_for_alert(g: pd.DataFrame) -> dict:
     signed = g["Size"].where(g["Entry"] == "Credit", -g["Size"])
     gaps = ts.diff().dropna().dt.total_seconds() / _DAY
     per_day = ts.dt.floor("D").value_counts()
+    # Timestamp-ordered view so credit/debit timing lines up (the aggregate stats above
+    # are order-independent; the pattern features below are not).
+    gs = g.sort_values("Timestamp")
+    order_ts = pd.to_datetime(gs["Timestamp"]).to_numpy()
+    span_hours = (ts.iloc[-1] - ts.iloc[0]).total_seconds() / 3600 if n > 1 else 0.0
     return {
         "txnCount": n,
         "creditCount": int(credit),
@@ -64,6 +104,10 @@ def _features_for_alert(g: pd.DataFrame) -> dict:
         "sizeStd": g["Size"].std(ddof=0),
         "sizeMax": g["Size"].max(),
         "netFlow": signed.sum(),
+        "medianCreditToDebitHours": _median_credit_to_debit_hours(
+            order_ts, gs["Entry"].to_numpy(), span_hours
+        ),
+        "postDormancyBurstFrac": _post_dormancy_burst_frac(order_ts, n),
     }
 
 
