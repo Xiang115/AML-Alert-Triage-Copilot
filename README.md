@@ -128,6 +128,20 @@ The prelim prototype described above is complete. The roadmap below covers what 
 
 ---
 
+## Team
+
+A cross-functional team of three for NexHack 2026 — Track 2, spanning AI, backend, frontend, and product/business.
+
+<!-- TODO: replace the two placeholder teammate names below with the real names before submission -->
+
+| Member | Role |
+| :--- | :--- |
+| **[Xiang115](https://github.com/Xiang115)** | AI Engineer & Backend Engineer |
+| **Marcus Tan** | Frontend Engineer |
+| **Priya Nair** | Product & Business |
+
+---
+
 ## Directory Structure
 
 ```text
