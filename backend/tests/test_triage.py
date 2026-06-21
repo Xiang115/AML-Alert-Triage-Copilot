@@ -6,9 +6,11 @@ from agents.knowledge_base import get_card
 from agents.triage import triage
 
 
-def test_triage_prompt_includes_benign_lookalike(make_client):
-    # Triage must see each card's benign look-alike so it can rule it out on the
-    # first pass, not lean entirely on the verifier (the crafted benign cases).
+def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_client):
+    # Triage matches on indicators ONLY; the benign look-alike + distinguishing test
+    # are withheld and given to the verifier alone, so the two agents don't run the
+    # same discrimination (ADR-0001). Triage seeing them made it do the verifier's job
+    # and dismiss the crafted benign look-alikes, flip-flopping the hero cases.
     card = get_card("PT-01")
     fake = make_client([json.dumps({
         "matchedTypologyCode": "PT-01", "firedIndicators": [], "citedTransactionIds": [],
@@ -17,7 +19,9 @@ def test_triage_prompt_includes_benign_lookalike(make_client):
     triage("evidence block", [card], client=fake)
 
     user_msg = fake.calls[0]["messages"][1]["content"]
-    assert card.benign_lookalike in user_msg
+    assert str(card.indicators) in user_msg  # indicators ARE shown
+    assert card.benign_lookalike not in user_msg
+    assert card.distinguishing_test not in user_msg
 
 
 def test_triage_retries_on_unknown_typology_code(make_client):

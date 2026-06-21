@@ -16,7 +16,7 @@ from agents.knowledge_base import get_card, select_cards
 from agents.str_drafter import draft_str
 from agents.triage import NO_MATCH_CODE, triage
 from agents.verifier import verify
-from schemas import AlertInput, TriageResult, Verifier
+from schemas import AlertInput, IndicatorCoverage, TriageResult, Verifier
 
 
 def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
@@ -34,6 +34,7 @@ def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
             explanation=tri.explanation,
             matched_typology=tri.matched_typology,
             cited_transaction_ids=[],
+            indicator_coverage=IndicatorCoverage(indicators=[], fired=[]),
             verifier=Verifier(
                 status="agreed",
                 agrees_with_recommendation=True,
@@ -62,6 +63,7 @@ def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
         explanation=tri.explanation,
         matched_typology=tri.matched_typology,
         cited_transaction_ids=tri.cited_transaction_ids,
+        indicator_coverage=IndicatorCoverage(indicators=card.indicators, fired=tri.fired_indicators),
         verifier=ver,
         str_draft=str_draft,
         model=config.MODEL_WORKHORSE,

@@ -10,6 +10,8 @@ interface TriageCardProps {
 export function TriageCard({ triage, isTriaging, triageStep, onRunLive }: TriageCardProps) {
   const escalate = triage.recommendation === 'escalate'
   const pct = Math.round(triage.confidence * 100)
+  const { indicators, fired } = triage.indicatorCoverage
+  const firedSet = new Set(fired)
 
   return (
     <section className="rounded-lg border border-line bg-surface p-5">
@@ -49,6 +51,38 @@ export function TriageCard({ triage, isTriaging, triageStep, onRunLive }: Triage
               </div>
             </div>
           </div>
+
+          {/* Indicator coverage — the evidence behind the confidence number (ADR-0007).
+              The score is the fraction of the typology's red flags that fired, not a
+              figure the model invented. */}
+          {indicators.length > 0 && (
+            <div className="mt-5 border-t border-line pt-4">
+              <div className="flex items-baseline justify-between">
+                <span className="label">Indicator coverage</span>
+                <span className="font-mono text-[12px] tabular-nums text-ink-soft">
+                  {fired.length}/{indicators.length} fired
+                </span>
+              </div>
+              <ul className="mt-2.5 space-y-1.5">
+                {indicators.map((ind) => {
+                  const hit = firedSet.has(ind)
+                  return (
+                    <li key={ind} className="flex items-start gap-2 text-[13px] leading-snug">
+                      <span
+                        aria-hidden
+                        className={`mt-px shrink-0 font-mono text-[12px] ${hit ? 'text-escalate' : 'text-ink-faint'}`}
+                      >
+                        {hit ? '✓' : '○'}
+                      </span>
+                      <span className={hit ? 'text-ink' : 'text-ink-faint line-through decoration-line'}>
+                        {ind}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
           {/* Matched typology */}
           <div className="mt-5 border-t border-line pt-4">

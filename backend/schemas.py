@@ -85,6 +85,15 @@ class Verifier(CamelModel):
     note: str
 
 
+class IndicatorCoverage(CamelModel):
+    """The evidence behind `confidence` (ADR-0007): the matched typology's full
+    indicator set and the subset that fired for this alert. Serialized so the UI
+    can show *why* the score is what it is, rather than a bare percentage. Both
+    lists are empty when no typology matched (a reasoned dismiss with no card)."""
+    indicators: list[str]
+    fired: list[str]
+
+
 class Period(CamelModel):
     # `from` is a Python keyword, so the field is from_ with an explicit wire alias.
     from_: datetime = Field(alias="from")
@@ -129,6 +138,7 @@ class TriageResult(CamelModel):
     explanation: str
     matched_typology: MatchedTypology
     cited_transaction_ids: list[str]
+    indicator_coverage: IndicatorCoverage
     verifier: Verifier
     str_draft: STRDraft | None = None
     model: str
