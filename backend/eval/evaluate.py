@@ -38,8 +38,11 @@ _FEATURES = _DATA / "alert_features.csv"
 _ALERTS = _DATA / "synthaml" / "synthetic_alerts.csv"
 _OUT = _DATA / "metrics.json"
 
-# Modeled time numbers (ADR-0004): baseline is a cited assumption, copilot a
-# conservative estimate — presented as illustrative, not measured.
+# Modeled time numbers (ADR-0004): illustrative, NOT measured — never present as a
+# sourced fact. 14.0 min baseline is a conservative midpoint of published AML
+# first-pass alert-review estimates (industry operational estimates put a Level-1
+# review at ~5-20 min/alert). 4.5 min is a conservative modeled with-copilot
+# estimate. Time-saved is shown as illustrative, anchored to that cited range.
 _BASELINE_MIN = 14.0
 _COPILOT_MIN = 4.5
 

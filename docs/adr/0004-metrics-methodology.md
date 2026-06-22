@@ -9,8 +9,10 @@ and transparently label the rest, rather than fabricate clean figures a judge co
 - **falsePositiveReduction** — measured, with an explicit definition stated on the slide: of the
   alerts the copilot recommends Dismiss, the share that are truly benign (label = Dismiss) — i.e. the
   benign review volume an analyst can safely skip. Stated precisely so it isn't read as a bigger claim.
-- **avgReviewTimeBaselineMin** — a cited industry/published figure, labeled as an assumption (we can't
-  time real analysts in a hackathon).
+- **avgReviewTimeBaselineMin** — a conservative midpoint (14 min) of published first-pass alert-review
+  estimates (industry operational estimates put a Level-1 review at ~5–20 min/alert), labeled as a
+  modeled assumption (we can't time real analysts in a hackathon). Presented as illustrative, never as
+  a single measured/primary figure.
 - **avgReviewTimeWithCopilotMin** — a conservative modeled estimate; time-saved is presented as
   illustrative, not measured.
 
@@ -22,3 +24,16 @@ held-out accuracy number plus honest labeling survives Q&A; fake precision does 
 `accuracyVsLabels` is measured over a **stratified random sample of the held-out slice (~100–300
 alerts)** that preserves the ~17% reported ratio. It is still a real measured number; note the sample
 size (n) on the metric slide so the claim is honest. Fix the random seed for reproducibility.
+
+## Supporting external figures (deck Problem / Metric slides)
+
+Every statistic shown on the pitch slides carries a real source — never a fabricated citation. Vetted
+anchors (verified 2026-06-22):
+
+- AML false-positive rate **90–95%** — PwC, *Towards Better Transaction Monitoring* (2019); corroborated
+  by FCA and FinCEN-files data.
+- Global financial-crime compliance cost **US$206.1bn (2023)** / **APAC US$45bn (2024)** — LexisNexis
+  Risk Solutions, *True Cost of Financial Crime Compliance*.
+- Alert first-pass review time **~5–20 min/alert** — industry operational estimates (a *range* only; the
+  14-min baseline above is a modeled midpoint, not a single sourced figure).
+- SynthAML dataset — Jensen et al. (2023), *Nature Scientific Data*.
