@@ -111,6 +111,19 @@ The prelim prototype described above is complete. The roadmap below covers what 
 | **3 — Production integration** | The **outbound goAML STR export already ships** (see *Integration Seam*); this phase wires the *inbound* alert ingestion from the institution's transaction-monitoring stack (e.g. SAS, Actimize, Oracle Mantas) and connects the export into the live case-management submission pipeline, swapping the demo reporting-entity config for the bank's real FIU registration. Expand the typology library with the bank's own crafted cases; multi-language STR output. The human remains the final decision-maker. |
 | **4 — Accelerator & market expansion** | Extend the verifier-grounded agent loop to adjacent fintech-risk workflows (fraud-dispute triage, scam-victim review, sanctions-hit adjudication) and adjacent buyers (e-wallets, remittance operators, payment platforms); regional regulatory packs beyond BNM/FATF; an analyst-override feedback loop that continuously sharpens the typology cards. |
 
+### Flagship Roadmap Feature — Mule-Network Investigation
+
+The single deepest item on the roadmap above, and the one we pitch as the headline *"what's next."* Today the copilot reasons about **one alert at a time** — exactly how a front-line analyst (and a rule-based monitoring system) sees the world, and exactly why **network-distributed laundering** can slip through. Mule-Network Investigation lifts the copilot from the single account to the *cluster*.
+
+It is deliberately a **hybrid of a deterministic graph and a precomputed agent** — not a link-chart every vendor already ships, and not a free-running live agent:
+
+- **Structure you can trust** — a deterministic graph-walk links accounts by a **shared counterparty: the Consolidation Account that multiple flagged accounts forward into** — so there are *no hallucinated edges*. The graph is assembled from the data, not invented by the model.
+- **Reasoning that earns the word "agentic"** — a precomputed **Network Agent** then assigns each account a **node role** (originator → mule → consolidation account → beneficiary), names the **network-scale typology**, and writes the narrative.
+
+The crafted demo cluster does two jobs at once. Around five accounts converge on one Consolidation Account: two already-escalated mules; **one hidden mule that single-alert triage correctly *dismissed*** — alone it looked benign; the network supplies the cross-account evidence a single-account view never had — and **one benign account the Network Agent *clears***, because it legitimately pays the same beneficiary. The first proves the network *finds* what account-level triage is structurally blind to; the second proves it *discriminates* rather than colouring every neighbour red (the Verifier philosophy, extended to networks).
+
+This is also the principled answer to AML's hardest metric reality: account-level triage — like the rule-based monitoring it sits on top of — has a **recall ceiling that only link-analysis can break**, because a single account distributing laundering across a network is invisible until you can see the network. **Integrity guardrail:** the feature runs on **hand-crafted demo data only and changes no measured number** — the held-out metrics stay the honest result, and the recall reframe is a talking point, never a fabricated "network-improved" statistic. It surfaces through a new `GET /alerts/{alertId}/network` endpoint served from a precomputed `networks.json` (exactly like the demo results), so it carries no live latency on the demo path (ADR-0009).
+
 ### Commercialization
 
 **Go-to-market:** land via the fixed-fee shadow-mode pilot, where the product proves time-saved on the buyer's *own* historical alerts before any workflow change — a low-risk entry for a risk-averse compliance buyer. Convert pilots to annual Team/Enterprise contracts; expand from one business unit to the rest of the institution.

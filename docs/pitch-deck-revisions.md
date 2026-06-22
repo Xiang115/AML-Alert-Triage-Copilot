@@ -124,6 +124,42 @@ A 4-step flow across the slide:
 
 ---
 
+## NEW — ROADMAP HERO: MULE-NETWORK INVESTIGATION  *(the headline "what's next"; pays off live in the final round per ADR-0009)*
+
+**Section:** ROADMAP · THE NEXT FRONTIER
+**Title:** From one account to the whole network
+**Subtitle:** Today the copilot reasons one alert at a time — exactly how an analyst (and a rule engine) sees the world, and exactly why network-distributed laundering slips through. Next: lift it from the account to the cluster.
+
+**The shape (one diagram, centre of the slide):**
+
+```
+        originator ─┐
+              mule ─┤
+              mule ─┼──►  [ CONSOLIDATION ACCOUNT ]  ──►  beneficiary
+       hidden mule ─┤            ▲
+   benign account ──┘     Network Agent assigns each
+   (cleared)             node a role + names the typology
+```
+
+**Why it's not just a link chart (the AI story):**
+- **Structure you can trust** — a deterministic graph-walk links accounts by a *shared Consolidation Account*; **no hallucinated edges** — assembled from the data, not invented by the model.
+- **Reasoning that earns "agentic"** — a precomputed **Network Agent** assigns each node a **role** (originator → mule → consolidation account → beneficiary), names the **network-scale typology**, and writes the narrative.
+
+**The crafted cluster does two jobs at once:**
+- **Finds** the **hidden mule** single-alert triage *correctly dismissed* — alone it looked benign; the network adds the cross-account evidence triage never had.
+- **Clears** the **benign neighbour** that legitimately pays the same beneficiary — it discriminates, doesn't colour everyone red (the Verifier philosophy, extended to networks).
+
+**The honest line (pre-empts the recall attack — pairs with Slide 9):**
+> Account-level triage has a **recall ceiling only link-analysis breaks** — one account spreading laundering across a network is invisible until you see the network. Demo-data only; **changes no measured number** — a talking point, not a fabricated "network-improved recall."
+
+**Demo placement:** a new **beat 3.5**, right after the Verifier — depth then breadth. The Verifier catches a wrong call on *one* alert; the network catches the hidden mule *across* alerts, then clears the benign one.
+
+> **Use this as the visual for the Roadmap slide (11+12+13 block in the cut list).** In the 7-min video it's the headline roadmap tease ("we said this was next"); in the final round it's a live demo beat that pays it off.
+
+*No external stat → no citation (roadmap capability + our own pipeline output).*
+
+---
+
 ## 7-MINUTE VIDEO — CUT LIST  *(14→17 slides can't all be narrated; this is the budget)*
 
 Target: **~3:15 pitch slides + ~3:30 live demo + ~0:15 close.** Roles:
