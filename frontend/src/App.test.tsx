@@ -15,6 +15,11 @@ describe('App (smoke)', () => {
     // Queue items arrive asynchronously from the mock api.
     expect(await screen.findByText('Tan Wei Ming')).toBeTruthy()
 
+    // The Queue Agent's Shift Briefing renders (ADR-0010)...
+    expect(await screen.findByText(/overnight run/i)).toBeTruthy()
+    // ...and the default needsReview lane hides an auto-cleared alert until you switch lanes.
+    expect(screen.queryByText('Priya Nair')).toBeNull()
+
     // Nothing selected yet -> the empty-state prompt is shown.
     expect(screen.getByText(/choose an alert from the queue/i)).toBeTruthy()
   })

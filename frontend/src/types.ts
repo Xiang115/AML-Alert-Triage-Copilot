@@ -5,6 +5,8 @@ export type Direction = 'inbound' | 'outbound'
 export type Recommendation = 'escalate' | 'dismiss'
 export type VerifierStatus = 'agreed' | 'flagged'
 export type DecisionAction = 'approve' | 'override'
+// The Queue Agent's routing lane (ADR-0010): an alert it auto-dismissed, or one a human must handle.
+export type Routing = 'autoCleared' | 'needsReview'
 
 export interface Account {
   accountId: string
@@ -96,6 +98,19 @@ export interface Alert {
   transactionIds: string[]
   triage: TriageResult
   transactions: Transaction[] | null
+  // Queue Agent routing lane (ADR-0010). Optional: a pre-Queue-Agent record carries none.
+  routing?: Routing | null
+}
+
+// The Queue Agent's precomputed overnight-run summary (ADR-0010), shown on queue open.
+export interface ShiftBriefing {
+  generatedAt: string
+  processed: number
+  autoCleared: number
+  needsReview: number
+  escalations: number
+  flagged: number
+  summary: string
 }
 
 export interface ConfusionMatrix {
@@ -116,6 +131,10 @@ export interface Metrics {
   confusionMatrix: ConfusionMatrix
   avgReviewTimeBaselineMin: number
   avgReviewTimeWithCopilotMin: number
+  // Queue Agent autonomy on the held-out slice (ADR-0010). Optional: a pre-Queue-Agent
+  // metrics.json predates them.
+  autoClearedShare?: number | null
+  autoClearPrecision?: number | null
 }
 
 export interface SubmissionAck {
@@ -127,7 +146,7 @@ export interface SubmissionAck {
 
 export interface AuditEntry {
   alertId: string
-  event: 'decision' | 'submission'
+  event: 'decision' | 'submission' | 'autoClear'
   at: string
   action?: DecisionAction | null
   aiRecommendation?: Recommendation | null

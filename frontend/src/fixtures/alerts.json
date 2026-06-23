@@ -124,11 +124,12 @@
           "No funds retained; activity inconsistent with stated account purpose and lacking apparent economic rationale.",
           "Account recently opened (2026-04-20) with minimal prior activity, matching pass-through typology."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:33:38.518904"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-002",
@@ -269,11 +270,12 @@
           "Minimal balance retention suggests possible pass-through or layering activity.",
           "No apparent economic purpose for immediate sweeping of card settlement proceeds to an operating account."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Pass-through / Rapid Movement call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:34:43.968654"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-003",
@@ -400,11 +402,12 @@
           "Funds received and nearly entirely sent out within hours to an individual",
           "Transaction pattern inconsistent with account's history and lacks apparent economic purpose"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Dormant-then-Active pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:35:37.527457"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-004",
@@ -525,11 +528,12 @@
           "No CDD refresh has been conducted since account opening, leaving the customer's profile and expected activity unverified.",
           "The sudden activation with a large financial throughput matches the dormant-then-active typology commonly associated with money laundering."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Dormant-then-Active call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:36:27.012411"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-005",
@@ -705,11 +709,12 @@
           "Aggregate cash inflow of RM72,200 was swiftly followed by a single outgoing transfer of RM70,000 to Sterling Overseas Trading, leaving a minimal balance.",
           "The pattern is characteristic of structuring/smurfing to circumvent CTR reporting requirements."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Structuring / Smurfing pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:37:01.399372"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-006",
@@ -899,11 +904,12 @@
           "Aggregate total of RM88,600 would have triggered a CTR if deposited at once",
           "Pattern matches structuring typology ST-01"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Structuring / Smurfing call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:37:35.916883"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-007",
@@ -986,7 +992,8 @@
       "strDraft": null,
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:37:47.473439"
-    }
+    },
+    "routing": "autoCleared"
   },
   {
     "alertId": "DQ-008",
@@ -1114,11 +1121,12 @@
           "Account opened less than one month prior, matching pass-through typology",
           "Rapid movement to a virtual-asset exchange without apparent commercial rationale"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:38:12.873795"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-009",
@@ -1306,11 +1314,12 @@
           "Business profile of a Lazada reseller typically receives consolidated payouts from the platform, not direct card payments from many individuals.",
           "No immediate outward transfer observed, but the accumulation of funds from unconnected parties raises suspicion for future fan-out."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:39:07.659561"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-010",
@@ -1465,11 +1474,12 @@
           "Absence of updated CDD despite significant activity change leaves the customer's risk unassessed.",
           "Rapid movement of nearly all received funds through layered transfers suggests potential money laundering."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified KYC Profile Mismatch pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:40:07.983276"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-011",
@@ -1554,7 +1564,8 @@
       "strDraft": null,
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:40:21.048803"
-    }
+    },
+    "routing": "autoCleared"
   },
   {
     "alertId": "DQ-012",
@@ -1757,11 +1768,12 @@
           "Minimal residual balance maintained after consolidation, characteristic of a pass-through account",
           "Transaction pattern aligns with fan-in consolidation typology commonly associated with money laundering"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:41:16.105576"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "DQ-013",
@@ -1846,7 +1858,8 @@
       "strDraft": null,
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:41:54.992805"
-    }
+    },
+    "routing": "autoCleared"
   },
   {
     "alertId": "HERO-001",
@@ -2073,11 +2086,12 @@
           "Transaction pattern inconsistent with personal account profile",
           "Amounts are uniform (MYR 850-900), suggesting structured layering"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:42:31.832432"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "HERO-002",
@@ -2230,11 +2244,12 @@
           "No funds retained; no spending consistent with the stated account purpose.",
           "Newly opened account (4 months) with high-value wire activity."
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:43:36.679425"
-    }
+    },
+    "routing": "needsReview"
   },
   {
     "alertId": "HERO-003",
@@ -2463,10 +2478,11 @@
           "Transaction pattern and velocity are wholly inconsistent with a personal account's expected usage",
           "Outbound transfer left a negligible remaining balance (MYR 700), consistent with a conduit account"
         ],
-        "recommendedAction": "Escalate to the Financial Intelligence and Enforcement Department (FIED)."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
       "model": "deepseek-v4-pro",
       "generatedAt": "2026-06-23T15:44:20.929174"
-    }
+    },
+    "routing": "needsReview"
   }
 ]

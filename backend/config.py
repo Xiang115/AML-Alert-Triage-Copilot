@@ -27,5 +27,9 @@ OFFLINE_LLM_TIMEOUT_SECONDS = float(os.getenv("OFFLINE_LLM_TIMEOUT_SECONDS", "18
 
 # Verifier flags / triage forces human review below this confidence (ADR-0007).
 REVIEW_THRESHOLD = float(os.getenv("REVIEW_THRESHOLD", "0.6"))
+# The Queue Agent auto-clears (dismisses) a verifier-agreed dismiss only at/above this
+# confidence (ADR-0010). Strictly above REVIEW_THRESHOLD so a flagged alert — capped just
+# below the review threshold — can never auto-clear; tune from held-out auto-clear precision.
+AUTO_CLEAR_THRESHOLD = float(os.getenv("AUTO_CLEAR_THRESHOLD", "0.85"))
 # Fixed for reproducible three-bucket split + eval sampling (ADR-0004/0005).
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))

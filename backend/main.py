@@ -27,13 +27,24 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from agents.pipeline import run_triage, run_triage_events
 from decision import resolve_str_draft
 from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
-from schemas import Alert, AuditEntry, CamelModel, Decision, Metrics, STRDraft, SubmissionAck
+from schemas import (
+    Alert,
+    AuditEntry,
+    CamelModel,
+    Decision,
+    Metrics,
+    ShiftBriefing,
+    STRDraft,
+    SubmissionAck,
+)
 
 logger = logging.getLogger("api")
 
 _DATA = Path(__file__).resolve().parent / "data"
 _RESULTS = _DATA / "results.json"
 _METRICS = _DATA / "metrics.json"
+_AUDIT_SEED = _DATA / "audit_seed.json"  # Queue Agent autoClear events (ADR-0010)
+_BRIEFING = _DATA / "shift_briefing.json"
 _GOAML_CONFIG = GoamlConfig.model_validate(
     json.loads((_DATA / "goaml_config.json").read_text(encoding="utf-8"))
 )
@@ -48,9 +59,19 @@ def _load_alerts() -> dict[str, dict]:
     return out
 
 
+def _load_audit_seed() -> list[dict]:
+    """The Queue Agent's autoClear events (ADR-0010), so /audit opens populated with the
+    autonomous overnight run instead of empty until a human acts. Missing file
+    (precompute not yet run) -> empty trail."""
+    if not _AUDIT_SEED.exists():
+        return []
+    return json.loads(_AUDIT_SEED.read_text(encoding="utf-8"))
+
+
 _ALERTS: dict[str, dict] = _load_alerts()
 _DECISIONS: dict[str, dict] = {}  # current disposition per alert (drives the export gate)
-_AUDIT_LOG: list[dict] = []  # append-only accountability trail (decisions + submissions)
+# append-only accountability trail, seeded with the Queue Agent's autonomous run (ADR-0010)
+_AUDIT_LOG: list[dict] = _load_audit_seed()
 
 
 # --- error shape: { "error": { "code", "message" } } (CLAUDE.md > API contract) ---
@@ -119,9 +140,14 @@ def _unexpected_error_handler(_request, exc: Exception):
 
 
 @app.get("/alerts")
-def list_alerts(status: str | None = None):
-    """Queue. Optional ?status= filter. Queue items omit embedded transactions."""
-    items = [a for a in _ALERTS.values() if status is None or a["status"] == status]
+def list_alerts(status: str | None = None, routing: str | None = None):
+    """Queue. Optional ?status= and ?routing= filters (the Queue Agent lanes, ADR-0010).
+    Queue items omit embedded transactions."""
+    items = [
+        a for a in _ALERTS.values()
+        if (status is None or a["status"] == status)
+        and (routing is None or a.get("routing") == routing)
+    ]
     return [{**a, "transactions": None} for a in items]
 
 
@@ -265,6 +291,16 @@ def get_audit():
     return list(reversed(_AUDIT_LOG))
 
 
+@app.get("/queue/briefing")
+def get_briefing():
+    """The Queue Agent's Shift Briefing (ADR-0010) — the precomputed overnight-run summary
+    the analyst sees on arrival. 404s in contract shape until precompute has written it."""
+    if not _BRIEFING.exists():
+        raise ApiError(404, "BRIEFING_NOT_READY", "shift_briefing.json has not been generated yet.")
+    data = json.loads(_BRIEFING.read_text(encoding="utf-8"))
+    return ShiftBriefing.model_validate(data).model_dump(by_alias=True, mode="json")
+
+
 @app.get("/metrics")
 def get_metrics():
     """Serve metrics.json (Phase 8). 404s in contract shape until that artifact exists."""
@@ -281,5 +317,5 @@ def reset():
     _ALERTS.clear()
     _ALERTS.update(_load_alerts())
     _DECISIONS.clear()
-    _AUDIT_LOG.clear()
+    _AUDIT_LOG[:] = _load_audit_seed()  # restore the autonomous seed; drop session events
     return {"status": "success", "message": "In-memory state reset from results.json."}

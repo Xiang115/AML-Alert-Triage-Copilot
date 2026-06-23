@@ -99,7 +99,7 @@ def run_triage_events(
                   + (" (capped below review threshold)" if ver.status == "flagged" else ""),
     }
 
-    str_draft = draft_str(alert, tri, card, client=client)
+    str_draft = draft_str(alert, tri, card, verifier_status=ver.status, client=client)
     yield {"type": "stage", "id": "draft", "label": "STR drafter",
            "detail": "Structured Suspicious Transaction Report drafted" if str_draft
                      else "Skipped — no report on a dismiss"}

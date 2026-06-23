@@ -3,10 +3,12 @@ import type { AlertStatus } from './types'
 import { useAlerts } from './hooks/useAlerts'
 import { useAlertDetail } from './hooks/useAlertDetail'
 import { useMetrics } from './hooks/useMetrics'
+import { useBriefing } from './hooks/useBriefing'
 import { BrandHeader } from './components/BrandHeader'
 import { TabNav } from './components/TabNav'
 import type { Tab } from './components/TabNav'
 import { AlertQueue } from './components/AlertQueue'
+import type { Lane } from './components/ShiftBriefing'
 import { MetricsSnapshot } from './components/MetricsSnapshot'
 import { AlertDetail } from './components/AlertDetail'
 import { EmptyState } from './components/EmptyState'
@@ -16,11 +18,20 @@ import { AuditView } from './components/AuditView'
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('queue')
   const [filterStatus, setFilterStatus] = useState<AlertStatus | 'all'>('all')
+  // The Queue Agent's lane (ADR-0010): default to the needsReview inbox — the worklist
+  // the agent left for the human after auto-clearing the benign noise.
+  const [laneFilter, setLaneFilter] = useState<Lane>('needsReview')
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null)
 
   const { alerts, loading: loadingList, reload: reloadList } = useAlerts(filterStatus)
   const { alert: selectedAlert, loading: loadingDetail, setAlert } = useAlertDetail(selectedAlertId)
   const metrics = useMetrics(activeTab)
+  const briefing = useBriefing()
+
+  // Apply the routing-lane filter on top of the status-fetched queue (a null routing —
+  // a pre-Queue-Agent record — counts as needsReview, the safe lane).
+  const visibleAlerts =
+    laneFilter === 'all' ? alerts : alerts.filter((a) => (a.routing ?? 'needsReview') === laneFilter)
 
   // Drop the selection if it falls out of the active filter (e.g. after a decision
   // re-filters the queue). Reacting to the fetched list is the point here.
@@ -40,12 +51,15 @@ export default function App() {
 
         {activeTab === 'queue' ? (
           <AlertQueue
-            alerts={alerts}
+            alerts={visibleAlerts}
             loading={loadingList}
             filterStatus={filterStatus}
             onFilterChange={setFilterStatus}
             selectedAlertId={selectedAlertId}
             onSelect={setSelectedAlertId}
+            briefing={briefing}
+            lane={laneFilter}
+            onLaneChange={setLaneFilter}
           />
         ) : (
           <MetricsSnapshot metrics={metrics} />

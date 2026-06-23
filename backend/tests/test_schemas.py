@@ -145,6 +145,19 @@ def test_alert_detail_round_trips_with_embedded_transactions():
     assert "str_draft" not in dumped["triage"]  # camelCase only
 
 
+def test_alert_routing_is_optional_and_round_trips():
+    # omitted -> None, so a pre-Queue-Agent results.json still validates at startup (ADR-0010)
+    assert Alert.model_validate(_camel_alert()).routing is None
+    routed = Alert.model_validate(_camel_alert(routing="autoCleared"))
+    assert routed.routing == "autoCleared"
+    assert routed.model_dump(by_alias=True)["routing"] == "autoCleared"
+
+
+def test_alert_rejects_unknown_routing_lane():
+    with pytest.raises(ValidationError):
+        Alert.model_validate(_camel_alert(routing="bogus"))
+
+
 def test_dismiss_alert_has_null_str_draft():
     payload = _camel_alert(triage=_camel_triage(recommendation="dismiss", with_str_draft=False))
     alert = Alert.model_validate(payload)

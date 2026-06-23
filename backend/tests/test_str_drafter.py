@@ -3,8 +3,22 @@
 import json
 
 from agents.knowledge_base import get_card
-from agents.str_drafter import draft_str
+from agents.str_drafter import draft_str, recommended_action
 from schemas import Alert, MatchedTypology, STRDraft, TriageOutput
+
+
+def test_recommended_action_varies_by_typology_when_verifier_agreed():
+    a = recommended_action("agreed", "Pass-through / Rapid Movement")
+    b = recommended_action("agreed", "Structuring / Smurfing")
+    assert "Pass-through / Rapid Movement" in a
+    assert "FIED" in a
+    assert a != b  # reflects the matched typology — not a hardcoded constant
+
+
+def test_recommended_action_holds_for_confirmation_when_verifier_flagged():
+    out = recommended_action("flagged", "Pass-through / Rapid Movement")
+    assert "Hold" in out  # a flagged call must not be filed without human confirmation
+    assert "Pass-through / Rapid Movement" in out
 
 
 def _alert():

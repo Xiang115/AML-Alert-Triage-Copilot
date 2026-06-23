@@ -11,8 +11,41 @@ Positive class = escalate (label Report). Definitions per ADR-0004:
                            (the "accuracy is a trap" reference point)
 """
 
-from eval.evaluate import compute_metrics, drop_error_predictions
+from eval.evaluate import auto_clear_metrics, compute_metrics, drop_error_predictions
 from schemas import Metrics
+
+
+def test_auto_cleared_share_is_fraction_of_queue_cleared():
+    # 2 of 4 scored alerts were auto-cleared by the Queue Agent (ADR-0010)
+    routings = ["autoCleared", "autoCleared", "needsReview", "needsReview"]
+    actuals = ["dismiss", "dismiss", "escalate", "dismiss"]
+    m = auto_clear_metrics(routings, actuals)
+    assert m["autoClearedShare"] == 0.5
+
+
+def test_auto_clear_precision_counts_a_missed_report_against_it():
+    # 3 auto-cleared: 2 truly benign, 1 was actually a Report (a catastrophic auto-dismiss)
+    routings = ["autoCleared", "autoCleared", "autoCleared", "needsReview"]
+    actuals = ["dismiss", "dismiss", "escalate", "escalate"]
+    m = auto_clear_metrics(routings, actuals)
+    assert m["autoClearPrecision"] == round(2 / 3, 4)
+
+
+def test_no_auto_clears_does_not_divide_by_zero():
+    # a queue where nothing met the bar — share 0, precision 0 (not a crash)
+    m = auto_clear_metrics(["needsReview", "needsReview"], ["escalate", "dismiss"])
+    assert m["autoClearedShare"] == 0.0
+    assert m["autoClearPrecision"] == 0.0
+
+
+def test_metrics_carries_auto_clear_fields():
+    # the auto-clear numbers merge into the Metrics wire contract (extra="forbid",
+    # so the schema must actually carry them) and survive validation.
+    base = compute_metrics(["dismiss"], ["dismiss"])
+    base.update(auto_clear_metrics(["autoCleared"], ["dismiss"]))  # share 1.0, precision 1.0
+    m = Metrics.model_validate(base)
+    assert m.auto_cleared_share == 1.0
+    assert m.auto_clear_precision == 1.0
 
 
 def test_all_correct_gives_perfect_accuracy():

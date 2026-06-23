@@ -54,6 +54,14 @@ def test_get_alerts_filters_by_status():
     assert all(a["status"] == "pending" for a in r.json())
 
 
+def test_get_alerts_filters_by_routing():
+    # the Queue Agent's lanes (ADR-0010): the needsReview inbox vs the auto-cleared surface
+    r = client.get("/alerts", params={"routing": "autoCleared"})
+    assert r.status_code == 200
+    data = r.json()
+    assert data and all(a["routing"] == "autoCleared" for a in data)
+
+
 # --- GET /alerts/{id} ---
 
 def test_get_alert_detail_embeds_transactions_and_triage():
@@ -251,6 +259,14 @@ def test_submission_appends_a_submission_event_to_the_audit_trail():
 
 # --- GET /audit (decision + submission audit trail) ---
 
+def test_audit_trail_opens_seeded_with_autoclear_events():
+    # the Queue Agent's overnight run populates /audit BEFORE any human acts (ADR-0010),
+    # so the trail isn't empty on a cold demo open.
+    autoclears = [e for e in client.get("/audit").json() if e["event"] == "autoClear"]
+    assert autoclears  # seeded, not empty
+    assert all(e["aiRecommendation"] == "dismiss" and e["verifierStatus"] == "agreed"
+               for e in autoclears)
+
 def test_decision_appends_audit_entry_pairing_ai_call_with_human_disposition():
     # The audit trail's whole point: record what the AI recommended next to what
     # the human decided, so an override is accountable after the fact.
@@ -290,11 +306,14 @@ def test_audit_trail_is_append_only_across_a_change_of_mind():
     assert entries[1]["finalDisposition"] == "escalate"
 
 
-def test_reset_clears_the_audit_trail():
+def test_reset_restores_the_audit_trail_to_the_autoclear_seed():
+    # reset drops session decisions/submissions but restores the Queue Agent's autoClear
+    # seed, so the trail returns to its cold-open state, not empty (ADR-0010).
     _decide("DQ-001", "approve", "escalate")
-    assert client.get("/audit").json()  # non-empty
+    assert any(e["event"] == "decision" for e in client.get("/audit").json())
     client.post("/reset")
-    assert client.get("/audit").json() == []
+    log = client.get("/audit").json()
+    assert log and all(e["event"] == "autoClear" for e in log)  # only the seed remains
 
 
 # --- POST /reset ---
@@ -304,6 +323,23 @@ def test_reset_restores_status_and_clears_decisions():
     r = client.post("/reset")
     assert r.status_code == 200 and r.json()["status"] == "success"
     assert client.get("/alerts/DQ-001").json()["status"] == "pending"  # back to source state
+
+
+# --- GET /queue/briefing (Queue Agent shift briefing) ---
+
+def test_queue_briefing_served_in_contract_shape():
+    r = client.get("/queue/briefing")
+    assert r.status_code == 200
+    b = r.json()
+    assert {"processed", "autoCleared", "needsReview", "escalations", "flagged", "summary"} <= b.keys()
+    assert b["processed"] == len(main._ALERTS)
+
+
+def test_queue_briefing_404_error_shaped_when_absent(monkeypatch):
+    monkeypatch.setattr(main, "_BRIEFING", main._DATA / "definitely_absent_briefing.json")
+    r = client.get("/queue/briefing")
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "BRIEFING_NOT_READY"
 
 
 # --- GET /metrics ---
