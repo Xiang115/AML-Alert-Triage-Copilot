@@ -22,6 +22,19 @@ from schemas import (
 )
 
 _REPORTING_INSTITUTION = "Demo Bank Berhad"
+_FIED = "the Financial Intelligence and Enforcement Department (FIED)"
+
+
+def recommended_action(verifier_status: str, typology_name: str) -> str:
+    """The STR's recommended next step (ADR-0006), derived from the call's signals rather
+    than a fixed string: a verifier flag means a human must confirm the pattern before the
+    bank files; otherwise it names the matched typology so the action reads case-specific."""
+    if verifier_status == "flagged":
+        return (
+            f"Hold for analyst confirmation before filing — the verifier flagged this "
+            f"{typology_name} call; escalate to {_FIED} only once the pattern is substantiated."
+        )
+    return f"File an STR with {_FIED} for the identified {typology_name} pattern."
 
 _SYSTEM = (
     "You are drafting a Suspicious Transaction Report for an AML analyst. Write only the narrative. "
@@ -57,8 +70,8 @@ def _cited(alert: AlertInput, ids: list[str]) -> list[CitedTransaction]:
     return out
 
 
-def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard, *, client=None,
-              model: str | None = None) -> STRDraft | None:
+def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard, *,
+              verifier_status: str = "agreed", client=None, model: str | None = None) -> STRDraft | None:
     if triage_result.recommendation != "escalate":
         return None
 
@@ -93,5 +106,5 @@ def draft_str(alert: AlertInput, triage_result: TriageOutput, card: TypologyCard
         activity_summary=narrative.activity_summary,
         cited_transactions=cited,
         grounds_for_suspicion=narrative.grounds_for_suspicion,
-        recommended_action="Escalate to the Financial Intelligence and Enforcement Department (FIED).",
+        recommended_action=recommended_action(verifier_status, triage_result.matched_typology.name),
     )

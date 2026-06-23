@@ -1,7 +1,7 @@
 // API client. Defaults to MOCK mode (reads fixtures) so the console builds
 // without the backend running. Set VITE_MOCK=false to hit the live API.
 
-import type { Alert, AlertStatus, AuditEntry, Metrics, SubmissionAck, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
+import type { Alert, AlertStatus, AuditEntry, Metrics, ShiftBriefing, SubmissionAck, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
 import { resolveStrDraft } from './decision'
 import alertsFixture from './fixtures/alerts.json'
 import metricsFixture from './fixtures/metrics.json'
@@ -10,6 +10,20 @@ import metricsFixture from './fixtures/metrics.json'
 const mockAlerts: Alert[] = [...(alertsFixture as unknown as Alert[])]
 // Append-only audit trail for mock mode (mirrors the backend _AUDIT_LOG).
 const mockAudit: AuditEntry[] = []
+
+// Seed the mock trail with the Queue Agent's autoClear events, so /audit opens populated
+// in mock mode exactly like the backend audit seed (ADR-0010). Pushed first (oldest); a
+// later getAudit() reverses to newest-first.
+const QUEUE_AGENT_RUN_AT = '2026-06-23T06:00:00'
+for (const a of mockAlerts) {
+  if (a.routing === 'autoCleared') {
+    mockAudit.push({
+      alertId: a.alertId, event: 'autoClear', at: QUEUE_AGENT_RUN_AT,
+      aiRecommendation: a.triage.recommendation, confidence: a.triage.confidence,
+      verifierStatus: a.triage.verifier.status,
+    })
+  }
+}
 
 // Demo-stable FIU ref, mirroring backend goaml.submission_reference.
 function mockSubmissionRef(alertId: string): string {
@@ -148,5 +162,28 @@ export async function getMetrics(): Promise<Metrics> {
   if (MOCK) return metricsFixture as Metrics
   const r = await fetch(new URL('/metrics', BASE))
   if (!r.ok) throw new Error(`GET /metrics ${r.status}`)
+  return r.json()
+}
+
+// The Queue Agent's Shift Briefing (ADR-0010) — the overnight-run summary on queue open.
+// Mock mode derives it from the fixture routing, mirroring the backend build_shift_briefing.
+export async function getBriefing(): Promise<ShiftBriefing> {
+  if (MOCK) {
+    const review = mockAlerts.filter((a) => a.routing !== 'autoCleared')
+    const autoCleared = mockAlerts.length - review.length
+    const escalations = review.filter((a) => a.triage.recommendation === 'escalate').length
+    const flagged = review.filter((a) => a.triage.verifier.status === 'flagged').length
+    return {
+      generatedAt: QUEUE_AGENT_RUN_AT,
+      processed: mockAlerts.length,
+      autoCleared,
+      needsReview: review.length,
+      escalations,
+      flagged,
+      summary: `Processed ${mockAlerts.length} alerts overnight. Auto-cleared ${autoCleared} high-confidence benign dismissals; ${review.length} need your review (${escalations} escalations to sign, ${flagged} flagged for judgment).`,
+    }
+  }
+  const r = await fetch(new URL('/queue/briefing', BASE))
+  if (!r.ok) throw new Error(`GET /queue/briefing ${r.status}`)
   return r.json()
 }

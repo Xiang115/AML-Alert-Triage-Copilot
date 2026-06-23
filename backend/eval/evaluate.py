@@ -7,13 +7,15 @@ frozen before any prompt tuning (data/holdout_alert_ids.json), so the number
 isn't memorisation.
 
 Triage reads aggregated per-alert features (real SynthAML rows are dense and
-amount-less; see ADR-0005), via render_features_evidence. One LLM call per
-sampled alert — keep the sample small. Run manually:
+amount-less; see ADR-0005), via render_features_evidence. Each alert now runs the
+full pipeline (triage → verifier → confidence → Auto-Clear Policy, ADR-0010) to
+also measure auto-clear share + precision on held-out — up to two LLM calls per
+alert (triage + the cheaper verifier), so keep the sample small. Run manually:
     python -m eval.evaluate            # default n=60
     python -m eval.evaluate --n 250    # bigger sample, more tokens
 
-Metric math (compute_metrics) is pure and unit-tested; this module's main()
-adds the data loading + live LLM run + metrics.json write.
+Metric math (compute_metrics, auto_clear_metrics) is pure and unit-tested; this
+module's main() adds the data loading + live LLM run + metrics.json write.
 """
 
 from __future__ import annotations
@@ -26,9 +28,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import config
+from agents.confidence import compute_confidence
 from agents.evidence import render_features_evidence
-from agents.knowledge_base import load_cards
-from agents.triage import triage
+from agents.knowledge_base import get_card, load_cards
+from agents.queue_agent import auto_clear_policy
+from agents.triage import NO_MATCH_CODE, triage
+from agents.verifier import verify
 from config import RANDOM_SEED
 from synthaml_loader import FEATURE_COLUMNS
 
@@ -111,6 +117,29 @@ def compute_metrics(
     }
 
 
+def auto_clear_metrics(routings: list[str], actuals: list[str]) -> dict:
+    """Auto-Clear Policy outcomes on the held-out slice (ADR-0010), pure.
+
+    autoClearedShare   = of the scored queue, the fraction the Queue Agent
+                         auto-dismissed unattended — the workload autonomy removes.
+    autoClearPrecision = of the auto-cleared alerts, the fraction truly benign
+                         (label Dismiss). The residual (1 - precision) are the
+                         auto-dismissed Reports — the catastrophic misses, reported.
+    """
+    total = len(routings)
+    cleared = [a for r, a in zip(routings, actuals) if r == "autoCleared"]
+    n_cleared = len(cleared)
+    n_benign = sum(a == "dismiss" for a in cleared)
+
+    def _safe(num: int, den: int) -> float:
+        return round(num / den, 4) if den else 0.0
+
+    return {
+        "autoClearedShare": _safe(n_cleared, total),
+        "autoClearPrecision": _safe(n_benign, n_cleared),
+    }
+
+
 def drop_error_predictions(
     predictions: list[str], actuals: list[str]
 ) -> tuple[list[str], list[str], int]:
@@ -138,22 +167,37 @@ def _stratified_sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
     return sample.sample(frac=1, random_state=seed).reset_index(drop=True)
 
 
-def _predict(row: pd.Series, cards: list[dict], cost_sensitive: bool = True) -> str:
-    """Triage one held-out alert. Retries a transient failure, then returns "error" (NOT
-    "dismiss") so a failed call is excluded from the metric instead of inflating false
-    negatives. `cost_sensitive` moves the matched-card decision toward Escalate (triage)."""
+def _predict(row: pd.Series, cards: list[dict], cost_sensitive: bool = True) -> tuple[str, str]:
+    """Run one held-out alert through the full pipeline and return (recommendation,
+    routing). Mirrors pipeline.run_triage_events: triage → (NO_MATCH short-circuit |
+    verifier → confidence) → Auto-Clear Policy (ADR-0010), so the held-out routing is
+    produced exactly as production would. Retries a transient failure, then returns
+    ("error", "error") so the row is EXCLUDED from both metrics rather than inflating
+    false negatives or fabricating auto-clears. `cost_sensitive` moves the matched-card
+    decision toward Escalate (triage)."""
     features = {c: row[c] for c in FEATURE_COLUMNS}
     evidence = render_features_evidence(features)
     for attempt in range(_MAX_PREDICT_ATTEMPTS):
         try:
-            rec = triage(
-                evidence, cards, max_tokens=_EVAL_MAX_TOKENS, cost_sensitive=cost_sensitive
-            ).recommendation
-            return rec if rec in ("escalate", "dismiss") else "dismiss"
+            tri = triage(evidence, cards, max_tokens=_EVAL_MAX_TOKENS, cost_sensitive=cost_sensitive)
+            rec = tri.recommendation if tri.recommendation in ("escalate", "dismiss") else "dismiss"
+            if tri.matched_typology.code == NO_MATCH_CODE:
+                # No card matched: a reasoned dismiss, no pattern for the verifier to challenge.
+                confidence = compute_confidence(0, 0, "dismiss", verifier_flagged=False)
+                verifier_status = "agreed"
+            else:
+                card = get_card(tri.matched_typology.code)
+                verifier_status = verify(evidence, rec, card).status
+                confidence = compute_confidence(
+                    len(tri.fired_indicators), len(card.indicators), rec,
+                    verifier_flagged=verifier_status == "flagged",
+                )
+            routing = auto_clear_policy(rec, confidence, verifier_status, config.AUTO_CLEAR_THRESHOLD)
+            return rec, routing
         except Exception:  # noqa: BLE001 — retry transient API errors, then exclude
             if attempt + 1 >= _MAX_PREDICT_ATTEMPTS:
-                return "error"
-    return "error"
+                return "error", "error"
+    return "error", "error"
 
 
 def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> None:
@@ -180,18 +224,23 @@ def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> N
     rows = [row for _, row in sample.iterrows()]
     actuals = [label_to_recommendation(row["Outcome"]) for row in rows]
 
-    predictions: list[str] = [""] * len(rows)
+    results: list[tuple[str, str]] = [("error", "error")] * len(rows)
     done = 0
     with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
         futures = {pool.submit(_predict, row, cards, cost_sensitive): i for i, row in enumerate(rows)}
         for fut in as_completed(futures):
-            predictions[futures[fut]] = fut.result()
+            results[futures[fut]] = fut.result()
             done += 1
             if done % 10 == 0 or done == len(rows):
                 print(f"  {done}/{len(rows)}", flush=True)
 
+    predictions = [rec for rec, _ in results]
+    routings = [rt for _, rt in results]
+    # Same error predicate on `predictions` in both calls keeps routings aligned with acts.
     preds, acts, n_excluded = drop_error_predictions(predictions, actuals)
+    _, kept_routings, _ = drop_error_predictions(predictions, routings)
     metrics = compute_metrics(preds, acts)
+    metrics.update(auto_clear_metrics(kept_routings, acts))
     _OUT.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print("\n================ EVALUATION (held-out, measured) ================")
     print(f"  cost-sensitive          {cost_sensitive}")
@@ -201,6 +250,8 @@ def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> N
     print(f"  recall (catch-rate)     {metrics['recall']:.1%}")
     print(f"  precision               {metrics['precision']:.1%}")
     print(f"  falsePositiveReduction  {metrics['falsePositiveReduction']:.1%}")
+    print(f"  autoClearedShare        {metrics['autoClearedShare']:.1%}  (queue handled unattended)")
+    print(f"  autoClearPrecision      {metrics['autoClearPrecision']:.1%}  (of auto-cleared, truly benign)")
     print(f"  confusion               {metrics['confusionMatrix']}")
     print(f"  reviewTime baseline->copilot  {_BASELINE_MIN}->{_COPILOT_MIN} min (modeled)")
     print(f"Wrote {_OUT}")

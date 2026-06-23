@@ -1,4 +1,5 @@
-import type { Alert, AlertStatus } from '../types'
+import type { Alert, AlertStatus, ShiftBriefing } from '../types'
+import { ShiftBriefingBanner, type Lane } from './ShiftBriefing'
 
 interface AlertQueueProps {
   alerts: Alert[]
@@ -7,6 +8,9 @@ interface AlertQueueProps {
   onFilterChange: (status: AlertStatus | 'all') => void
   selectedAlertId: string | null
   onSelect: (alertId: string) => void
+  briefing: ShiftBriefing | null
+  lane: Lane
+  onLaneChange: (lane: Lane) => void
 }
 
 const FILTERS = ['all', 'pending', 'approved', 'overridden'] as const
@@ -24,9 +28,15 @@ export function AlertQueue({
   onFilterChange,
   selectedAlertId,
   onSelect,
+  briefing,
+  lane,
+  onLaneChange,
 }: AlertQueueProps) {
   return (
     <>
+      {/* Queue Agent overnight run + lane filter (ADR-0010) */}
+      <ShiftBriefingBanner briefing={briefing} lane={lane} onLaneChange={onLaneChange} />
+
       {/* Filters */}
       <div className="flex gap-4 border-b border-line px-5 py-2.5">
         {FILTERS.map((status) => (
@@ -83,6 +93,9 @@ export function AlertQueue({
                         {Math.round(a.triage.confidence * 100)}%
                       </span>
                       {flagged && <span className="ml-auto font-medium text-flag">Flagged</span>}
+                      {a.routing === 'autoCleared' && (
+                        <span className="ml-auto label text-verified">Auto-cleared</span>
+                      )}
                     </div>
                   </button>
                 </li>

@@ -1,0 +1,38 @@
+[
+  {
+    "alertId": "DQ-007",
+    "event": "autoClear",
+    "at": "2026-06-23T22:11:06.094270",
+    "action": null,
+    "aiRecommendation": "dismiss",
+    "finalDisposition": null,
+    "confidence": 1.0,
+    "verifierStatus": "agreed",
+    "note": null,
+    "submissionRef": null
+  },
+  {
+    "alertId": "DQ-011",
+    "event": "autoClear",
+    "at": "2026-06-23T22:11:06.094270",
+    "action": null,
+    "aiRecommendation": "dismiss",
+    "finalDisposition": null,
+    "confidence": 1.0,
+    "verifierStatus": "agreed",
+    "note": null,
+    "submissionRef": null
+  },
+  {
+    "alertId": "DQ-013",
+    "event": "autoClear",
+    "at": "2026-06-23T22:11:06.094270",
+    "action": null,
+    "aiRecommendation": "dismiss",
+    "finalDisposition": null,
+    "confidence": 1.0,
+    "verifierStatus": "agreed",
+    "note": null,
+    "submissionRef": null
+  }
+]

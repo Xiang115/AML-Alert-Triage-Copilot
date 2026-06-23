@@ -43,13 +43,48 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
           <div className="rounded-lg border border-line bg-surface p-5">
             <h3 className="text-[14px] font-semibold text-ink">Human-in-the-loop safety net</h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
-              The copilot never makes the final call. Every recommendation is reviewed by the analyst, and the
-              adversarial verifier flags low-confidence or borderline cases for mandatory human review. The
-              copilot triages a queue asynchronously and triages <em>alerts</em> — not the raw transaction
-              firehose, which the bank's monitoring system already reduces — so its value is workload removed,
-              not autonomous decisioning.
+              The copilot never makes the <em>consequential</em> call. Escalations, verifier-flagged alerts,
+              and low-confidence dismisses all route to the analyst; the Queue Agent autonomously clears only
+              the high-confidence, verifier-agreed benign noise — dismiss-only, sampled, and audited — and
+              never auto-escalates or auto-files. It triages <em>alerts</em>, not the raw transaction firehose
+              the bank's monitoring system already reduces, so its value is workload removed on the safe side,
+              with the human gate kept exactly where the regulator demands it.
             </p>
           </div>
+
+          {/* Autonomous queue agent (ADR-0010) — the two numbers paired with the honest caveat */}
+          {metrics.autoClearedShare != null && metrics.autoClearPrecision != null && (
+            <div className="rounded-lg border border-line bg-surface p-6">
+              <h3 className="text-[14px] font-semibold text-ink">Autonomous queue agent — what it clears, and what it can't</h3>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">
+                The Queue Agent works the queue unattended and auto-dismisses <strong>only</strong>{' '}
+                high-confidence, verifier-agreed benign alerts — dismiss-only, never auto-escalating or
+                auto-filing. Measured on the held-out slice:
+              </p>
+
+              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line">
+                <MiniStat
+                  label="Queue auto-cleared"
+                  value={`${(metrics.autoClearedShare * 100).toFixed(0)}%`}
+                  sub="handled unattended"
+                />
+                <MiniStat
+                  label="Auto-clear precision"
+                  value={`${(metrics.autoClearPrecision * 100).toFixed(0)}%`}
+                  sub="of auto-cleared, truly benign"
+                />
+              </div>
+
+              <p className="mt-4 text-[13px] leading-relaxed text-ink-soft">
+                Stated honestly: the remaining {((1 - metrics.autoClearPrecision) * 100).toFixed(0)}% of
+                auto-cleared alerts were in fact reportable (held-out catch-rate{' '}
+                {(metrics.recall * 100).toFixed(0)}%) — the structural recall ceiling of any single-account
+                view. That residual is contained by <strong>human sampling of the auto-cleared lane</strong>{' '}
+                and is the exact gap the <strong>Mule-Network roadmap</strong> closes with cross-account link
+                analysis. The human is never removed; the agent removes the benign noise.
+              </p>
+            </div>
+          )}
 
           {/* Held-out eval — presented honestly as a conservative floor */}
           <div className="rounded-lg border border-line bg-surface p-6">

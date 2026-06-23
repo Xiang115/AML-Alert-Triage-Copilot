@@ -161,6 +161,9 @@ class AlertInput(CamelModel):
 
 class Alert(AlertInput):
     triage: TriageResult
+    # The Queue Agent's routing lane (ADR-0010). Optional: a pre-Queue-Agent results.json
+    # and the live /triage path (which returns a bare TriageResult) carry no routing.
+    routing: Literal["autoCleared", "needsReview"] | None = None
 
 
 class Decision(CamelModel):
@@ -175,9 +178,10 @@ class Decision(CamelModel):
 class AuditEntry(CamelModel):
     """One append-only event in the accountability trail. `event` discriminates:
     a `decision` pairs the AI's call with the human disposition; a `submission`
-    records a goAML filing. Fields not relevant to the event are null."""
+    records a goAML filing; an `autoClear` records an alert the Queue Agent dismissed
+    autonomously, with no human (ADR-0010). Fields not relevant to the event are null."""
     alert_id: str
-    event: Literal["decision", "submission"]
+    event: Literal["decision", "submission", "autoClear"]
     at: datetime
     # decision events
     action: Literal["approve", "override"] | None = None
@@ -195,6 +199,20 @@ class SubmissionAck(CamelModel):
     submission_ref: str
     status: Literal["accepted"]
     submitted_at: datetime
+
+
+class ShiftBriefing(CamelModel):
+    """The Queue Agent's precomputed summary of the overnight run (ADR-0010): the banner
+    the analyst sees on arrival. Counts are deterministic; `summary` is a templated
+    narrative (LLM-enhanced later). `escalations`/`flagged` are lenses on `needsReview`
+    and may overlap."""
+    generated_at: datetime
+    processed: int
+    auto_cleared: int
+    needs_review: int
+    escalations: int
+    flagged: int
+    summary: str
 
 
 class ConfusionMatrix(CamelModel):
@@ -217,3 +235,7 @@ class Metrics(CamelModel):
     confusion_matrix: ConfusionMatrix
     avg_review_time_baseline_min: float
     avg_review_time_with_copilot_min: float
+    # Queue Agent autonomy outcomes on the held-out slice (ADR-0010). Optional: the
+    # pre-Queue-Agent metrics.json predates them and compute_metrics() omits them.
+    auto_cleared_share: float | None = None
+    auto_clear_precision: float | None = None
