@@ -7,6 +7,10 @@ interface AlertQueueProps {
   onFilterChange: (status: AlertStatus | 'all') => void
   selectedAlertId: string | null
   onSelect: (alertId: string) => void
+  /** Alert currently mid-"Analyzing…" during a demo replay (null when idle). */
+  analyzingId?: string | null
+  /** When provided, renders a ▶ Replay button that triggers the demo replay. */
+  onReplay?: () => void
 }
 
 const FILTERS = ['all', 'pending', 'approved', 'overridden'] as const
@@ -24,11 +28,13 @@ export function AlertQueue({
   onFilterChange,
   selectedAlertId,
   onSelect,
+  analyzingId,
+  onReplay,
 }: AlertQueueProps) {
   return (
     <>
       {/* Filters */}
-      <div className="flex gap-4 border-b border-line px-5 py-2.5">
+      <div className="flex items-center gap-4 border-b border-line px-5 py-2.5">
         {FILTERS.map((status) => (
           <button
             key={status}
@@ -42,6 +48,15 @@ export function AlertQueue({
             {status}
           </button>
         ))}
+        {onReplay && (
+          <button
+            onClick={onReplay}
+            title="Replay the triage queue (demo)"
+            className="ml-auto rounded border border-line px-2 py-0.5 text-[11px] font-semibold text-flag transition-colors hover:bg-paper"
+          >
+            ▶ Replay
+          </button>
+        )}
       </div>
 
       {/* List */}
@@ -75,15 +90,22 @@ export function AlertQueue({
                     <div className="mt-1 truncate text-[14px] font-medium text-ink">{a.account.holderName}</div>
                     <p className="mt-0.5 truncate text-[12px] text-ink-faint">{a.trigger}</p>
 
-                    <div className="mt-2 flex items-center gap-3 text-[12px]">
-                      <span className={`font-semibold ${escalate ? 'text-escalate' : 'text-verified'}`}>
-                        {escalate ? 'Escalate' : 'Dismiss'}
-                      </span>
-                      <span className="font-mono text-ink-faint tabular-nums">
-                        {Math.round(a.triage.confidence * 100)}%
-                      </span>
-                      {flagged && <span className="ml-auto font-medium text-flag">Flagged</span>}
-                    </div>
+                    {analyzingId === a.alertId ? (
+                      <div className="mt-2 flex items-center gap-2 text-[12px] text-ink-faint">
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-line-strong border-t-ink" />
+                        <span className="animate-pulse">Analyzing…</span>
+                      </div>
+                    ) : (
+                      <div className="mt-2 flex items-center gap-3 text-[12px]">
+                        <span className={`font-semibold ${escalate ? 'text-escalate' : 'text-verified'}`}>
+                          {escalate ? 'Escalate' : 'Dismiss'}
+                        </span>
+                        <span className="font-mono text-ink-faint tabular-nums">
+                          {Math.round(a.triage.confidence * 100)}%
+                        </span>
+                        {flagged && <span className="ml-auto font-medium text-flag">Flagged</span>}
+                      </div>
+                    )}
                   </button>
                 </li>
               )

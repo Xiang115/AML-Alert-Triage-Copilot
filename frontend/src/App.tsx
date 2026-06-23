@@ -3,6 +3,7 @@ import type { AlertStatus } from './types'
 import { useAlerts } from './hooks/useAlerts'
 import { useAlertDetail } from './hooks/useAlertDetail'
 import { useMetrics } from './hooks/useMetrics'
+import { useDemoReplay } from './hooks/useDemoReplay'
 import { BrandHeader } from './components/BrandHeader'
 import { TabNav } from './components/TabNav'
 import type { Tab } from './components/TabNav'
@@ -21,6 +22,8 @@ export default function App() {
   const { alerts, loading: loadingList, reload: reloadList } = useAlerts(filterStatus)
   const { alert: selectedAlert, loading: loadingDetail, setAlert } = useAlertDetail(selectedAlertId)
   const metrics = useMetrics(activeTab)
+  // Demo replay: streams the precomputed queue in one-by-one (no API), then opens HERO-001.
+  const replay = useDemoReplay(setSelectedAlertId)
 
   // Drop the selection if it falls out of the active filter (e.g. after a decision
   // re-filters the queue). Reacting to the fetched list is the point here.
@@ -40,15 +43,17 @@ export default function App() {
 
         {activeTab === 'queue' ? (
           <AlertQueue
-            alerts={alerts}
-            loading={loadingList}
+            alerts={replay.isReplaying ? replay.visibleAlerts : alerts}
+            loading={replay.isReplaying ? false : loadingList}
             filterStatus={filterStatus}
             onFilterChange={setFilterStatus}
             selectedAlertId={selectedAlertId}
             onSelect={setSelectedAlertId}
+            analyzingId={replay.analyzingId}
+            onReplay={() => replay.start(alerts)}
           />
         ) : (
-          <MetricsSnapshot />
+          <MetricsSnapshot metrics={metrics} />
         )}
       </aside>
 

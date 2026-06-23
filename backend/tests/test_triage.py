@@ -3,7 +3,7 @@
 import json
 
 from agents.knowledge_base import get_card
-from agents.triage import triage
+from agents.triage import _cost_sensitive_escalate, triage
 
 
 def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_client):
@@ -86,3 +86,68 @@ def test_triage_resolves_card_and_clamps_indicators(make_client):
     assert out.fired_indicators == [real_indicator]  # hallucinated one dropped
     assert out.cited_transaction_ids == ["T-1001"]
     assert out.explanation
+
+
+# --- cost-sensitive operating point (recall-oriented escalation) -------------------
+
+def test_cost_sensitive_escalate_pure():
+    # A timid dismiss on a card that fired an indicator becomes an escalate.
+    assert _cost_sensitive_escalate("dismiss", ["i1"], 1) == "escalate"
+    # No fired indicators → no fabricated escalate.
+    assert _cost_sensitive_escalate("dismiss", [], 1) == "dismiss"
+    # An already-escalate call is untouched.
+    assert _cost_sensitive_escalate("escalate", [], 1) == "escalate"
+    # Threshold respected: one fired indicator under a min of 2 stays dismiss.
+    assert _cost_sensitive_escalate("dismiss", ["i1"], 2) == "dismiss"
+
+
+def test_cost_sensitive_flips_timid_dismiss_to_escalate(make_client):
+    # Matched card + a real fired indicator + model said dismiss → cost-sensitive escalates.
+    card = get_card("PT-01")
+    real_indicator = card.indicators[0]
+    out = triage("evidence block", [card], cost_sensitive=True, client=make_client([json.dumps({
+        "matchedTypologyCode": "PT-01", "firedIndicators": [real_indicator],
+        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+    })]))
+    assert out.recommendation == "escalate"
+    assert out.fired_indicators == [real_indicator]
+
+
+def test_cost_sensitive_does_not_escalate_when_nothing_fired(make_client):
+    card = get_card("PT-01")
+    out = triage("evidence block", [card], cost_sensitive=True, client=make_client([json.dumps({
+        "matchedTypologyCode": "PT-01", "firedIndicators": [],
+        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+    })]))
+    assert out.recommendation == "dismiss"  # no fired indicators → not forced
+
+
+def test_cost_sensitive_never_escalates_no_match(make_client):
+    # NO_MATCH is always a reasoned dismiss; cost-sensitive must not fabricate a match.
+    out = triage("evidence block", [get_card("PT-01")], cost_sensitive=True,
+                 client=make_client([json.dumps({
+                     "matchedTypologyCode": "NONE", "firedIndicators": [],
+                     "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+                 })]))
+    assert out.recommendation == "dismiss"
+    assert out.matched_typology.code == "NONE"
+
+
+def test_default_is_not_cost_sensitive(make_client):
+    # Without the flag, a matched dismiss stays dismiss even with a fired indicator.
+    card = get_card("PT-01")
+    out = triage("evidence block", [card], client=make_client([json.dumps({
+        "matchedTypologyCode": "PT-01", "firedIndicators": [card.indicators[0]],
+        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+    })]))
+    assert out.recommendation == "dismiss"
+
+
+def test_cost_sensitive_note_only_in_prompt_when_enabled(make_client):
+    card = get_card("PT-01")
+    resp = json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [],
+                       "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x"})
+    on = make_client([resp]); triage("ev", [card], cost_sensitive=True, client=on)
+    off = make_client([resp]); triage("ev", [card], client=off)
+    assert "COST-SENSITIVE MODE" in on.calls[0]["messages"][0]["content"]
+    assert "COST-SENSITIVE MODE" not in off.calls[0]["messages"][0]["content"]

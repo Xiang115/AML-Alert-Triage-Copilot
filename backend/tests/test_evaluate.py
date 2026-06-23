@@ -11,7 +11,7 @@ Positive class = escalate (label Report). Definitions per ADR-0004:
                            (the "accuracy is a trap" reference point)
 """
 
-from eval.evaluate import compute_metrics
+from eval.evaluate import compute_metrics, drop_error_predictions
 from schemas import Metrics
 
 
@@ -78,3 +78,23 @@ def test_classification_rates_never_divide_by_zero():
     assert m["precision"] == 0.0
     assert m["specificity"] == 1.0  # every actual-dismiss correctly not-escalated
     assert m["baselineAccuracy"] == 1.0
+
+
+def test_drop_error_predictions_excludes_failed_calls():
+    # An "error" (failed LLM call) is missing data — excluded, not scored as a dismiss.
+    preds = ["escalate", "error", "dismiss", "error"]
+    actuals = ["escalate", "escalate", "dismiss", "dismiss"]
+    kept_p, kept_a, n_excluded = drop_error_predictions(preds, actuals)
+    assert kept_p == ["escalate", "dismiss"]
+    assert kept_a == ["escalate", "dismiss"]
+    assert n_excluded == 2
+
+
+def test_dropping_errors_does_not_manufacture_false_negatives():
+    # Old bug: the errored actual-escalate row would have been scored dismiss => a FN,
+    # tanking recall. Excluding it keeps recall honest (here: perfect on what was scored).
+    preds = ["escalate", "error"]
+    actuals = ["escalate", "escalate"]
+    kept_p, kept_a, _ = drop_error_predictions(preds, actuals)
+    m = compute_metrics(kept_p, kept_a)
+    assert m["recall"] == 1.0  # not 0.5 — the failed call isn't a false negative
