@@ -141,6 +141,34 @@ def test_live_triage_unknown_alert_returns_error_shaped_404():
     assert r.json()["error"]["code"] == "ALERT_NOT_FOUND"
 
 
+# --- GET /alerts/{id}/triage/stream (live SSE 'thinking' view) ---
+
+def test_live_triage_stream_emits_stage_events_then_result(make_client):
+    card_indicator = "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)"
+    fake = make_client([
+        json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [card_indicator],
+                    "citedTransactionIds": ["DT-1001"], "recommendation": "escalate", "explanation": "STREAM-MARKER"}),
+        json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+        json.dumps({"activitySummary": "s", "groundsForSuspicion": ["x"]}),
+    ])
+    app.dependency_overrides[get_llm_client] = lambda: fake
+
+    before = client.get("/alerts/DQ-001").json()["triage"]
+    r = client.get("/alerts/DQ-001/triage/stream")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/event-stream")
+
+    body = r.text
+    # an SSE frame per pipeline stage, in order, plus indicators and the final result
+    for stage in ("retrieve", "triage", "verifier", "confidence", "draft"):
+        assert f'"id": "{stage}"' in body
+    assert '"type": "indicator"' in body
+    assert '"type": "result"' in body
+    assert "STREAM-MARKER" in body
+    # the precomputed demo source is untouched (ADR-0003)
+    assert client.get("/alerts/DQ-001").json()["triage"] == before
+
+
 # --- GET /alerts/{id}/str.xml (goAML export) ---
 
 def _decide(alert_id, action, disposition):

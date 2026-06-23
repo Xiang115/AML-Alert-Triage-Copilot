@@ -1,22 +1,14 @@
 import { useState } from 'react'
-import { exportGoamlStr, postDecision, postTriage, submitGoamlStr } from '../api'
+import { exportGoamlStr, postDecision, submitGoamlStr } from '../api'
 import { finalDispositionFor } from '../decision'
 import type { Alert, STRDraft, SubmissionAck } from '../types'
+import { useReasoningPlayback } from '../hooks/useReasoningPlayback'
+import { useReasoningStream } from '../hooks/useReasoningStream'
 import { TriageCard } from './TriageCard'
 import { VerifierPanel } from './VerifierPanel'
 import { TransactionTable } from './TransactionTable'
 import { StrEditor } from './StrEditor'
 import { DecisionPanel } from './DecisionPanel'
-
-const LIVE_TRIAGE_STEPS = [
-  'Initializing DeepSeek LLM client...',
-  'Retrieving Typology Cards from KB...',
-  'Analyzing transactions and calculating running balance...',
-  'Triage Agent: Assessing Escalate/Dismiss recommendation...',
-  'Verifier Agent: Challenging triage call against Distinguishing Test...',
-  'STR Drafter: Generating structured Suspicious Transaction Report...',
-  'Complete!',
-]
 
 interface AlertDetailProps {
   alert: Alert
@@ -25,8 +17,6 @@ interface AlertDetailProps {
 }
 
 export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps) {
-  const [isTriaging, setIsTriaging] = useState(false)
-  const [triageStep, setTriageStep] = useState('')
   // Seeded from the draft; App remounts this component per alert (key=alertId),
   // so opening a different alert resets these without an effect.
   const [editedSummary, setEditedSummary] = useState(alert.triage.strDraft?.activitySummary ?? '')
@@ -35,29 +25,39 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
   )
   const [ack, setAck] = useState<SubmissionAck | null>(null)
 
-  // Execute Live Triage Endpoint (for Q&A WOW factor)
-  const handleLiveTriage = async () => {
-    setIsTriaging(true)
-    for (const step of LIVE_TRIAGE_STEPS) {
-      setTriageStep(step)
-      await new Promise((resolve) => setTimeout(resolve, 350))
-    }
+  // Two sources for the reasoning timeline: a precomputed replay (demo, no API) and the
+  // live SSE stream (real pipeline). Both feed the same TriageCard; live takes precedence
+  // while active. Both hooks reset on remount (App keys this component by alertId).
+  const replay = useReasoningPlayback()
+  const stream = useReasoningStream()
+  const liveActive = stream.streaming || stream.events.length > 0
+  const timeline = liveActive
+    ? { events: stream.events, revealed: stream.events.length, playing: stream.streaming }
+    : { events: replay.events, revealed: replay.revealed, playing: replay.playing }
+  const busy = stream.streaming || replay.playing
 
-    try {
-      const freshResult = await postTriage(alert.alertId)
-      setAlert({ ...alert, triage: freshResult })
-      if (freshResult.strDraft) {
-        setEditedSummary(freshResult.strDraft.activitySummary)
-        setEditedGrounds([...freshResult.strDraft.groundsForSuspicion])
-      }
-      onReloadList()
-    } catch (err) {
-      console.error(err)
-      window.alert('Triage run failed. Check backend console logs.')
-    } finally {
-      setIsTriaging(false)
-      setTriageStep('')
+  const applyFreshTriage = (triage: Alert['triage']) => {
+    setAlert({ ...alert, triage })
+    if (triage.strDraft) {
+      setEditedSummary(triage.strDraft.activitySummary)
+      setEditedGrounds([...triage.strDraft.groundsForSuspicion])
     }
+    onReloadList()
+  }
+
+  // Live triage (Q&A): stream the real pipeline's reasoning step-by-step over SSE.
+  const handleLiveTriage = () => {
+    replay.reset()
+    stream.start(alert.alertId, {
+      onResult: applyFreshTriage,
+      onError: (m) => console.warn('Live triage stream:', m),
+    })
+  }
+
+  // Demo replay: reveal the precomputed reasoning without any backend call.
+  const handleReplayReasoning = () => {
+    stream.stop()
+    replay.play(alert.triage)
   }
 
   // Handle analyst decision (Approve / Override)
@@ -128,9 +128,10 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
         <div className="col-span-7 space-y-5">
           <TriageCard
             triage={alert.triage}
-            isTriaging={isTriaging}
-            triageStep={triageStep}
+            timeline={timeline}
             onRunLive={handleLiveTriage}
+            onReplayReasoning={handleReplayReasoning}
+            busy={busy}
           />
           <VerifierPanel verifier={alert.triage.verifier} />
           <TransactionTable

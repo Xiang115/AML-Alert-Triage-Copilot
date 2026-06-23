@@ -1,13 +1,17 @@
 import type { TriageResult } from '../types'
+import type { ReasoningEvent } from '../hooks/useReasoningPlayback'
+import { ReasoningTimeline } from './ReasoningTimeline'
 
 interface TriageCardProps {
   triage: TriageResult
-  isTriaging: boolean
-  triageStep: string
+  // Reasoning timeline to render, fed by either the precomputed replay or the live stream.
+  timeline: { events: ReasoningEvent[]; revealed: number; playing: boolean }
   onRunLive: () => void
+  onReplayReasoning: () => void
+  busy: boolean
 }
 
-export function TriageCard({ triage, isTriaging, triageStep, onRunLive }: TriageCardProps) {
+export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, busy }: TriageCardProps) {
   const escalate = triage.recommendation === 'escalate'
   const pct = Math.round(triage.confidence * 100)
   const { indicators, fired } = triage.indicatorCoverage
@@ -17,21 +21,28 @@ export function TriageCard({ triage, isTriaging, triageStep, onRunLive }: Triage
     <section className="rounded-lg border border-line bg-surface p-5">
       <div className="flex items-center justify-between">
         <h3 className="label">Triage recommendation</h3>
-        <button
-          onClick={onRunLive}
-          disabled={isTriaging}
-          className="text-[12px] font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline disabled:opacity-50"
-        >
-          {isTriaging ? 'Running…' : 'Run live'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onReplayReasoning}
+            disabled={busy}
+            title="Replay the agent's reasoning step-by-step (precomputed — no API call)"
+            className="text-[12px] font-medium text-flag underline-offset-4 hover:underline disabled:opacity-50"
+          >
+            ▶ Reasoning
+          </button>
+          <button
+            onClick={onRunLive}
+            disabled={busy}
+            title="Stream the live pipeline's reasoning over SSE (real DeepSeek run)"
+            className="text-[12px] font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline disabled:opacity-50"
+          >
+            Run live
+          </button>
+        </div>
       </div>
 
-      {isTriaging ? (
-        <div className="flex flex-col items-center justify-center gap-2.5 py-10 text-center">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-line-strong border-t-ink"></div>
-          <span className="text-[13px] text-ink-soft">{triageStep}</span>
-          <span className="label">DeepSeek live session</span>
-        </div>
+      {timeline.playing || timeline.revealed > 0 ? (
+        <ReasoningTimeline events={timeline.events} revealed={timeline.revealed} playing={timeline.playing} />
       ) : (
         <>
           {/* Recommendation + confidence */}
