@@ -37,6 +37,31 @@ _SYSTEM = (
     '"recommendation" ("escalate"|"dismiss"), "explanation"}.'
 )
 
+# Cost-sensitive operating-point note (opt-in via triage(cost_sensitive=True)). In AML a
+# missed launderer (FN) costs far more than an extra review (FP), and a second-line verifier
+# + human gate review every escalation — so on borderline evidence we prefer Escalate. It is
+# appended to the otherwise-stable system prefix and stays constant across a whole eval/
+# precompute run, so DeepSeek prompt-caching still holds.
+_COST_SENSITIVE_NOTE = (
+    "COST-SENSITIVE MODE: a missed suspicious case (false negative) is far costlier than an "
+    "unnecessary review (false positive), and a second-line verifier and a human analyst review "
+    "every escalation. When the evidence is borderline or only partially matches a card, prefer "
+    "Escalate over Dismiss."
+)
+
+
+def _cost_sensitive_escalate(recommendation: str, fired: list[str], min_fired_to_escalate: int) -> str:
+    """Move the matched-card decision along the recall/false-positive frontier (ADR-0004/0007).
+
+    A timid dismiss on a card that *did* fire indicators is exactly the false negative AML can
+    least afford; the verifier + human gate absorb the extra escalations. So escalate when at
+    least `min_fired_to_escalate` indicators fired. Only the matched-card branch calls this —
+    NO_MATCH stays a reasoned dismiss; we never fabricate a typology match to escalate.
+    """
+    if recommendation == "dismiss" and len(fired) >= min_fired_to_escalate:
+        return "escalate"
+    return recommendation
+
 
 class _TriageResponse(LLMResponse):
     """The shape the Triage Agent prompt asks the model to return. `recommendation`
@@ -84,7 +109,8 @@ def _render_cards(cards: list[TypologyCard]) -> str:
 
 
 def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str | None = None,
-           max_tokens: int | None = None) -> TriageOutput:
+           max_tokens: int | None = None, cost_sensitive: bool = False,
+           min_fired_to_escalate: int = 1) -> TriageOutput:
     # Feature-evidence (eval) prompts make V4 reason harder; the caller can raise
     # max_tokens so the visible JSON isn't truncated to empty by reasoning tokens.
     extra = {"max_tokens": max_tokens} if max_tokens is not None else {}
@@ -93,6 +119,9 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
     # prefix that DeepSeek prompt-caches; only the per-alert evidence varies in the user
     # message. Keeps the big static block out of the billed/processed tokens per call.
     system = f"{_SYSTEM}\n\nCandidate typologies (match the alert to exactly one):\n{_render_cards(cards)}"
+    if cost_sensitive:
+        # Constant for the whole run, so the cached prefix is unaffected across calls.
+        system = f"{system}\n\n{_COST_SENSITIVE_NOTE}"
     parsed = complete_model(
         system,
         f"Alert evidence:\n{evidence}",
@@ -113,8 +142,11 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
         )
     card = get_card(parsed.matched_typology_code)
     fired = [i for i in parsed.fired_indicators if i in card.indicators]
+    recommendation = parsed.recommendation
+    if cost_sensitive:
+        recommendation = _cost_sensitive_escalate(recommendation, fired, min_fired_to_escalate)
     return TriageOutput(
-        recommendation=parsed.recommendation,
+        recommendation=recommendation,
         matched_typology=MatchedTypology(code=card.code, name=card.name, source=card.source),
         fired_indicators=fired,
         cited_transaction_ids=parsed.cited_transaction_ids,

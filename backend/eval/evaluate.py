@@ -39,10 +39,11 @@ _ALERTS = _DATA / "synthaml" / "synthetic_alerts.csv"
 _OUT = _DATA / "metrics.json"
 
 # Modeled time numbers (ADR-0004): illustrative, NOT measured — never present as a
-# sourced fact. 14.0 min baseline is a conservative midpoint of published AML
-# first-pass alert-review estimates (industry operational estimates put a Level-1
-# review at ~5-20 min/alert). 4.5 min is a conservative modeled with-copilot
-# estimate. Time-saved is shown as illustrative, anchored to that cited range.
+# sourced fact. 14.0 min baseline is anchored to published AML first-pass
+# alert-review estimates (Level-1 review ~5-15 min/alert; Flagright, 2026); note it
+# sits at the UPPER end of that range, so the modeled time-saved is optimistic-
+# illustrative, not conservative. 4.5 min is a modeled with-copilot estimate.
+# Time-saved is shown as illustrative, anchored to that cited range.
 _BASELINE_MIN = 14.0
 _COPILOT_MIN = 4.5
 
@@ -51,6 +52,10 @@ _COPILOT_MIN = 4.5
 # so run them through a small thread pool to cut wall-time (same token count).
 _EVAL_MAX_TOKENS = 8192
 _WORKERS = 6
+# Retry a transient API failure before giving up; a call that still fails is recorded as
+# "error" and EXCLUDED from the metric (drop_error_predictions) rather than silently scored
+# as a dismiss — the old default manufactured false negatives and deflated recall.
+_MAX_PREDICT_ATTEMPTS = 2
 
 
 def label_to_recommendation(outcome: str) -> str:
@@ -106,6 +111,21 @@ def compute_metrics(
     }
 
 
+def drop_error_predictions(
+    predictions: list[str], actuals: list[str]
+) -> tuple[list[str], list[str], int]:
+    """Exclude failed-call ("error") rows from the metric (ADR-0004).
+
+    A failed LLM call is *missing data*, not a Dismiss decision — counting it as a dismiss
+    manufactures false negatives and deflates recall. Returns (kept_predictions,
+    kept_actuals, n_excluded). Pure: unit-tested without data or tokens.
+    """
+    kept = [(p, a) for p, a in zip(predictions, actuals) if p in ("escalate", "dismiss")]
+    preds = [p for p, _ in kept]
+    acts = [a for _, a in kept]
+    return preds, acts, len(predictions) - len(kept)
+
+
 def _stratified_sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
     """Sample n rows stratified on Outcome, preserving the reported ratio."""
     rng = np.random.RandomState(seed)
@@ -118,16 +138,25 @@ def _stratified_sample(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
     return sample.sample(frac=1, random_state=seed).reset_index(drop=True)
 
 
-def _predict(row: pd.Series, cards: list[dict]) -> str:
+def _predict(row: pd.Series, cards: list[dict], cost_sensitive: bool = True) -> str:
+    """Triage one held-out alert. Retries a transient failure, then returns "error" (NOT
+    "dismiss") so a failed call is excluded from the metric instead of inflating false
+    negatives. `cost_sensitive` moves the matched-card decision toward Escalate (triage)."""
     features = {c: row[c] for c in FEATURE_COLUMNS}
-    try:
-        rec = triage(render_features_evidence(features), cards, max_tokens=_EVAL_MAX_TOKENS).recommendation
-        return rec if rec in ("escalate", "dismiss") else "dismiss"
-    except Exception:  # noqa: BLE001 — rare hard failure; conservative default
-        return "dismiss"
+    evidence = render_features_evidence(features)
+    for attempt in range(_MAX_PREDICT_ATTEMPTS):
+        try:
+            rec = triage(
+                evidence, cards, max_tokens=_EVAL_MAX_TOKENS, cost_sensitive=cost_sensitive
+            ).recommendation
+            return rec if rec in ("escalate", "dismiss") else "dismiss"
+        except Exception:  # noqa: BLE001 — retry transient API errors, then exclude
+            if attempt + 1 >= _MAX_PREDICT_ATTEMPTS:
+                return "error"
+    return "error"
 
 
-def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
+def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> None:
     import llm
     llm.use_offline_timeout()  # long timeout: don't abort+retry valid slow reasoning calls
     for p in (_HOLDOUT_IDS, _FEATURES, _ALERTS):
@@ -144,7 +173,8 @@ def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
     merged = labels.merge(feats, on="AlertID")
     merged = merged[merged["AlertID"].isin(holdout)]
     sample = _stratified_sample(merged, n, seed)
-    print(f"Evaluating {len(sample)} held-out alerts via the live triage agent (n requested={n})...")
+    print(f"Evaluating {len(sample)} held-out alerts via the live triage agent "
+          f"(n requested={n}, cost_sensitive={cost_sensitive})...")
 
     cards = load_cards()
     rows = [row for _, row in sample.iterrows()]
@@ -153,19 +183,25 @@ def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
     predictions: list[str] = [""] * len(rows)
     done = 0
     with ThreadPoolExecutor(max_workers=_WORKERS) as pool:
-        futures = {pool.submit(_predict, row, cards): i for i, row in enumerate(rows)}
+        futures = {pool.submit(_predict, row, cards, cost_sensitive): i for i, row in enumerate(rows)}
         for fut in as_completed(futures):
             predictions[futures[fut]] = fut.result()
             done += 1
             if done % 10 == 0 or done == len(rows):
                 print(f"  {done}/{len(rows)}", flush=True)
 
-    metrics = compute_metrics(predictions, actuals)
+    preds, acts, n_excluded = drop_error_predictions(predictions, actuals)
+    metrics = compute_metrics(preds, acts)
     _OUT.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print("\n================ EVALUATION (held-out, measured) ================")
-    print(f"  n (sample)              {metrics['totalAlerts']}")
+    print(f"  cost-sensitive          {cost_sensitive}")
+    print(f"  n (scored)              {metrics['totalAlerts']}  (excluded errors: {n_excluded})")
     print(f"  accuracyVsLabels        {metrics['accuracyVsLabels']:.1%}")
+    print(f"  baselineAccuracy        {metrics['baselineAccuracy']:.1%}")
+    print(f"  recall (catch-rate)     {metrics['recall']:.1%}")
+    print(f"  precision               {metrics['precision']:.1%}")
     print(f"  falsePositiveReduction  {metrics['falsePositiveReduction']:.1%}")
+    print(f"  confusion               {metrics['confusionMatrix']}")
     print(f"  reviewTime baseline->copilot  {_BASELINE_MIN}->{_COPILOT_MIN} min (modeled)")
     print(f"Wrote {_OUT}")
 
@@ -173,4 +209,7 @@ def main(n: int = 60, seed: int = RANDOM_SEED) -> None:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=60, help="stratified holdout sample size (LLM calls)")
-    main(n=ap.parse_args().n)
+    ap.add_argument("--cost-sensitive", action=argparse.BooleanOptionalAction, default=True,
+                    help="prefer Escalate on borderline matched cards (recall-oriented; default on)")
+    args = ap.parse_args()
+    main(n=args.n, cost_sensitive=args.cost_sensitive)

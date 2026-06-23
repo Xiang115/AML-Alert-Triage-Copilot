@@ -19,11 +19,11 @@ from agents.verifier import verify
 from schemas import AlertInput, IndicatorCoverage, TriageResult, Verifier
 
 
-def run_triage(alert: AlertInput, *, client=None) -> TriageResult:
+def run_triage(alert: AlertInput, *, client=None, cost_sensitive: bool = False) -> TriageResult:
     evidence = render_alert_evidence(alert)
     cards = select_cards(alert)
 
-    tri = triage(evidence, cards, client=client)
+    tri = triage(evidence, cards, client=client, cost_sensitive=cost_sensitive)
 
     if tri.matched_typology.code == NO_MATCH_CODE:
         # No typology matched → confident dismiss; no card to verify or draft against.
