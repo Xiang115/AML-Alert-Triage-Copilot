@@ -20,9 +20,9 @@ from typing import Literal
 from fastapi import Depends, FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from agents.pipeline import run_triage
+from agents.pipeline import run_triage, run_triage_events
 from decision import resolve_str_draft
 from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
 from schemas import Alert, AuditEntry, CamelModel, Decision, Metrics, STRDraft, SubmissionAck
@@ -141,6 +141,30 @@ def live_triage(alert_id: str, client=Depends(get_llm_client)):
     except Exception as e:  # noqa: BLE001 — demo resilience: replay precomputed on any failure
         logger.warning("Live triage for %s failed (%s); serving precomputed fallback.", alert_id, e)
         return alert["triage"]
+
+
+@app.get("/alerts/{alert_id}/triage/stream")
+def live_triage_stream(alert_id: str, client=Depends(get_llm_client)):
+    """LIVE pipeline run, streamed as Server-Sent Events so the UI can show the agent's
+    reasoning step-by-step as each stage actually completes (Q&A 'thinking' view). Never
+    persists. On any provider failure it emits an error event then the precomputed result,
+    so the demo still resolves (ADR-0003). Cost-sensitive, to match the served demo data."""
+    alert = _require_alert(alert_id)
+
+    def gen():
+        try:
+            for ev in run_triage_events(Alert.model_validate(alert), client=client, cost_sensitive=True):
+                if ev["type"] == "result":
+                    payload = {"type": "result", "triage": ev["triage"].model_dump(by_alias=True, mode="json")}
+                else:
+                    payload = ev
+                yield f"data: {json.dumps(payload)}\n\n"
+        except Exception as e:  # noqa: BLE001 — demo resilience: fall back to precomputed
+            logger.warning("Live triage stream for %s failed (%s); serving precomputed fallback.", alert_id, e)
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Live run failed; showing the precomputed result.'})}\n\n"
+            yield f"data: {json.dumps({'type': 'result', 'triage': alert['triage']})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
 
 @app.post("/alerts/{alert_id}/decision")

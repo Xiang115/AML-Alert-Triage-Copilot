@@ -7,7 +7,7 @@ escalate) the STR narrative.
 import json
 
 from agents.knowledge_base import get_card
-from agents.pipeline import run_triage
+from agents.pipeline import run_triage, run_triage_events
 from schemas import Alert, TriageResult
 
 
@@ -63,3 +63,30 @@ def test_flag_caps_confidence_and_verifier_stays_pure(make_client):
     out = run_triage(_alert(), client=fake)
     assert out.verifier.status == "flagged"
     assert out.confidence == 0.59  # full coverage capped below the review threshold
+
+
+def test_run_triage_events_streams_stages_then_result(make_client):
+    # The streamed path yields a stage per pipeline step (with indicators one-by-one),
+    # ending in a result that matches the batch run_triage.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            _triage_json(two),
+            json.dumps({"agreesWithRecommendation": True, "note": "Clearly meets the test."}),
+            json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
+        ]
+    )
+    events = list(run_triage_events(_alert(), client=fake))
+
+    assert [e["id"] for e in events if e["type"] == "stage"] == [
+        "retrieve", "triage", "verifier", "confidence", "draft",
+    ]
+    inds = [e for e in events if e["type"] == "indicator"]
+    assert len(inds) == len(get_card("PT-01").indicators)
+    assert sum(1 for e in inds if e["fired"]) == 2
+
+    result = events[-1]
+    assert result["type"] == "result"
+    assert isinstance(result["triage"], TriageResult)
+    assert result["triage"].recommendation == "escalate"
+    assert result["triage"].confidence == 0.5
