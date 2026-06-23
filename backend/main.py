@@ -6,7 +6,9 @@ endpoint, POST /alerts/{id}/triage, re-runs the pipeline for Q&A only: it return
 a fresh result WITHOUT mutating the precomputed demo source, and falls back to the
 precomputed triage if the provider hiccups (ADR-0003).
 
-Run from /backend:  uvicorn main:app --reload
+Run from /backend:  python -m uvicorn main:app --reload
+(use `python -m uvicorn`, not bare `uvicorn` — Windows Application Control blocks the
+unsigned uvicorn.exe shim in .venv\\Scripts\\.)
 """
 
 from __future__ import annotations

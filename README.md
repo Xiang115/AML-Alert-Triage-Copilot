@@ -213,17 +213,18 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
    ```
 3. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 4. Configure your `.env` file using `.env.example` as a template:
    ```env
    DEEPSEEK_API_KEY=your_api_key_here
    DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
    ```
-5. Run the FastAPI server:
+5. Run the FastAPI server (loads `data/results.json` on startup and serves it from memory):
    ```bash
-   uvicorn main:app --reload
+   python -m uvicorn main:app --reload
    ```
+   > **Windows note:** invoke uvicorn via `python -m uvicorn …`, not the bare `uvicorn` command. Windows Application Control / Smart App Control blocks the unsigned `uvicorn.exe` shim in `.venv\Scripts\` (`"An Application Control policy has blocked this file"`); running it through `python.exe` avoids that. The same `python -m <tool>` form works for any blocked venv tool (e.g. `python -m pytest`).
 
 ### Frontend Setup
 1. Navigate to the frontend directory:
@@ -243,6 +244,7 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
    ```bash
    npm run dev
    ```
+   > With `VITE_MOCK=false` (live mode) the console calls the backend at `VITE_API_BASE`, so **start the backend first** — otherwise the queue and metrics stay empty. Set `VITE_MOCK=true` to run the UI off bundled fixtures with no backend.
 
 ### Running the Evaluation Suite
 Compute system performance metrics locally on holdout splits:
