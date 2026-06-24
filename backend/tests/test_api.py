@@ -318,6 +318,37 @@ def test_reset_restores_the_audit_trail_to_the_autoclear_seed():
     assert log and all(e["event"] in ("autoClear", "debateResolved") for e in log)
 
 
+# --- GET /audit/summary (AI–analyst agreement, session, decision-scoped) ---
+
+def test_audit_summary_starts_with_no_decisions_and_null_agreement():
+    # the seed has autoClear/debateResolved events but no human decisions yet —
+    # agreementRate must be null, never a misleading 100%.
+    s = client.get("/audit/summary").json()
+    assert s == {"decisions": 0, "approvals": 0, "overrides": 0, "agreementRate": None}
+
+
+def test_audit_summary_counts_approvals_and_overrides():
+    _decide("DQ-001", "approve", "escalate")   # agree with the AI
+    _decide("DQ-003", "override", "dismiss")    # disagree
+    _decide("DQ-005", "approve", "escalate")   # agree
+    s = client.get("/audit/summary").json()
+    assert s["decisions"] == 3
+    assert s["approvals"] == 2
+    assert s["overrides"] == 1
+    assert s["agreementRate"] == round(2 / 3, 4)
+
+
+def test_audit_summary_ignores_autoclear_and_submission_events():
+    # only human approve/override decisions count toward agreement — the seeded autoClear /
+    # debateResolved events and a goAML submission must not inflate the denominator.
+    _decide("DQ-001", "approve", "escalate")
+    client.post("/alerts/DQ-001/str/submit")  # appends a submission event
+    s = client.get("/audit/summary").json()
+    assert s["decisions"] == 1
+    assert s["approvals"] == 1
+    assert s["agreementRate"] == 1.0
+
+
 # --- POST /reset ---
 
 def test_reset_restores_status_and_clears_decisions():

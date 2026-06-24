@@ -32,6 +32,7 @@ from schemas import (
     AuditEntry,
     CamelModel,
     Decision,
+    DecisionSummary,
     Metrics,
     ShiftBriefing,
     STRDraft,
@@ -289,6 +290,24 @@ def submit_goaml_str(alert_id: str):
 def get_audit():
     """The append-only accountability trail, newest first (decisions + submissions)."""
     return list(reversed(_AUDIT_LOG))
+
+
+@app.get("/audit/summary")
+def get_audit_summary():
+    """Session AI–analyst agreement, computed from the audit log's `decision` events — the
+    authoritative record, so every client agrees (vs. a per-client tally that would drift).
+    Decision-scoped: autoClear / debateResolved / submission events never count. `agreementRate`
+    is null until a decision is made. A session-activity signal, NOT held-out performance
+    (that is /metrics) — surfaced on the audit trail, never the performance dashboard."""
+    decisions = [e for e in _AUDIT_LOG if e["event"] == "decision"]
+    approvals = sum(1 for e in decisions if e.get("action") == "approve")
+    n = len(decisions)
+    return DecisionSummary(
+        decisions=n,
+        approvals=approvals,
+        overrides=n - approvals,
+        agreement_rate=round(approvals / n, 4) if n else None,
+    ).model_dump(by_alias=True, mode="json")
 
 
 @app.get("/queue/briefing")

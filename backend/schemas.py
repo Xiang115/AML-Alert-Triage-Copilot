@@ -239,6 +239,18 @@ class SubmissionAck(CamelModel):
     submitted_at: datetime
 
 
+class DecisionSummary(CamelModel):
+    """Session, decision-scoped AI–analyst agreement, computed from the audit log's
+    `decision` events only (autoClear/debateResolved/submission excluded). `agreementRate`
+    is `approvals / decisions`, and `None` until the first decision — never a misleading 100%.
+    Authoritative server-side so every client agrees; a session-activity signal, NOT a held-out
+    performance metric (that is `Metrics.accuracyVsLabels`)."""
+    decisions: int
+    approvals: int
+    overrides: int
+    agreement_rate: float | None = None
+
+
 class ShiftBriefing(CamelModel):
     """The Queue Agent's precomputed summary of the overnight run (ADR-0010): the banner
     the analyst sees on arrival. Counts are deterministic; `summary` is a templated

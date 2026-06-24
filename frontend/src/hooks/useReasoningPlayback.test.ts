@@ -65,6 +65,25 @@ describe('buildReasoningEvents', () => {
     expect(rev && rev.kind === 'stage' && rev.detail).toContain('the flag stands')
   })
 
+  it('inserts a grounding beat after the indicators when transactions are cited', () => {
+    const ev = buildReasoningEvents(triage({ citedTransactionIds: ['T-1', 'T-2'] }))
+    expect(ev.filter((e) => e.kind === 'stage').map((e) => (e.kind === 'stage' ? e.id : ''))).toEqual([
+      'retrieve',
+      'triage',
+      'grounding',
+      'verifier',
+      'confidence',
+      'draft',
+    ])
+    const grounding = ev.find((e) => e.kind === 'stage' && e.id === 'grounding')
+    expect(grounding && grounding.kind === 'stage' && grounding.detail).toContain('2 cited transactions verified against the account ledger')
+  })
+
+  it('omits the grounding beat when nothing is cited', () => {
+    const ev = buildReasoningEvents(triage({ citedTransactionIds: [] }))
+    expect(ev.some((e) => e.kind === 'stage' && e.id === 'grounding')).toBe(false)
+  })
+
   it('handles a no-match dismiss (no indicators, STR skipped)', () => {
     const ev = buildReasoningEvents(
       triage({

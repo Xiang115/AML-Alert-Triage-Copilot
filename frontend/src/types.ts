@@ -183,3 +183,13 @@ export interface AuditEntry {
   note?: string | null
   submissionRef?: string | null
 }
+
+// Session, decision-scoped AI–analyst agreement (GET /audit/summary). `agreementRate` is
+// null until the first decision — never a misleading 100%. Distinct from Metrics: that is
+// held-out AI-vs-ground-truth; this is live AI-vs-human session activity.
+export interface DecisionSummary {
+  decisions: number
+  approvals: number
+  overrides: number
+  agreementRate: number | null
+}

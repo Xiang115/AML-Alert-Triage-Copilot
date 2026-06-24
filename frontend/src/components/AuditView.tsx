@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { AuditEntry } from '../types'
-import { getAudit } from '../api'
+import type { AuditEntry, DecisionSummary } from '../types'
+import { getAudit, getAuditSummary } from '../api'
 import { Badge } from './ui/Badge'
 
 // The accountability record: every analyst decision and goAML filing, newest first.
@@ -8,12 +8,13 @@ import { Badge } from './ui/Badge'
 // records the FIU reference the STR was filed under.
 export function AuditView() {
   const [entries, setEntries] = useState<AuditEntry[]>([])
+  const [summary, setSummary] = useState<DecisionSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
-    getAudit()
-      .then((e) => active && setEntries(e))
+    Promise.all([getAudit(), getAuditSummary()])
+      .then(([e, s]) => { if (active) { setEntries(e); setSummary(s) } })
       .catch((err) => console.error(err))
       .finally(() => active && setLoading(false))
     return () => { active = false }
@@ -25,6 +26,23 @@ export function AuditView() {
       <p className="mt-1 text-[13px] text-ink-soft">
         Every Queue Agent auto-clear, adversarial debate, analyst decision, and goAML filing, newest first — the accountability record a regulator can replay.
       </p>
+
+      {/* Session AI–analyst agreement (GET /audit/summary): live this-session activity, NOT a
+          held-out performance metric — appears only once the analyst has actually decided. */}
+      {summary && summary.decisions > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1.5 rounded-lg border border-line bg-surface px-4 py-3">
+          <span className="label">This session</span>
+          <SummaryStat label="decisions" value={summary.decisions} />
+          <SummaryStat label="approved" value={summary.approvals} />
+          <SummaryStat label="overrides" value={summary.overrides} />
+          <span className="ml-auto text-[13px]">
+            <span className="text-ink-soft">AI–analyst agreement </span>
+            <span className="font-mono font-semibold tabular-nums text-ink">
+              {summary.agreementRate === null ? '—' : `${Math.round(summary.agreementRate * 100)}%`}
+            </span>
+          </span>
+        </div>
+      )}
 
       {loading ? (
         <p className="mt-6 text-[13px] text-ink-faint">Loading…</p>
@@ -92,5 +110,14 @@ export function AuditView() {
         </table>
       )}
     </div>
+  )
+}
+
+function SummaryStat({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="text-[13px]">
+      <span className="font-mono font-semibold tabular-nums text-ink">{value}</span>
+      <span className="ml-1 text-ink-soft">{label}</span>
+    </span>
   )
 }

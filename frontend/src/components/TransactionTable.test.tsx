@@ -46,6 +46,22 @@ describe('TransactionTable', () => {
     expect(balanceSpans[1].className).toContain('text-escalate') // draining
   })
 
+  it('shows a "verified against source ledger" badge with the cited count', () => {
+    const transactions = [txn({ transactionId: 'T-1' }), txn({ transactionId: 'T-2' })]
+    const { container } = render(
+      <TransactionTable transactions={transactions} citedTransactionIds={['T-1', 'T-2']} />,
+    )
+    expect(container.textContent).toContain('2 verified against source ledger')
+  })
+
+  it('hides the verified badge when nothing is cited', () => {
+    const transactions = [txn({ transactionId: 'T-1' })]
+    const { container } = render(
+      <TransactionTable transactions={transactions} citedTransactionIds={[]} />,
+    )
+    expect(container.textContent).not.toContain('verified against source ledger')
+  })
+
   it('shows an empty-state row when there are no transactions', () => {
     const { container } = render(
       <TransactionTable transactions={null} citedTransactionIds={[]} />,
