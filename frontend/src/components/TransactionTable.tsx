@@ -15,7 +15,16 @@ export function TransactionTable({ transactions, citedTransactionIds }: Transact
 
   return (
     <section className="rounded-lg border border-line bg-surface p-5">
-      <h3 className="label">Transaction ledger</h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="label">Transaction ledger</h3>
+        {citedTransactionIds.length > 0 && (
+          // Citation Grounding (CONTEXT.md): every cited id is a real ledger entry. Claims
+          // provenance — that the transactions exist in the source — not that they prove guilt.
+          <span className="inline-flex items-center gap-1 rounded-full bg-verified-soft px-2.5 py-1 text-[11px] font-medium text-verified">
+            ✓ {citedTransactionIds.length} verified against source ledger
+          </span>
+        )}
+      </div>
 
       <table className="mt-3 w-full text-left text-[12px]">
         <thead>

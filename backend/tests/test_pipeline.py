@@ -133,7 +133,39 @@ def test_run_triage_events_includes_the_debate_turns(make_client):
         ]
     )
     ids = [e["id"] for e in run_triage_events(_alert(), client=fake) if e["type"] == "stage"]
-    assert ids == ["retrieve", "triage", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
+    assert ids == ["retrieve", "triage", "grounding", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
+
+
+def test_citations_are_grounded_to_the_ledger(make_client):
+    # Citation Grounding: the model cites an id that isn't in the alert's ledger; the pipeline
+    # clamps it out (provenance, not correctness) and the grounding stage reports the drop honestly.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            json.dumps(
+                {
+                    "matchedTypologyCode": "PT-01",
+                    "firedIndicators": two,
+                    "citedTransactionIds": ["T-1001", "T-9999"],  # T-9999 is not in the ledger
+                    "recommendation": "escalate",
+                    "explanation": "In then out within hours.",
+                }
+            ),
+            json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+            json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
+        ]
+    )
+    events = list(run_triage_events(_alert(), client=fake))
+    result = events[-1]["triage"]
+    # the hallucinated id is dropped — only the real ledger entry survives downstream
+    assert result.cited_transaction_ids == ["T-1001"]
+    assert result.str_draft is not None
+    assert [c.transaction_id for c in result.str_draft.cited_transactions] == ["T-1001"]
+    # the grounding stage reports it honestly
+    grounding = next(e for e in events if e["type"] == "stage" and e["id"] == "grounding")
+    assert "1 of 2" in grounding["detail"]
+    assert "1 invalid" in grounding["detail"]
+    assert "ledger" in grounding["detail"].lower()
 
 
 def test_run_triage_events_streams_stages_then_result(make_client):
@@ -150,11 +182,14 @@ def test_run_triage_events_streams_stages_then_result(make_client):
     events = list(run_triage_events(_alert(), client=fake))
 
     assert [e["id"] for e in events if e["type"] == "stage"] == [
-        "retrieve", "triage", "verifier", "confidence", "draft",
+        "retrieve", "triage", "grounding", "verifier", "confidence", "draft",
     ]
     inds = [e for e in events if e["type"] == "indicator"]
     assert len(inds) == len(get_card("PT-01").indicators)
     assert sum(1 for e in inds if e["fired"]) == 2
+    # the grounding step reports the two cited ids as verified against the ledger, no drops
+    grounding = next(e for e in events if e["type"] == "stage" and e["id"] == "grounding")
+    assert "2 cited transactions verified against the account ledger" in grounding["detail"]
 
     result = events[-1]
     assert result["type"] == "result"

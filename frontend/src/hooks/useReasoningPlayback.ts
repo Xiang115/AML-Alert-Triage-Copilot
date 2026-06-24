@@ -37,6 +37,20 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
     ev.push({ kind: 'indicator', text: ind, fired: firedSet.has(ind) })
   }
 
+  // Citation Grounding: every cited id is a real ledger entry (clamped server-side). Surface
+  // it as a reasoning beat — only when the call cited anything. The precomputed citations are
+  // all valid, so this mirrors the live grounding stage's "all verified, none dropped" case.
+  const citedCount = t.citedTransactionIds.length
+  if (citedCount > 0) {
+    ev.push({
+      kind: 'stage',
+      id: 'grounding',
+      label: 'Grounding citations against the source ledger',
+      detail: `${citedCount} cited transaction${citedCount === 1 ? '' : 's'} verified against the account ledger`,
+      tone: 'verified',
+    })
+  }
+
   ev.push({
     kind: 'stage',
     id: 'verifier',

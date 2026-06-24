@@ -1,7 +1,7 @@
 // API client. Defaults to MOCK mode (reads fixtures) so the console builds
 // without the backend running. Set VITE_MOCK=false to hit the live API.
 
-import type { Alert, AlertStatus, AuditEntry, Metrics, ShiftBriefing, SubmissionAck, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
+import type { Alert, AlertStatus, AuditEntry, DecisionSummary, Metrics, ShiftBriefing, SubmissionAck, TriageResult, DecisionAction, Recommendation, STRDraft } from './types'
 import { resolveStrDraft } from './decision'
 import alertsFixture from './fixtures/alerts.json'
 import metricsFixture from './fixtures/metrics.json'
@@ -167,6 +167,25 @@ export async function getAudit(): Promise<AuditEntry[]> {
   if (MOCK) return [...mockAudit].reverse()
   const r = await fetch(new URL('/audit', BASE))
   if (!r.ok) throw new Error(`GET /audit ${r.status}`)
+  return r.json()
+}
+
+// Session AI–analyst agreement, computed from the authoritative audit log's decision events
+// (so every client agrees). Decision-scoped: autoClear/debateResolved/submission don't count.
+export async function getAuditSummary(): Promise<DecisionSummary> {
+  if (MOCK) {
+    const decisions = mockAudit.filter((e) => e.event === 'decision')
+    const approvals = decisions.filter((e) => e.action === 'approve').length
+    const n = decisions.length
+    return {
+      decisions: n,
+      approvals,
+      overrides: n - approvals,
+      agreementRate: n ? Math.round((approvals / n) * 10000) / 10000 : null,
+    }
+  }
+  const r = await fetch(new URL('/audit/summary', BASE))
+  if (!r.ok) throw new Error(`GET /audit/summary ${r.status}`)
   return r.json()
 }
 

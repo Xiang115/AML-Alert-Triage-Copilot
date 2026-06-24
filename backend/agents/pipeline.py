@@ -70,6 +70,16 @@ def run_triage_events(
         return
 
     card = get_card(tri.matched_typology.code)
+    # Citation Grounding: clamp the cited ids to the account's real ledger — the model
+    # cannot cite a transaction that does not exist (the txn-level analogue of clamping
+    # fired indicators to the card). Asserts provenance, not correctness.
+    valid_ids = {t.transaction_id for t in (alert.transactions or [])}
+    cited_count = len(tri.cited_transaction_ids)
+    tri = tri.model_copy(
+        update={"cited_transaction_ids": [c for c in tri.cited_transaction_ids if c in valid_ids]}
+    )
+    grounded_count = len(tri.cited_transaction_ids)
+    dropped = cited_count - grounded_count
     yield {
         "type": "stage", "id": "triage", "label": "Triage agent — assessing the call",
         "detail": f"{'Escalate' if tri.recommendation == 'escalate' else 'Dismiss'} — "
@@ -79,6 +89,19 @@ def run_triage_events(
     fired = set(tri.fired_indicators)
     for ind in card.indicators:
         yield {"type": "indicator", "text": ind, "fired": ind in fired}
+
+    # Surface the grounding as its own reasoning beat — only when the call cited anything.
+    if cited_count:
+        plural = "s" if grounded_count != 1 else ""
+        detail = (
+            f"{grounded_count} cited transaction{plural} verified against the account ledger"
+            if dropped == 0
+            else f"{grounded_count} of {cited_count} cited transactions verified against the "
+                 f"account ledger — {dropped} invalid citation{'s' if dropped != 1 else ''} dropped"
+        )
+        yield {"type": "stage", "id": "grounding",
+               "label": "Grounding citations against the source ledger",
+               "detail": detail, "tone": "verified"}
 
     ver = verify(evidence, tri.recommendation, card, client=client)
     yield {
