@@ -2,7 +2,7 @@
   {
     "alertId": "DQ-007",
     "event": "autoClear",
-    "at": "2026-06-23T22:11:06.094270",
+    "at": "2026-06-24T17:06:46.688364",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -14,7 +14,7 @@
   {
     "alertId": "DQ-011",
     "event": "autoClear",
-    "at": "2026-06-23T22:11:06.094270",
+    "at": "2026-06-24T17:06:46.688364",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -26,13 +26,25 @@
   {
     "alertId": "DQ-013",
     "event": "autoClear",
-    "at": "2026-06-23T22:11:06.094270",
+    "at": "2026-06-24T17:06:46.688364",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
     "confidence": 1.0,
     "verifierStatus": "agreed",
     "note": null,
+    "submissionRef": null
+  },
+  {
+    "alertId": "HERO-001",
+    "event": "debateResolved",
+    "at": "2026-06-24T17:06:46.688364",
+    "action": null,
+    "aiRecommendation": "escalate",
+    "finalDisposition": null,
+    "confidence": null,
+    "verifierStatus": "flagged",
+    "note": "The unrelated-sender consolidation is suggestive, but the retained balance and forwarding to an established business counterparty leave the fan-in distinguishing test unsatisfied. The flag holds \u2014 refer to a human analyst before acting.",
     "submissionRef": null
   }
 ]

@@ -307,13 +307,15 @@ def test_audit_trail_is_append_only_across_a_change_of_mind():
 
 
 def test_reset_restores_the_audit_trail_to_the_autoclear_seed():
-    # reset drops session decisions/submissions but restores the Queue Agent's autoClear
-    # seed, so the trail returns to its cold-open state, not empty (ADR-0010).
+    # reset drops session decisions/submissions but restores the Queue Agent's seed (autoClear
+    # events, ADR-0010, plus debateResolved events, ADR-0011), so the trail returns to its
+    # cold-open state, not empty.
     _decide("DQ-001", "approve", "escalate")
     assert any(e["event"] == "decision" for e in client.get("/audit").json())
     client.post("/reset")
     log = client.get("/audit").json()
-    assert log and all(e["event"] == "autoClear" for e in log)  # only the seed remains
+    # only the seed remains — no session decision/submission events
+    assert log and all(e["event"] in ("autoClear", "debateResolved") for e in log)
 
 
 # --- POST /reset ---

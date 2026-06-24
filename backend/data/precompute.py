@@ -17,7 +17,13 @@ from pathlib import Path
 
 import config
 from agents.pipeline import run_triage
-from agents.queue_agent import build_audit_seed, build_shift_briefing, narrate_briefing, stamp_routing
+from agents.queue_agent import (
+    build_audit_seed,
+    build_debate_audit_seed,
+    build_shift_briefing,
+    narrate_briefing,
+    stamp_routing,
+)
 from agents.str_drafter import recommended_action
 from schemas import Alert, AlertInput, TriageResult
 
@@ -28,17 +34,22 @@ _AUDIT_SEED = _DATA / "audit_seed.json"
 _BRIEFING = _DATA / "shift_briefing.json"
 
 
-def _run_with_retry(alert: AlertInput, client, attempts: int = 3, *,
+def _run_with_retry(alert: AlertInput, client, attempts: int = 4, *,
                     cost_sensitive: bool = False) -> TriageResult:
-    """DeepSeek V4 occasionally returns an empty body (reasoning-token starvation);
-    one llm-level retry already runs inside complete_model — add a small outer retry
-    so a single flaky response doesn't abort a multi-alert batch."""
+    """DeepSeek V4 occasionally returns an empty body (reasoning-token starvation) or a transient
+    `Connection error` mid-batch; one llm-level retry already runs inside complete_model — add an
+    outer retry with backoff so a single flaky response or brief network blip doesn't abort a long,
+    expensive multi-alert batch (no per-alert checkpoint, so one failure wastes the whole run)."""
+    import time
+
     last = None
-    for _ in range(attempts):
+    for attempt in range(attempts):
         try:
             return run_triage(alert, client=client, cost_sensitive=cost_sensitive)
         except Exception as e:  # noqa: BLE001 — surface only after exhausting retries
             last = e
+            if attempt < attempts - 1:
+                time.sleep(5 * (attempt + 1))  # 5s, 10s, 15s — ride out a brief API/network blip
     raise RuntimeError(f"run_triage failed for {alert.alert_id} after {attempts} attempts: {last}")
 
 
@@ -95,7 +106,10 @@ def _write_artifacts(results: list[dict], *, narrate: bool = False, client=None)
                 a["triage"]["verifier"]["status"], a["triage"]["matchedTypology"]["name"]
             )
     _OUT.write_text(json.dumps(routed, indent=2, ensure_ascii=False), encoding="utf-8")
-    _AUDIT_SEED.write_text(json.dumps(build_audit_seed(routed, at=at), indent=2), encoding="utf-8")
+    # The trail opens populated with the autonomous run (ADR-0010) AND every contested call
+    # resolved by an adversarial debate (ADR-0011), so /audit replays exactly what the agents did.
+    audit_seed = build_audit_seed(routed, at=at) + build_debate_audit_seed(routed, at=at)
+    _AUDIT_SEED.write_text(json.dumps(audit_seed, indent=2), encoding="utf-8")
     briefing = build_shift_briefing(routed, at=at)
     if narrate:
         try:

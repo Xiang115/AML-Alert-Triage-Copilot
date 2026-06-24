@@ -4,6 +4,7 @@ from datetime import datetime
 from agents.queue_agent import (
     auto_clear_policy,
     build_audit_seed,
+    build_debate_audit_seed,
     build_shift_briefing,
     narrate_briefing,
     route_triage,
@@ -31,6 +32,26 @@ def test_build_audit_seed_emits_one_autoclear_entry_per_cleared_alert():
     assert e.ai_recommendation == "dismiss"
     assert e.confidence == 0.95
     assert e.verifier_status == "agreed"
+
+
+def test_build_debate_audit_seed_records_each_debated_alert():
+    # ADR-0011: every alert that entered an adversarial debate writes a debateResolved entry, so the
+    # accountability trail captures the contested calls (post-debate recommendation, final verdict).
+    at = datetime(2026, 6, 23, 6, 0, 0)
+    debated = {"alertId": "C", "triage": {
+        "recommendation": "escalate", "confidence": 0.5, "verifier": {"status": "agreed"},
+        "debate": {"reverdict": {"outcome": "conceded", "dispositionChanged": True,
+                                 "note": "Triage conceded; disposition changed to escalate."}}}}
+    plain = {"alertId": "A", "triage": {"recommendation": "dismiss", "confidence": 0.95,
+                                        "verifier": {"status": "agreed"}}}
+    seed = build_debate_audit_seed([debated, plain], at=at)
+    assert len(seed) == 1  # only the debated alert
+    e = AuditEntry.model_validate(seed[0])
+    assert e.event == "debateResolved"
+    assert e.alert_id == "C"
+    assert e.ai_recommendation == "escalate"  # the post-debate recommendation
+    assert e.verifier_status == "agreed"
+    assert "conceded" in e.note
 
 
 def test_narrate_briefing_returns_llm_summary_grounded_in_counts(make_client):
@@ -74,6 +95,17 @@ def test_route_triage_reads_the_stored_triage_dict():
     assert route_triage(review, threshold=0.85) == "needsReview"
 
 
+def test_route_triage_firewalls_a_debated_alert():
+    # ADR-0011: a stored triage carrying a `debate` was contested, so it never auto-clears even
+    # when its FINAL verdict is a confident, verifier-agreed dismiss. Same verdict without a debate
+    # still clears — the firewall is the only difference.
+    debated = {"recommendation": "dismiss", "confidence": 0.95, "verifier": {"status": "agreed"},
+               "debate": {"reverdict": {"outcome": "convinced", "dispositionChanged": False}}}
+    undebated = {"recommendation": "dismiss", "confidence": 0.95, "verifier": {"status": "agreed"}}
+    assert route_triage(debated, threshold=0.85) == "needsReview"
+    assert route_triage(undebated, threshold=0.85) == "autoCleared"
+
+
 def test_auto_clear_bar_sits_above_the_review_threshold():
     # ADR-0010 safety invariant: a verifier-flagged alert is capped just below
     # REVIEW_THRESHOLD, so the auto-clear bar must sit strictly above it — a flagged
@@ -93,6 +125,13 @@ def test_escalate_is_never_auto_cleared():
 def test_verifier_flag_is_never_auto_cleared():
     # the verifier challenged the call — a human adjudicates even a high-confidence dismiss
     assert auto_clear_policy("dismiss", 0.95, "flagged", threshold=0.85) == "needsReview"
+
+
+def test_debated_alert_is_never_auto_cleared():
+    # ADR-0011 firewall: an alert that entered an adversarial debate routes to a human even when
+    # the debate resolved to a confident, verifier-agreed dismiss — we never auto-clear a contested
+    # call, so autoClearPrecision is untouched by the debate.
+    assert auto_clear_policy("dismiss", 0.95, "agreed", threshold=0.85, debated=True) == "needsReview"
 
 
 def test_low_confidence_dismiss_needs_review():

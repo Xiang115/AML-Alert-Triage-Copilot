@@ -18,6 +18,22 @@ T = TypeVar("T", bound=BaseModel)
 _client = None
 
 
+def coerce_text(v):
+    """Coerce a free-text field the model may have returned as a dict/list into readable prose.
+
+    DeepSeek (esp. flash) often answers a "reasoning" field with a structured object or a list of
+    points instead of a plain string. Rather than fail validation and burn a full retry, flatten it
+    to "key: value; key: value" / "a; b". Strings pass through unchanged. Use as a mode="before"
+    field validator on untrusted free-text fields."""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        return "; ".join(f"{k}: {coerce_text(val)}" for k, val in v.items())
+    if isinstance(v, (list, tuple)):
+        return "; ".join(coerce_text(x) for x in v)
+    return str(v)
+
+
 def _make_openai(**kwargs):
     """Seam for tests: builds the real OpenAI client (imported lazily so the
     dependency isn't required when a fake client is injected)."""

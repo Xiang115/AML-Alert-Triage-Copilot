@@ -25,6 +25,18 @@ for (const a of mockAlerts) {
   }
 }
 
+// Seed debateResolved events for contested calls (ADR-0011), mirroring the backend's
+// build_debate_audit_seed, so /audit shows every adversarial debate in mock mode too.
+for (const a of mockAlerts) {
+  if (a.triage.debate) {
+    mockAudit.push({
+      alertId: a.alertId, event: 'debateResolved', at: QUEUE_AGENT_RUN_AT,
+      aiRecommendation: a.triage.recommendation, verifierStatus: a.triage.verifier.status,
+      note: a.triage.debate.reverdict.note,
+    })
+  }
+}
+
 // Demo-stable FIU ref, mirroring backend goaml.submission_reference.
 function mockSubmissionRef(alertId: string): string {
   let h = 0

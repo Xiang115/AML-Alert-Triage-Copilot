@@ -19,9 +19,9 @@ from agents.confidence import compute_confidence
 from agents.evidence import render_alert_evidence
 from agents.knowledge_base import get_card, select_cards
 from agents.str_drafter import draft_str
-from agents.triage import NO_MATCH_CODE, triage
-from agents.verifier import verify
-from schemas import AlertInput, IndicatorCoverage, TriageResult, Verifier
+from agents.triage import NO_MATCH_CODE, rebut, triage
+from agents.verifier import challenge, re_verdict, verify
+from schemas import AlertInput, Debate, IndicatorCoverage, Reverdict, TriageResult, Verifier
 
 
 def run_triage_events(
@@ -87,32 +87,67 @@ def run_triage_events(
         "tone": "flag" if ver.status == "flagged" else "verified",
     }
 
+    # Adversarial debate (ADR-0011): only on a flagged first pass. The challenge stays un-anchored
+    # (raw evidence only, ADR-0001); Triage gets one rebuttal; a non-concede triggers a re-verdict.
+    # `recommendation` and `final_ver` are the post-debate truth that drives confidence + the STR.
+    recommendation = tri.recommendation
+    final_ver = ver
+    debate: Debate | None = None
+    if ver.status == "flagged":
+        ch = challenge(evidence, tri.recommendation, card, client=client)
+        yield {"type": "stage", "id": "challenge",
+               "label": "Adversarial debate — the verifier's challenge",
+               "detail": f"{ch.counter_hypothesis} {ch.distinguishing_test_assessment}", "tone": "flag"}
+        rb = rebut(evidence, card, ch, client=client)
+        yield {"type": "stage", "id": "rebuttal", "label": "Triage rebuttal",
+               "detail": ("Conceded — " if rb.conceded else "Defends the call — ") + rb.argument,
+               "tone": "verified" if rb.conceded else "escalate"}
+        if rb.conceded:
+            recommendation = "escalate" if tri.recommendation == "dismiss" else "dismiss"
+            rev = Reverdict(outcome="conceded", disposition_changed=True,
+                            note=f"Triage conceded the challenge; disposition changed to {recommendation}.")
+        else:
+            rev = re_verdict(evidence, tri.recommendation, card, ch, rb, client=client)
+        final_status = "flagged" if rev.outcome == "holds" else "agreed"
+        final_ver = Verifier(status=final_status, agrees_with_recommendation=final_status == "agreed",
+                             note=rev.note or ver.note)
+        debate = Debate(challenge=ch, rebuttal=rb, reverdict=rev)
+        yield {"type": "stage", "id": "reverdict", "label": "Verifier re-verdict",
+               "detail": {"holds": f"Flag holds — {rev.note}",
+                          "convinced": f"Verifier convinced; flag resolved — {rev.note}",
+                          "conceded": rev.note}[rev.outcome],
+               "tone": "flag" if rev.outcome == "holds" else "verified"}
+
+    # The disposition may have flipped — draft + confidence run off the post-debate recommendation.
+    eff_tri = tri if recommendation == tri.recommendation else tri.model_copy(
+        update={"recommendation": recommendation})
     confidence = compute_confidence(
-        len(tri.fired_indicators), len(card.indicators), tri.recommendation,
-        verifier_flagged=ver.status == "flagged",
+        len(tri.fired_indicators), len(card.indicators), recommendation,
+        verifier_flagged=final_ver.status == "flagged",
     )
     total = len(card.indicators)
     yield {
         "type": "stage", "id": "confidence",
         "label": "Computing confidence from indicator coverage",
         "detail": f"{len(tri.fired_indicators)}/{total} indicators fired → {round(confidence * 100)}%"
-                  + (" (capped below review threshold)" if ver.status == "flagged" else ""),
+                  + (" (capped below review threshold)" if final_ver.status == "flagged" else ""),
     }
 
-    str_draft = draft_str(alert, tri, card, verifier_status=ver.status, client=client)
+    str_draft = draft_str(alert, eff_tri, card, verifier_status=final_ver.status, client=client)
     yield {"type": "stage", "id": "draft", "label": "STR drafter",
            "detail": "Structured Suspicious Transaction Report drafted" if str_draft
                      else "Skipped — no report on a dismiss"}
 
     result = TriageResult(
         alert_id=alert.alert_id,
-        recommendation=tri.recommendation,
+        recommendation=recommendation,
         confidence=confidence,
         explanation=tri.explanation,
         matched_typology=tri.matched_typology,
         cited_transaction_ids=tri.cited_transaction_ids,
         indicator_coverage=IndicatorCoverage(indicators=card.indicators, fired=tri.fired_indicators),
-        verifier=ver,
+        verifier=final_ver,
+        debate=debate,
         str_draft=str_draft,
         model=config.MODEL_WORKHORSE,
         generated_at=datetime.now(),

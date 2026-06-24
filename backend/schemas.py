@@ -121,6 +121,40 @@ class STRDraft(CamelModel):
     recommended_action: str
 
 
+class Challenge(CamelModel):
+    """The Verifier's flag stated as an argument (ADR-0011): the counter-hypothesis (the
+    benign look-alike) and a point-by-point read of the evidence against the distinguishing
+    test. Produced by the un-anchored first pass, so it never sees the Triage explanation."""
+    counter_hypothesis: str
+    distinguishing_test_assessment: str
+
+
+class Rebuttal(CamelModel):
+    """Triage's single response turn (ADR-0011): defends the call against the Challenge, or
+    concedes. `conceded=True` means Triage accepted the challenge — the Disposition flips."""
+    argument: str
+    conceded: bool
+
+
+class Reverdict(CamelModel):
+    """The Verifier's final judgment after the Rebuttal (ADR-0011). `holds` keeps the flag
+    (→ needsReview); `convinced` resolves it (→ agreed, disposition unchanged); `conceded`
+    means Triage gave way (→ agreed, disposition flipped). `disposition_changed` records
+    whether escalate↔dismiss flipped."""
+    outcome: Literal["holds", "convinced", "conceded"]
+    disposition_changed: bool
+    note: str
+
+
+class Debate(CamelModel):
+    """The recorded adversarial debate (ADR-0011), present on a TriageResult only when the
+    Verifier's first pass flagged. Drives the final confidence/routing, is replayed in the
+    reasoning timeline, and firewalls the alert out of auto-clear (ADR-0010)."""
+    challenge: Challenge
+    rebuttal: Rebuttal
+    reverdict: Reverdict
+
+
 class TriageOutput(CamelModel):
     """Internal Triage Agent output. Unlike the wire `TriageResult`, it carries
     `fired_indicators` (consumed by confidence + STR drafting, never serialized)."""
@@ -140,6 +174,9 @@ class TriageResult(CamelModel):
     cited_transaction_ids: list[str]
     indicator_coverage: IndicatorCoverage
     verifier: Verifier
+    # The adversarial debate (ADR-0011): null unless the Verifier's first pass flagged. Its
+    # presence firewalls the alert out of auto-clear (ADR-0010, route_triage).
+    debate: Debate | None = None
     str_draft: STRDraft | None = None
     model: str
     generated_at: datetime
@@ -179,9 +216,10 @@ class AuditEntry(CamelModel):
     """One append-only event in the accountability trail. `event` discriminates:
     a `decision` pairs the AI's call with the human disposition; a `submission`
     records a goAML filing; an `autoClear` records an alert the Queue Agent dismissed
-    autonomously, with no human (ADR-0010). Fields not relevant to the event are null."""
+    autonomously, with no human (ADR-0010); a `debateResolved` records an alert that went
+    through an adversarial debate (ADR-0011). Fields not relevant to the event are null."""
     alert_id: str
-    event: Literal["decision", "submission", "autoClear"]
+    event: Literal["decision", "submission", "autoClear", "debateResolved"]
     at: datetime
     # decision events
     action: Literal["approve", "override"] | None = None

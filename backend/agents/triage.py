@@ -13,8 +13,8 @@ from pydantic import field_validator
 
 import config
 from agents.knowledge_base import get_card, load_cards
-from llm import complete_model
-from schemas import LLMResponse, MatchedTypology, TriageOutput, TypologyCard
+from llm import coerce_text, complete_model
+from schemas import Challenge, LLMResponse, MatchedTypology, Rebuttal, TriageOutput, TypologyCard
 
 # Sentinel: no candidate typology matched the evidence. A first-class, one-call
 # answer (recommendation = dismiss) rather than an empty code that retries until
@@ -152,3 +152,45 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
         cited_transaction_ids=parsed.cited_transaction_ids,
         explanation=parsed.explanation,
     )
+
+
+# --- Adversarial debate rebuttal (ADR-0011) ----------------------------------------
+
+_REBUT_SYSTEM = (
+    "You are the AML triage agent. A second-line verifier has FLAGGED your call and put a "
+    "counter-hypothesis to you. Re-examine the evidence honestly against the typology's "
+    "distinguishing test. Defend your call ONLY if the evidence genuinely satisfies the test; if "
+    "the verifier's benign explanation is the better fit, CONCEDE — conceding corrects the call and "
+    "is not a failure. Reply ONLY with JSON: "
+    '{"argument" (one or two sentences answering the challenge), '
+    '"conceded" (true if you accept the verifier\'s counter-hypothesis, else false)}.'
+)
+
+
+class _RebutResponse(LLMResponse):
+    argument: str
+    conceded: bool
+
+    @field_validator("argument", mode="before")
+    @classmethod
+    def _flatten(cls, v):
+        return coerce_text(v)
+
+
+def rebut(evidence: str, card: TypologyCard, challenge: Challenge, *, client=None,
+          model: str | None = None) -> Rebuttal:
+    """Triage's single response turn in the debate (ADR-0011). The only point Triage sees the
+    verifier's reasoning; it defends the call against the Challenge or concedes (which flips the
+    disposition downstream). Runs on the workhorse model."""
+    parsed = complete_model(
+        _REBUT_SYSTEM,
+        f"Typology [{card.code}] {card.name}\n"
+        f"Distinguishing test: {card.distinguishing_test}\n"
+        f"Verifier's counter-hypothesis: {challenge.counter_hypothesis}\n"
+        f"Verifier's test assessment: {challenge.distinguishing_test_assessment}\n\n"
+        f"Evidence:\n{evidence}",
+        model or config.MODEL_WORKHORSE,
+        _RebutResponse,
+        client=client,
+    )
+    return Rebuttal(argument=parsed.argument, conceded=parsed.conceded)

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-06-23T22:11:06.094270",
+  "generatedAt": "2026-06-24T17:06:46.688364",
   "processed": 16,
   "autoCleared": 3,
   "needsReview": 13,
   "escalations": 13,
   "flagged": 5,
-  "summary": "We processed 16 alerts overnight. 3 were auto-cleared as high-confidence, verifier-agreed benign dismissals, and the remaining 13 were routed to human review, with all escalations to sign and 5 flagged for judgment, leaving every uncertain call for the analyst."
+  "summary": "Processed 16 alerts overnight. Auto-cleared 3 high-confidence benign dismissals; 13 need your review (13 escalations to sign, 5 flagged for judgment)."
 }

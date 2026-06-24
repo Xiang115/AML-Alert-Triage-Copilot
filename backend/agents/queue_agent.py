@@ -20,7 +20,15 @@ def auto_clear_policy(
     confidence: float,
     verifier_status: str,
     threshold: float,
+    *,
+    debated: bool = False,
 ) -> str:
+    # Firewall (ADR-0011): an alert that entered an adversarial debate was contested, so it always
+    # routes to a human — even if the debate resolved to a confident, verifier-agreed dismiss. The
+    # Auto-Clear Policy only clears alerts the verifier agreed with on its first, independent pass,
+    # so the debate can never lower autoClearPrecision.
+    if debated:
+        return "needsReview"
     if (
         recommendation == "dismiss"
         and verifier_status == "agreed"
@@ -32,12 +40,15 @@ def auto_clear_policy(
 
 def route_triage(triage: dict, threshold: float) -> str:
     """Apply the Auto-Clear Policy to a stored (camelCase) triage dict — the adapter
-    precompute uses to stamp `routing` onto each served Alert."""
+    precompute uses to stamp `routing` onto each served Alert. A triage that carries a
+    `debate` was contested (ADR-0011), so it is firewalled to needsReview regardless of
+    its final verdict."""
     return auto_clear_policy(
         triage["recommendation"],
         triage["confidence"],
         triage["verifier"]["status"],
         threshold,
+        debated=triage.get("debate") is not None,
     )
 
 
@@ -65,6 +76,31 @@ def build_audit_seed(alerts: list[dict], *, at: datetime) -> list[dict]:
                 ai_recommendation=t["recommendation"],
                 confidence=t["confidence"],
                 verifier_status=t["verifier"]["status"],
+            ).model_dump(by_alias=True, mode="json")
+        )
+    return seed
+
+
+def build_debate_audit_seed(alerts: list[dict], *, at: datetime) -> list[dict]:
+    """The `debateResolved` audit entries for the alerts that entered an adversarial debate
+    (ADR-0011), so the accountability trail records every contested call — the post-debate
+    recommendation, the final verifier verdict, and the re-verdict note. Returns camelCase
+    AuditEntry dicts; derived only from the stored triage, so it adds no LLM cost."""
+    seed = []
+    for a in alerts:
+        t = a["triage"]
+        debate = t.get("debate")
+        if not debate:
+            continue
+        rev = debate["reverdict"]
+        seed.append(
+            AuditEntry(
+                alert_id=a["alertId"],
+                event="debateResolved",
+                at=at,
+                ai_recommendation=t["recommendation"],
+                verifier_status=t["verifier"]["status"],
+                note=rev.get("note", ""),
             ).model_dump(by_alias=True, mode="json")
         )
     return seed
