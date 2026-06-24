@@ -32,6 +32,9 @@ describe('buildReasoningEvents', () => {
     expect(inds).toHaveLength(4)
     expect(inds.filter((i) => i.kind === 'indicator' && i.fired)).toHaveLength(3)
 
+    const retrieve = ev.find((e) => e.kind === 'stage' && e.id === 'retrieve')
+    expect(retrieve && retrieve.kind === 'stage' && retrieve.label).toContain('ranking')
+
     const verifier = ev.find((e) => e.kind === 'stage' && e.id === 'verifier')
     expect(verifier && verifier.kind === 'stage' && verifier.detail).toContain('FLAGGED')
     expect(verifier && verifier.kind === 'stage' && verifier.detail).toContain('looks like a merchant')

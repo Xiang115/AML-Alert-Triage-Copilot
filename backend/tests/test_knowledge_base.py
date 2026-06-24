@@ -1,6 +1,22 @@
 import pytest
 
-from agents.knowledge_base import get_card, load_cards
+from agents.knowledge_base import get_card, load_cards, rank_cards
+
+
+def test_rank_cards_surfaces_the_matching_typology_first():
+    # trigger vocabulary maps to the card; the pre-rank must put the right candidate on top
+    assert rank_cards("Rapid in-out movement on a recently opened low-activity account")[0][0].code == "PT-01"
+    assert rank_cards("Account dormant 16 months then reactivated by a large inbound credit")[0][0].code == "DA-01"
+    assert rank_cards("Repeated cash deposits just below the CTR threshold across branches")[0][0].code == "ST-01"
+    assert rank_cards("Numerous inbound transfers from unrelated individuals consolidated then forwarded")[0][0].code == "FI-01"
+
+
+def test_rank_cards_is_recall_preserving_and_sorted_descending():
+    ranked = rank_cards("any evidence text whatsoever")
+    # the ranking never drops a candidate — every card survives (recall guarantee)
+    assert {c.code for c, _ in ranked} == {c.code for c in load_cards()}
+    scores = [s for _, s in ranked]
+    assert scores == sorted(scores, reverse=True)
 
 
 def test_load_cards_returns_the_curated_set():

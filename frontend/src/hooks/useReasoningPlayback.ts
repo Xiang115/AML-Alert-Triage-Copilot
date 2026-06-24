@@ -18,7 +18,9 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
   ev.push({
     kind: 'stage',
     id: 'retrieve',
-    label: 'Retrieving typology cards (FATF / BNM)',
+    // The live run ranks all candidates by signal overlap; the replay reconstructs from the
+    // stored result, so it frames the matched card as the strongest retrieved candidate.
+    label: 'Retrieving & ranking typology cards (FATF / BNM)',
     detail: matched
       ? `Matched ${t.matchedTypology.code} — ${t.matchedTypology.name} · ${t.matchedTypology.source}`
       : 'No candidate typology matched the evidence',

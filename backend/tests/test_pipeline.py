@@ -136,6 +136,26 @@ def test_run_triage_events_includes_the_debate_turns(make_client):
     assert ids == ["retrieve", "triage", "grounding", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
 
 
+def test_retrieve_stage_shows_the_candidate_ranking(make_client):
+    # The retrieve step now ranks candidates by signal overlap (display only — all cards still
+    # go to triage). For ALERT-001 (pass-through evidence) PT-01 should lead the ranking.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            _triage_json(two),
+            json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+            json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
+        ]
+    )
+    retrieve = next(
+        e for e in run_triage_events(_alert(), client=fake)
+        if e["type"] == "stage" and e["id"] == "retrieve"
+    )
+    assert "Ranked" in retrieve["detail"]
+    assert "PT-01" in retrieve["detail"]  # the strongest candidate is surfaced
+    assert "passed to triage" in retrieve["detail"].lower()
+
+
 def test_citations_are_grounded_to_the_ledger(make_client):
     # Citation Grounding: the model cites an id that isn't in the alert's ledger; the pipeline
     # clamps it out (provenance, not correctness) and the grounding stage reports the drop honestly.
