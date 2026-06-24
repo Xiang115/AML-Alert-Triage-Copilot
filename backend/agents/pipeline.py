@@ -17,7 +17,7 @@ from datetime import datetime
 import config
 from agents.confidence import compute_confidence
 from agents.evidence import render_alert_evidence
-from agents.knowledge_base import get_card, select_cards
+from agents.knowledge_base import get_card, rank_cards, select_cards
 from agents.str_drafter import draft_str
 from agents.triage import NO_MATCH_CODE, rebut, triage
 from agents.verifier import challenge, re_verdict, verify
@@ -32,10 +32,15 @@ def run_triage_events(
     is {"type": "result", "triage": <TriageResult>} carrying the assembled object."""
     evidence = render_alert_evidence(alert)
     cards = select_cards(alert)
+    # Cheap, deterministic relevance pre-rank for the retrieve step (display only — all cards
+    # still go to triage, so the cached prompt prefix and recall are untouched, ADR-0002).
+    ranked = rank_cards(evidence, cards)
+    top = ", ".join(f"{c.code} ({score:g})" for c, score in ranked[:3] if score > 0) or "no strong signal"
     yield {
         "type": "stage", "id": "retrieve",
-        "label": "Retrieving typology cards (FATF / BNM)",
-        "detail": f"Loaded {len(cards)} candidate typology cards",
+        "label": "Retrieving & ranking typology cards (FATF / BNM)",
+        "detail": f"Ranked {len(cards)} candidate cards by signal overlap — strongest: {top}. "
+                  f"All passed to triage to reason over.",
     }
 
     tri = triage(evidence, cards, client=client, cost_sensitive=cost_sensitive)
