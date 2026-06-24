@@ -3,7 +3,8 @@
 import json
 
 from agents.knowledge_base import get_card
-from agents.triage import _cost_sensitive_escalate, triage
+from agents.triage import _cost_sensitive_escalate, rebut, triage
+from schemas import Challenge
 
 
 def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_client):
@@ -86,6 +87,34 @@ def test_triage_resolves_card_and_clamps_indicators(make_client):
     assert out.fired_indicators == [real_indicator]  # hallucinated one dropped
     assert out.cited_transaction_ids == ["T-1001"]
     assert out.explanation
+
+
+# --- adversarial debate rebuttal (ADR-0011) ---------------------------------------
+
+def _challenge():
+    return Challenge(
+        counter_hypothesis="High-turnover retailer, not a pass-through.",
+        distinguishing_test_assessment="Funds dwell over a day, unlike a same-day sweep.",
+    )
+
+
+def test_rebut_defends_the_call(make_client):
+    out = rebut(
+        "evidence block", get_card("PT-01"), _challenge(),
+        client=make_client([json.dumps({
+            "argument": "Balance still drains to zero each cycle.", "conceded": False})]),
+    )
+    assert out.conceded is False
+    assert out.argument
+
+
+def test_rebut_can_concede(make_client):
+    out = rebut(
+        "evidence block", get_card("PT-01"), _challenge(),
+        client=make_client([json.dumps({
+            "argument": "On reflection the dwell time fits a benign sweep.", "conceded": True})]),
+    )
+    assert out.conceded is True
 
 
 # --- cost-sensitive operating point (recall-oriented escalation) -------------------

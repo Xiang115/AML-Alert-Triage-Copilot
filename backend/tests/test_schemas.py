@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from schemas import Alert, Transaction
 
 
-def _camel_triage(recommendation="escalate", with_str_draft=True):
+def _camel_triage(recommendation="escalate", with_str_draft=True, debate=None):
     typ = {"code": "PT-01", "name": "Pass-through", "source": "FATF R.20"}
     str_draft = None
     if with_str_draft:
@@ -35,7 +35,7 @@ def _camel_triage(recommendation="escalate", with_str_draft=True):
             "groundsForSuspicion": ["No economic purpose", "Balance drained to zero"],
             "recommendedAction": "Escalate to FIED",
         }
-    return {
+    result = {
         "alertId": "A1",
         "recommendation": recommendation,
         "confidence": 0.82,
@@ -48,6 +48,9 @@ def _camel_triage(recommendation="escalate", with_str_draft=True):
         "model": "deepseek",
         "generatedAt": "2026-06-01T09:00:00",
     }
+    if debate is not None:
+        result["debate"] = debate
+    return result
 
 
 def _camel_alert(**over):
@@ -156,6 +159,33 @@ def test_alert_routing_is_optional_and_round_trips():
 def test_alert_rejects_unknown_routing_lane():
     with pytest.raises(ValidationError):
         Alert.model_validate(_camel_alert(routing="bogus"))
+
+
+def test_triage_round_trips_an_adversarial_debate():
+    # ADR-0011: a flagged call carries a recorded debate (challenge -> rebuttal -> re-verdict).
+    debate = {
+        "challenge": {
+            "counterHypothesis": "High-turnover retailer, not a pass-through.",
+            "distinguishingTestAssessment": "Funds dwell over 24h, unlike a same-day sweep.",
+        },
+        "rebuttal": {"argument": "Balance still drains to zero each cycle.", "conceded": False},
+        "reverdict": {
+            "outcome": "holds",
+            "dispositionChanged": False,
+            "note": "Dwell time alone does not clear the structuring pattern.",
+        },
+    }
+    alert = Alert.model_validate(_camel_alert(triage=_camel_triage(debate=debate)))
+    assert alert.triage.debate.reverdict.outcome == "holds"
+    assert alert.triage.debate.rebuttal.conceded is False
+    dumped = alert.model_dump(by_alias=True)["triage"]["debate"]
+    assert dumped["challenge"]["counterHypothesis"].startswith("High-turnover")
+    assert "counter_hypothesis" not in dumped["challenge"]  # camelCase only
+
+
+def test_triage_debate_is_null_by_default():
+    # an agreed (un-debated) call carries no debate, so a pre-ADR-0011 results.json still validates
+    assert Alert.model_validate(_camel_alert()).triage.debate is None
 
 
 def test_dismiss_alert_has_null_str_draft():

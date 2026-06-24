@@ -41,6 +41,30 @@ describe('buildReasoningEvents', () => {
     expect(conf && conf.kind === 'stage' && conf.detail).toContain('capped')
   })
 
+  it('inserts the debate turns (challenge → rebuttal → re-verdict) after the verifier when present', () => {
+    const ev = buildReasoningEvents(
+      triage({
+        debate: {
+          challenge: { counterHypothesis: 'legitimate merchant', distinguishingTestAssessment: 'funds dwell over a day' },
+          rebuttal: { argument: 'senders are unrelated individuals', conceded: false },
+          reverdict: { outcome: 'holds', dispositionChanged: false, note: 'the flag stands — refer to a human' },
+        },
+      }),
+    )
+    expect(ev.filter((e) => e.kind === 'stage').map((e) => (e.kind === 'stage' ? e.id : ''))).toEqual([
+      'retrieve',
+      'triage',
+      'verifier',
+      'challenge',
+      'rebuttal',
+      'reverdict',
+      'confidence',
+      'draft',
+    ])
+    const rev = ev.find((e) => e.kind === 'stage' && e.id === 'reverdict')
+    expect(rev && rev.kind === 'stage' && rev.detail).toContain('the flag stands')
+  })
+
   it('handles a no-match dismiss (no indicators, STR skipped)', () => {
     const ev = buildReasoningEvents(
       triage({

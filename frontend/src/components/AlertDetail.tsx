@@ -6,6 +6,7 @@ import { useReasoningPlayback } from '../hooks/useReasoningPlayback'
 import { useReasoningStream } from '../hooks/useReasoningStream'
 import { TriageCard } from './TriageCard'
 import { VerifierPanel } from './VerifierPanel'
+import { DebatePanel } from './DebatePanel'
 import { TransactionTable } from './TransactionTable'
 import { StrEditor } from './StrEditor'
 import { DecisionPanel } from './DecisionPanel'
@@ -134,6 +135,7 @@ export function AlertDetail({ alert, setAlert, onReloadList }: AlertDetailProps)
             busy={busy}
           />
           <VerifierPanel verifier={alert.triage.verifier} />
+          {alert.triage.debate && <DebatePanel debate={alert.triage.debate} />}
           <TransactionTable
             transactions={alert.transactions}
             citedTransactionIds={alert.triage.citedTransactionIds}

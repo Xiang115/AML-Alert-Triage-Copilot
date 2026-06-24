@@ -51,18 +51,89 @@ def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     assert out.cited_transaction_ids == ["T-1001", "T-1002"]
 
 
-def test_flag_caps_confidence_and_verifier_stays_pure(make_client):
+def test_debate_holds_keeps_flag_and_caps_confidence(make_client):
+    # ADR-0011: verifier flags an escalate, triage defends (no concede), the re-verdict HOLDS →
+    # flag stands, confidence capped, disposition unchanged, and the debate is recorded.
     four = get_card("PT-01").indicators[:4]
     fake = make_client(
         [
             _triage_json(four),
             json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign sweep."}),
+            json.dumps({"counterHypothesis": "Payroll sweep.", "distinguishingTestAssessment": "Dwell > 1d."}),
+            json.dumps({"argument": "Balance drains to zero each cycle.", "conceded": False}),
+            json.dumps({"outcome": "holds", "note": "Dwell time does not clear it."}),
             json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
         ]
     )
     out = run_triage(_alert(), client=fake)
+    assert out.recommendation == "escalate"  # unchanged — flag held, no flip
     assert out.verifier.status == "flagged"
     assert out.confidence == 0.59  # full coverage capped below the review threshold
+    assert out.debate is not None
+    assert out.debate.reverdict.outcome == "holds"
+    assert out.debate.reverdict.disposition_changed is False
+    assert out.str_draft is not None  # an escalate that held still drafts an STR
+
+
+def test_debate_concede_flips_dismiss_to_escalate(make_client):
+    # ADR-0011 deepest cut: verifier flags a DISMISS, triage concedes → disposition flips to escalate,
+    # the verifier resolves to agreed, and an STR is now drafted for the saved alert.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            _triage_json(two, "dismiss"),
+            json.dumps({"agreesWithRecommendation": False, "note": "This looks like a real pass-through."}),
+            json.dumps({"counterHypothesis": "Active pass-through.", "distinguishingTestAssessment": "Same-day sweep."}),
+            json.dumps({"argument": "On reflection the same-day sweep fits the typology.", "conceded": True}),
+            json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
+        ]
+    )
+    out = run_triage(_alert(), client=fake)
+    assert out.recommendation == "escalate"  # flipped from the first-pass dismiss
+    assert out.verifier.status == "agreed"  # triage moved to the verifier's position
+    assert out.debate.reverdict.outcome == "conceded"
+    assert out.debate.reverdict.disposition_changed is True
+    assert out.str_draft is not None  # the saved alert now gets an STR
+    assert out.confidence == 0.5  # 2 of 4 coverage as an escalate, not capped (agreed)
+
+
+def test_debate_convinced_resolves_flag_without_flipping(make_client):
+    # Triage does not concede but the re-verdict is CONVINCED → flag resolves to agreed, the
+    # disposition is unchanged, and confidence is no longer capped.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            _triage_json(two, "escalate"),
+            json.dumps({"agreesWithRecommendation": False, "note": "Could be benign."}),
+            json.dumps({"counterHypothesis": "Benign retailer.", "distinguishingTestAssessment": "Maybe high turnover."}),
+            json.dumps({"argument": "Counterparties are unrelated shells.", "conceded": False}),
+            json.dumps({"outcome": "convinced", "note": "Shell counterparties settle it."}),
+            json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
+        ]
+    )
+    out = run_triage(_alert(), client=fake)
+    assert out.recommendation == "escalate"  # unchanged
+    assert out.verifier.status == "agreed"  # flag resolved by the rebuttal
+    assert out.debate.reverdict.outcome == "convinced"
+    assert out.debate.reverdict.disposition_changed is False
+    assert out.confidence == 0.5  # 2 of 4 coverage, NOT capped
+
+
+def test_run_triage_events_includes_the_debate_turns(make_client):
+    # On a flagged first pass the timeline gains three turns between verifier and confidence.
+    four = get_card("PT-01").indicators[:4]
+    fake = make_client(
+        [
+            _triage_json(four),
+            json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign sweep."}),
+            json.dumps({"counterHypothesis": "Payroll sweep.", "distinguishingTestAssessment": "Dwell > 1d."}),
+            json.dumps({"argument": "Balance drains to zero.", "conceded": False}),
+            json.dumps({"outcome": "holds", "note": "Does not clear it."}),
+            json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
+        ]
+    )
+    ids = [e["id"] for e in run_triage_events(_alert(), client=fake) if e["type"] == "stage"]
+    assert ids == ["retrieve", "triage", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
 
 
 def test_run_triage_events_streams_stages_then_result(make_client):

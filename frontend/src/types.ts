@@ -41,6 +41,31 @@ export interface Verifier {
   note: string
 }
 
+// Adversarial debate (ADR-0011): present only when the verifier's first pass flagged.
+export type ReverdictOutcome = 'holds' | 'convinced' | 'conceded'
+
+export interface Challenge {
+  counterHypothesis: string
+  distinguishingTestAssessment: string
+}
+
+export interface Rebuttal {
+  argument: string
+  conceded: boolean
+}
+
+export interface Reverdict {
+  outcome: ReverdictOutcome
+  dispositionChanged: boolean
+  note: string
+}
+
+export interface Debate {
+  challenge: Challenge
+  rebuttal: Rebuttal
+  reverdict: Reverdict
+}
+
 // The evidence behind `confidence` (ADR-0007): the matched typology's full
 // indicator set and the subset that fired. Both empty when no typology matched.
 export interface IndicatorCoverage {
@@ -83,6 +108,8 @@ export interface TriageResult {
   citedTransactionIds: string[]
   indicatorCoverage: IndicatorCoverage
   verifier: Verifier
+  // Null unless the verifier's first pass flagged and the two agents debated (ADR-0011).
+  debate?: Debate | null
   strDraft: STRDraft | null
   model: string
   generatedAt: string
@@ -146,7 +173,7 @@ export interface SubmissionAck {
 
 export interface AuditEntry {
   alertId: string
-  event: 'decision' | 'submission' | 'autoClear'
+  event: 'decision' | 'submission' | 'autoClear' | 'debateResolved'
   at: string
   action?: DecisionAction | null
   aiRecommendation?: Recommendation | null

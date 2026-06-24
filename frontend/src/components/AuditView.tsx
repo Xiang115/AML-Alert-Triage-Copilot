@@ -23,7 +23,7 @@ export function AuditView() {
     <div className="h-full overflow-y-auto bg-paper p-6">
       <h2 className="text-xl font-semibold tracking-tight text-ink">Audit trail</h2>
       <p className="mt-1 text-[13px] text-ink-soft">
-        Every Queue Agent auto-clear, analyst decision, and goAML filing, newest first — the accountability record a regulator can replay.
+        Every Queue Agent auto-clear, adversarial debate, analyst decision, and goAML filing, newest first — the accountability record a regulator can replay.
       </p>
 
       {loading ? (
@@ -51,6 +51,8 @@ export function AuditView() {
                     <Badge tone="bg-verified-soft text-verified">Filed</Badge>
                   ) : e.event === 'autoClear' ? (
                     <Badge tone="bg-verified-soft text-verified">Auto-cleared</Badge>
+                  ) : e.event === 'debateResolved' ? (
+                    <Badge tone="bg-flag-soft text-flag">Debate</Badge>
                   ) : (
                     <Badge tone="bg-paper text-ink-soft">{e.action}</Badge>
                   )}
@@ -65,6 +67,8 @@ export function AuditView() {
                     </span>
                   ) : e.event === 'autoClear' ? (
                     <span className="font-mono text-[12px] text-verified">{e.aiRecommendation} → auto</span>
+                  ) : e.event === 'debateResolved' ? (
+                    <span className="font-mono text-[12px] text-flag">{e.aiRecommendation} · debated</span>
                   ) : (
                     <span className="text-ink-faint">—</span>
                   )}
@@ -76,6 +80,8 @@ export function AuditView() {
                     <span className="text-[12px]">
                       Auto-Clear Policy · {Math.round((e.confidence ?? 0) * 100)}% · verifier {e.verifierStatus}
                     </span>
+                  ) : e.event === 'debateResolved' ? (
+                    <span className="text-[12px]">{e.note}</span>
                   ) : (
                     e.note ?? <span className="text-ink-faint">—</span>
                   )}

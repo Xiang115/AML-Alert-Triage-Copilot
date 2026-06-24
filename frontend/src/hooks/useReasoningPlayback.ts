@@ -45,6 +45,38 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
     tone: t.verifier.status === 'flagged' ? 'flag' : 'verified',
   })
 
+  // Adversarial debate (ADR-0011): present only on a flagged first pass. Mirrors the
+  // backend SSE stream so the precomputed replay and the live run show the same turns.
+  if (t.debate) {
+    const { challenge, rebuttal, reverdict } = t.debate
+    ev.push({
+      kind: 'stage',
+      id: 'challenge',
+      label: "Adversarial debate — the verifier's challenge",
+      detail: `${challenge.counterHypothesis} ${challenge.distinguishingTestAssessment}`,
+      tone: 'flag',
+    })
+    ev.push({
+      kind: 'stage',
+      id: 'rebuttal',
+      label: 'Triage rebuttal',
+      detail: `${rebuttal.conceded ? 'Conceded — ' : 'Defends the call — '}${rebuttal.argument}`,
+      tone: rebuttal.conceded ? 'verified' : 'escalate',
+    })
+    const reverdictDetail = {
+      holds: `Flag holds — ${reverdict.note}`,
+      convinced: `Verifier convinced; flag resolved — ${reverdict.note}`,
+      conceded: reverdict.note,
+    }[reverdict.outcome]
+    ev.push({
+      kind: 'stage',
+      id: 'reverdict',
+      label: 'Verifier re-verdict',
+      detail: reverdictDetail,
+      tone: reverdict.outcome === 'holds' ? 'flag' : 'verified',
+    })
+  }
+
   const total = t.indicatorCoverage.indicators.length
   const pct = Math.round(t.confidence * 100)
   ev.push({

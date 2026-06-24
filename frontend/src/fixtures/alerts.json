@@ -2010,6 +2010,21 @@
         "agreesWithRecommendation": false,
         "note": "Account shows retention of funds, partial forwarding to a business counterparty, and consistent inbound amounts, consistent with a legitimate merchant receiving customer payments rather than mule consolidation."
       },
+      "debate": {
+        "challenge": {
+          "counterHypothesis": "A legitimate merchant consolidating customer payments: funds are partly retained and forwarded to an established business counterparty, not swept out in full to an unrelated beneficiary.",
+          "distinguishingTestAssessment": "The fan-in test wants rapid, near-complete pass-through from unrelated senders to an unrelated beneficiary with the balance drained to ~0. Here the balance is retained, forwarding is partial and to a known business counterparty, and inbound amounts are consistent — so the distinguishing test is not cleanly satisfied."
+        },
+        "rebuttal": {
+          "argument": "The inbound credits come from multiple UNRELATED individuals rather than repeat, identifiable customers, and they consolidate into a single large outbound within a short window — the fan-in layering signature. Partial retention is consistent with staged forwarding, not a merchant margin.",
+          "conceded": false
+        },
+        "reverdict": {
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "The unrelated-sender consolidation is suggestive, but the retained balance and forwarding to an established business counterparty leave the fan-in distinguishing test unsatisfied. The flag holds — refer to a human analyst before acting."
+        }
+      },
       "strDraft": {
         "reportDate": "2026-06-23T15:42:31.832388",
         "reportingInstitution": "Demo Bank Berhad",
