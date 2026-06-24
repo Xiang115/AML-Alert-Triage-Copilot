@@ -4,10 +4,8 @@ The live /triage endpoint injects a fake LLM client via the get_llm_client
 dependency override, so the whole suite spends zero DeepSeek tokens.
 """
 
-import copy
 import json
 
-import pytest
 from fastapi.testclient import TestClient
 from lxml import etree
 
@@ -16,22 +14,21 @@ import main
 from main import app, get_llm_client
 from schemas import Alert, TriageResult
 
+# State isolation (_reset_state) and the ':memory:' DB live in conftest.py — autouse.
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def _reset_state():
-    """Endpoints mutate in-memory state (decisions flip status); isolate each test."""
-    alerts = copy.deepcopy(main._ALERTS)
-    decisions = copy.deepcopy(main._DECISIONS)
-    audit = copy.deepcopy(main._AUDIT_LOG)
-    yield
-    main._ALERTS.clear()
-    main._ALERTS.update(alerts)
-    main._DECISIONS.clear()
-    main._DECISIONS.update(decisions)
-    main._AUDIT_LOG[:] = audit
-    app.dependency_overrides.clear()
+# --- GET /health ---
+
+def test_health_reports_readiness():
+    r = client.get("/health")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["status"] == "ok"
+    assert d["alertsLoaded"] == main.store.count_alerts()
+    assert d["transactionsLoaded"] == main.store.count_transactions()
+    assert isinstance(d["llmKeyPresent"], bool)  # the pre-demo "is the live path wired" signal
+    assert d["model"]
 
 
 # --- GET /alerts ---
@@ -41,7 +38,7 @@ def test_get_alerts_returns_full_queue_camelcase_without_transactions():
     assert r.status_code == 200
     data = r.json()
     assert len(data) > 0  # the precomputed queue is non-empty
-    assert len(data) == len(main._ALERTS)  # returns the whole loaded queue, however many
+    assert len(data) == main.store.count_alerts()  # returns the whole loaded queue, however many
     for item in data:
         assert "alertId" in item and "alert_id" not in item  # camelCase only
         assert item["transactions"] is None  # queue omits embedded transactions
@@ -365,7 +362,7 @@ def test_queue_briefing_served_in_contract_shape():
     assert r.status_code == 200
     b = r.json()
     assert {"processed", "autoCleared", "needsReview", "escalations", "flagged", "summary"} <= b.keys()
-    assert b["processed"] == len(main._ALERTS)
+    assert b["processed"] == main.store.count_alerts()
 
 
 def test_queue_briefing_404_error_shaped_when_absent(monkeypatch):

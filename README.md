@@ -168,9 +168,10 @@ A two-person team for NexHack 2026 — Track 2, spanning AI, backend, and fronte
 │   │   ├── goaml_config.json  # Per-FIU goAML registration (the (B)->(A) config swap)
 │   │   └── goaml_str.xsd       # Tightly-scoped goAML STR schema (export is validated against it)
 │   ├── eval/            # evaluate.py offline validation script
-│   ├── tests/           # 99 passing backend unit and integration tests
+│   ├── tests/           # 162 passing backend unit and integration tests
 │   ├── main.py          # FastAPI application entrypoint
 │   ├── goaml.py         # goAML STR export serializer (the integration seam)
+│   ├── store.py         # decisions + audit persistence (SQLAlchemy, DATABASE_URL seam)
 │   └── config.py        # Environment variables and runtime thresholds
 ├── frontend/
 │   ├── src/             # React console source code
@@ -188,12 +189,13 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
 * **`GET /alerts/{alertId}`**: Retrieves the detailed alert object, embedding transactions and precomputed triage; each alert carries its `routing` lane.
 * **`GET /queue/briefing`**: The Queue Agent's precomputed **Shift Briefing** (ADR-0010) — the overnight-run summary (processed / auto-cleared / needs-review counts + narrative) shown when the analyst opens the queue. 404 `BRIEFING_NOT_READY` until precompute has written it.
 * **`POST /alerts/{alertId}/triage`**: Triggers a live multi-agent pipeline execution (Q&A only). Returns a fresh result without mutating the demo source; falls back to the precomputed triage on provider failure.
-* **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`), an optional `note` (the reason-of-record, required by the UI on override), and STR edits in-memory; appends a decision event to the audit trail.
+* **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`), an optional `note` (the reason-of-record, required by the UI on override), and STR edits to the database (the `decisions` table, behind the `DATABASE_URL` seam); appends a decision event to the audit trail. The decision survives a restart and the alert's status/STR are rehydrated on startup.
 * **`GET /alerts/{alertId}/str.xml`**: Exports the approved STR as a schema-valid goAML XML report (the integration seam). Gated on a recorded *escalate* sign-off, recomputed live — returns `409 STR_NOT_ADJUDICATED` before sign-off and `409 STR_DISMISSED` if the alert was dismissed.
 * **`POST /alerts/{alertId}/str/submit`**: Files the approved STR to goAML and returns a `SubmissionAck` (FIU reference + `accepted`). Same gate as the export; records a submission event in the audit trail.
 * **`GET /audit`**: Returns the append-only accountability trail, newest first. Opens **seeded** with the Queue Agent's `autoClear` events (the autonomous overnight run, ADR-0010), then accrues `decision` and `submission` events as the analyst acts — so the trail is never empty on a cold open.
 * **`GET /metrics`**: Serves measured system accuracy and workload-reduction statistics, including the Queue Agent's `autoClearedShare` + `autoClearPrecision` (404 `METRICS_NOT_READY` until the eval suite has run).
-* **`POST /reset`**: Reloads the initial dataset state to clear in-memory decision edits; restores the audit trail to the Queue Agent's autoClear seed.
+* **`POST /reset`**: Reloads the alert catalog and resets the persisted store (clears session decisions + audit events); restores the audit trail to the Queue Agent's autoClear seed.
+* **`GET /health`**: Liveness + readiness probe — reports `status`, alerts loaded, the configured model, and `llmKeyPresent`, so the live `/triage` path can be confirmed wired *before* a Q&A (a missing key otherwise only surfaces mid-run, then falls back to precomputed per ADR-0003).
 
 ---
 
@@ -230,6 +232,15 @@ All endpoints exchange camelCase JSON payloads. Internal Python models map to sn
    python -m uvicorn main:app --reload
    ```
    > **Windows note:** invoke uvicorn via `python -m uvicorn …`, not the bare `uvicorn` command. Windows Application Control / Smart App Control blocks the unsigned `uvicorn.exe` shim in `.venv\Scripts\` (`"An Application Control policy has blocked this file"`); running it through `python.exe` avoids that. The same `python -m <tool>` form works for any blocked venv tool (e.g. `python -m pytest`).
+
+### Database (decisions + audit trail)
+
+Analyst decisions and the append-only audit trail are persisted through a single
+`DATABASE_URL` seam (`backend/store.py`, SQLAlchemy), so the storage engine is a
+configuration change, not a code change. It defaults to a zero-ops **SQLite** file
+(`backend/data/app.db`, created on first run); point `DATABASE_URL` at **Postgres or
+MySQL** for production and the same `store.py` code runs unchanged. Decisions survive a
+restart, and each alert's status/STR is rehydrated on startup.
 
 ### Frontend Setup
 1. Navigate to the frontend directory:

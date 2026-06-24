@@ -1,0 +1,28 @@
+# Local Postgres for the production-shaped persistence path. The demo defaults to SQLite
+# (zero-ops); this proves the SAME store.py code runs unchanged on a real client-server
+# RDBMS — the DATABASE_URL is the only thing that changes.
+#
+#   docker compose up -d
+#   # from backend/ (venv active):
+#   DATABASE_URL=postgresql+psycopg://aml:aml@localhost:5432/aml python -m pytest -q
+#   DATABASE_URL=postgresql+psycopg://aml:aml@localhost:5432/aml python -m uvicorn main:app
+#   docker compose down            # (add -v to also drop the data volume)
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: aml
+      POSTGRES_PASSWORD: aml
+      POSTGRES_DB: aml
+    ports:
+      - "5432:5432"
+    volumes:
+      - aml_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aml -d aml"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  aml_pgdata:

@@ -4,10 +4,17 @@ Model ids are defaults — confirm exact DeepSeek ids before the live run (Phase
 """
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Persistence for Decisions + the audit trail (store.py), behind one DATABASE_URL seam.
+# Defaults to a SQLite file (zero-ops demo); production points it at Postgres/MySQL with
+# no code change — e.g. postgresql+psycopg://user:pw@host:5432/db. Tests use 'sqlite://'.
+_DATA_DIR = Path(__file__).resolve().parent / "data"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{(_DATA_DIR / 'app.db').as_posix()}")
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")

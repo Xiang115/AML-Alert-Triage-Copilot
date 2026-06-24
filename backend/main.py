@@ -24,6 +24,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
+import config
+import store
 from agents.pipeline import run_triage, run_triage_events
 from decision import resolve_str_draft
 from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
@@ -39,6 +41,10 @@ from schemas import (
     SubmissionAck,
 )
 
+# Configure logging once at import so the api/llm loggers actually emit (a bare
+# getLogger has no handler). Idempotent — a no-op if a host (uvicorn) already set up
+# root handlers, so it never double-logs.
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("api")
 
 _DATA = Path(__file__).resolve().parent / "data"
@@ -51,13 +57,13 @@ _GOAML_CONFIG = GoamlConfig.model_validate(
 )
 
 
-def _load_alerts() -> dict[str, dict]:
-    """Load precomputed alerts (camelCase dicts), validating each against the contract."""
-    out: dict[str, dict] = {}
-    for a in json.loads(_RESULTS.read_text(encoding="utf-8")):
+def _load_alert_catalog() -> list[dict]:
+    """Load the precomputed alert catalog (camelCase dicts), validating each against the
+    contract. The seed source for the alert tables and the file-of-record (ADR-0003)."""
+    catalog = json.loads(_RESULTS.read_text(encoding="utf-8"))
+    for a in catalog:
         Alert.model_validate(a)  # fail fast on a malformed results.json
-        out[a["alertId"]] = a
-    return out
+    return catalog
 
 
 def _load_audit_seed() -> list[dict]:
@@ -69,10 +75,15 @@ def _load_audit_seed() -> list[dict]:
     return json.loads(_AUDIT_SEED.read_text(encoding="utf-8"))
 
 
-_ALERTS: dict[str, dict] = _load_alerts()
-_DECISIONS: dict[str, dict] = {}  # current disposition per alert (drives the export gate)
-# append-only accountability trail, seeded with the Queue Agent's autonomous run (ADR-0010)
-_AUDIT_LOG: list[dict] = _load_audit_seed()
+# The DB (store.py, behind the DATABASE_URL seam) is the source of truth for the alert
+# catalog (alerts + their transactions), the analyst's decisions, and the audit trail —
+# all survive a restart and are safe under concurrent requests. The catalog is seeded
+# from results.json (the file-of-record, ADR-0003) and the trail from the Queue Agent's
+# autonomous run (ADR-0010); each seed only takes when its table is empty, so a restart
+# keeps decision-updated alert statuses and real runtime events.
+store.init()
+store.seed_alerts(_load_alert_catalog())
+store.seed_audit(_load_audit_seed())
 
 
 # --- error shape: { "error": { "code", "message" } } (CLAUDE.md > API contract) ---
@@ -85,7 +96,7 @@ class ApiError(Exception):
 
 
 def _require_alert(alert_id: str) -> dict:
-    alert = _ALERTS.get(alert_id)
+    alert = store.get_alert(alert_id)
     if alert is None:
         raise ApiError(404, "ALERT_NOT_FOUND", f"No alert with id '{alert_id}'.")
     return alert
@@ -140,16 +151,26 @@ def _unexpected_error_handler(_request, exc: Exception):
     return _error_response(500, "INTERNAL_ERROR", "An unexpected error occurred.")
 
 
+@app.get("/health")
+def health():
+    """Liveness + readiness for the live path. `llmKeyPresent` confirms the live
+    /triage run is actually wired BEFORE you're on camera — a missing key otherwise
+    only surfaces as a logged warning mid-Q&A, then falls back to precomputed
+    (ADR-0003). Cheap to hit during a pre-demo check."""
+    return {
+        "status": "ok",
+        "alertsLoaded": store.count_alerts(),
+        "transactionsLoaded": store.count_transactions(),
+        "llmKeyPresent": bool(config.DEEPSEEK_API_KEY),
+        "model": config.MODEL_WORKHORSE,
+    }
+
+
 @app.get("/alerts")
 def list_alerts(status: str | None = None, routing: str | None = None):
-    """Queue. Optional ?status= and ?routing= filters (the Queue Agent lanes, ADR-0010).
-    Queue items omit embedded transactions."""
-    items = [
-        a for a in _ALERTS.values()
-        if (status is None or a["status"] == status)
-        and (routing is None or a.get("routing") == routing)
-    ]
-    return [{**a, "transactions": None} for a in items]
+    """Queue. Optional ?status= and ?routing= filters (the Queue Agent lanes, ADR-0010),
+    applied as indexed WHERE clauses in the DB. Queue items omit embedded transactions."""
+    return store.list_alerts(status, routing)
 
 
 @app.get("/alerts/{alert_id}")
@@ -209,15 +230,19 @@ def decide(alert_id: str, body: DecisionRequest):
         decided_at=datetime.now(),
     )
 
-    alert["status"] = "approved" if decision.action == "approve" else "overridden"
+    new_status = "approved" if decision.action == "approve" else "overridden"
     # The disposition->STR invariant lives in decision.resolve_str_draft (reset restores it).
-    alert["triage"]["strDraft"] = resolve_str_draft(
+    new_str_draft = resolve_str_draft(
         alert["triage"]["strDraft"], decision.final_disposition, decision.edited_str_draft
     )
-
-    _DECISIONS[alert_id] = decision.model_dump(by_alias=True, mode="json")
+    # Persist the decision's effect on the alert row (survives restart), the decision
+    # record (the filing gate), and the audit event — all in the DB.
+    store.set_alert_decision(alert_id, new_status, new_str_draft)
+    store.record_decision(alert_id, decision.model_dump(by_alias=True, mode="json"))
+    alert["status"] = new_status
+    alert["triage"]["strDraft"] = new_str_draft
     triage = alert["triage"]
-    _AUDIT_LOG.append(AuditEntry(
+    store.append_audit(AuditEntry(
         alert_id=alert_id,
         event="decision",
         at=decision.decided_at,
@@ -236,8 +261,8 @@ def _require_escalate_signoff(alert_id: str) -> tuple[Alert, dict]:
     only after an analyst signs off on an escalation. Raises 409 (no decision /
     dismissed) so a later change-of-mind revokes both export and submission. Returns
     the validated Alert plus its decision record."""
-    _require_alert(alert_id)
-    decision = _DECISIONS.get(alert_id)
+    alert_dict = _require_alert(alert_id)
+    decision = store.get_decision(alert_id)
     if decision is None:
         raise ApiError(
             409, "STR_NOT_ADJUDICATED",
@@ -245,7 +270,7 @@ def _require_escalate_signoff(alert_id: str) -> tuple[Alert, dict]:
         )
     if decision["finalDisposition"] != "escalate":
         raise ApiError(409, "STR_DISMISSED", "Alert was dismissed; there is no STR to file.")
-    alert = Alert.model_validate(_ALERTS[alert_id])
+    alert = Alert.model_validate(alert_dict)
     if alert.triage.str_draft is None:  # invariant: an escalate decision keeps the draft
         raise ApiError(409, "STR_DISMISSED", "No STR draft is present for this alert.")
     return alert, decision
@@ -280,7 +305,7 @@ def submit_goaml_str(alert_id: str):
         status="accepted",
         submitted_at=datetime.now(),
     )
-    _AUDIT_LOG.append(AuditEntry(
+    store.append_audit(AuditEntry(
         alert_id=alert_id, event="submission", at=ack.submitted_at, submission_ref=ack.submission_ref,
     ).model_dump(by_alias=True, mode="json"))
     return ack.model_dump(by_alias=True, mode="json")
@@ -289,7 +314,7 @@ def submit_goaml_str(alert_id: str):
 @app.get("/audit")
 def get_audit():
     """The append-only accountability trail, newest first (decisions + submissions)."""
-    return list(reversed(_AUDIT_LOG))
+    return list(reversed(store.all_audit()))
 
 
 @app.get("/audit/summary")
@@ -299,7 +324,7 @@ def get_audit_summary():
     Decision-scoped: autoClear / debateResolved / submission events never count. `agreementRate`
     is null until a decision is made. A session-activity signal, NOT held-out performance
     (that is /metrics) — surfaced on the audit trail, never the performance dashboard."""
-    decisions = [e for e in _AUDIT_LOG if e["event"] == "decision"]
+    decisions = [e for e in store.all_audit() if e["event"] == "decision"]
     approvals = sum(1 for e in decisions if e.get("action") == "approve")
     n = len(decisions)
     return DecisionSummary(
@@ -331,10 +356,8 @@ def get_metrics():
 
 @app.post("/reset")
 def reset():
-    """Reload the in-memory alert state from results.json and clear session decisions.
-    Not in the core contract — a demo convenience to clear edits between rehearsals."""
-    _ALERTS.clear()
-    _ALERTS.update(_load_alerts())
-    _DECISIONS.clear()
-    _AUDIT_LOG[:] = _load_audit_seed()  # restore the autonomous seed; drop session events
-    return {"status": "success", "message": "In-memory state reset from results.json."}
+    """Reset the persisted store: re-seed the alert catalog, drop session decisions + audit
+    events, and restore the Queue Agent's autonomous seed. Not in the core contract — a
+    demo convenience to clear edits between rehearsals."""
+    store.reset()
+    return {"status": "success", "message": "State reset from the seeded catalog."}
