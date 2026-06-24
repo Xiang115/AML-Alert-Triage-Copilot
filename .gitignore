@@ -19,6 +19,10 @@ __pycache__/
 .pytest_cache/
 .env
 
+# Runtime SQLite store (decisions + audit trail) — local state, never commit
+*.db
+backend/data/app.db
+
 # Node / frontend
 frontend/node_modules/
 frontend/dist/
@@ -27,6 +31,3 @@ frontend/dist/
 CLAUDE.md
 CONTEXT.md
 docs/NexHack2026.md
-
-# CI workflows — keep local, not on GitHub
-.github/workflows/

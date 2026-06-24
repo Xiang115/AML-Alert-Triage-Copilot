@@ -1,12 +1,19 @@
-# Phase 0+ backend deps. Run from /backend with the local venv:
+# Backend deps. Run from /backend with the local venv:
 #   python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
-fastapi
-uvicorn[standard]
-pydantic>=2
-python-dotenv
-httpx          # required by starlette TestClient
-pytest
+#
+# Versions are PINNED for reproducible installs — a fresh install on demo day must
+# not pull a breaking minor (e.g. the openai SDK or pydantic). Re-pin with:
+#   .venv/Scripts/python -m pip freeze   (then copy the lines below)
+fastapi==0.137.1
+uvicorn[standard]==0.49.0
+pydantic==2.13.4
+python-dotenv==1.2.2
+httpx==0.28.1          # required by starlette TestClient
+pytest==9.1.0
 # --- used from later phases ---
-openai         # DeepSeek via its OpenAI-compatible endpoint (Phase 2)
-pandas         # SynthAML loader (Phase 1)
-lxml           # goAML STR export: build + XSD-validate the report (goaml.py)
+openai==2.42.0         # DeepSeek via its OpenAI-compatible endpoint (Phase 2)
+pandas==3.0.3          # SynthAML loader (Phase 1)
+lxml==6.1.1            # goAML STR export: build + XSD-validate the report (goaml.py)
+sqlalchemy==2.0.51     # decisions + audit persistence behind the DATABASE_URL seam (store.py)
+psycopg[binary]==3.3.4 # Postgres driver — only used when DATABASE_URL points at Postgres
+
