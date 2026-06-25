@@ -110,3 +110,14 @@ base rate* — **recall and per-typology recall are the mix-independent truths**
 **Combined coverage across both real datasets: 4 of 5 cards measured** — PT-01/DA-01 on SynthAML,
 PT-01/FI-01/ST-01 on SAML-D. **KYC-01 remains the honest residual** (needs customer profile no public
 set carries).
+
+**Update (2026-06-25) — triage match fix lifts recall 55%→72%.** Instrumenting the held-out misses
+(`scratchpad/diagnose_triage`) found **all 68 recall misses were `NO_MATCH`** (zero matched-but-unfired):
+triage dismissed borderline-but-suspicious reports because the `NO_MATCH→dismiss` path short-circuits
+**before** the cost-sensitive bias runs. Fix (`agents/triage._COST_SENSITIVE_NOTE`): the cost-sensitive
+instruction now governs the **match** decision too — match the closest card on a suspicious pattern
+(balance draining to zero, rapid in/out, many counterparties, sub-threshold clustering); reserve `NONE`
+for unsuspicious evidence. Re-measured (no-debate, n=250): **recall 55.3%→72.0%**, **FI-01 68%→84%,
+PT-01 51%→77%, ST-01 63%→74%**, **precision essentially flat 74.1%→75.0%** (tp 83→108 for only fp 29→36
+— the converted misses were genuinely suspicious), accuracy 61.6%→68.8%. The predicted precision crater
+did not occur because benign alerts still `NO_MATCH`.
