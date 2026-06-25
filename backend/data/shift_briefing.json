@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-06-24T17:06:46.688364",
-  "processed": 16,
-  "autoCleared": 3,
-  "needsReview": 13,
-  "escalations": 13,
-  "flagged": 5,
-  "summary": "Processed 16 alerts overnight. Auto-cleared 3 high-confidence benign dismissals; 13 need your review (13 escalations to sign, 5 flagged for judgment)."
+  "generatedAt": "2026-06-25T22:02:34.069998",
+  "processed": 25,
+  "autoCleared": 6,
+  "needsReview": 19,
+  "escalations": 12,
+  "flagged": 1,
+  "summary": "Processed 25 alerts overnight. Auto-cleared 6 high-confidence benign dismissals; 19 need your review (12 escalations to sign, 1 flagged for judgment)."
 }

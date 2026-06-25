@@ -1,0 +1,156 @@
+[
+  {
+    "alertId": "SD-00001",
+    "outcome": "escalate",
+    "typology": "PT-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00002",
+    "outcome": "escalate",
+    "typology": "PT-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00003",
+    "outcome": "escalate",
+    "typology": "PT-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00004",
+    "outcome": "escalate",
+    "typology": "PT-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00005",
+    "outcome": "escalate",
+    "typology": "FI-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00006",
+    "outcome": "escalate",
+    "typology": "FI-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00007",
+    "outcome": "escalate",
+    "typology": "FI-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00008",
+    "outcome": "escalate",
+    "typology": "FI-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00009",
+    "outcome": "escalate",
+    "typology": "ST-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00010",
+    "outcome": "escalate",
+    "typology": "ST-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00011",
+    "outcome": "escalate",
+    "typology": "ST-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00012",
+    "outcome": "escalate",
+    "typology": "ST-01",
+    "coverageGap": false,
+    "kind": "report"
+  },
+  {
+    "alertId": "SD-00013",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "lookalike"
+  },
+  {
+    "alertId": "SD-00014",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "lookalike"
+  },
+  {
+    "alertId": "SD-00015",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "lookalike"
+  },
+  {
+    "alertId": "SD-00016",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "lookalike"
+  },
+  {
+    "alertId": "SD-00017",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  },
+  {
+    "alertId": "SD-00018",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  },
+  {
+    "alertId": "SD-00019",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  },
+  {
+    "alertId": "SD-00020",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  },
+  {
+    "alertId": "SD-00021",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  },
+  {
+    "alertId": "SD-00022",
+    "outcome": "dismiss",
+    "typology": null,
+    "coverageGap": false,
+    "kind": "normal"
+  }
+]

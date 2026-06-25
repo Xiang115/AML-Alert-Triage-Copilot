@@ -11,7 +11,14 @@ Positive class = escalate (label Report). Definitions per ADR-0004:
                            (the "accuracy is a trap" reference point)
 """
 
-from eval.evaluate import auto_clear_metrics, compute_metrics, drop_error_predictions
+from eval.evaluate import (
+    MEASURED_TYPOLOGIES,
+    ROADMAP_TYPOLOGIES,
+    auto_clear_metrics,
+    compute_metrics,
+    coverage_fields,
+    drop_error_predictions,
+)
 from schemas import Metrics
 
 
@@ -46,6 +53,61 @@ def test_metrics_carries_auto_clear_fields():
     m = Metrics.model_validate(base)
     assert m.auto_cleared_share == 1.0
     assert m.auto_clear_precision == 1.0
+
+
+def test_coverage_fields_declare_measured_and_roadmap_typologies():
+    # ADR-0004 honesty: the held-out number names which detectors it actually measures.
+    c = coverage_fields()
+    assert c["measuredTypologies"] == ["PT-01", "DA-01"]
+    assert c["roadmapTypologies"] == ["FI-01", "ST-01", "KYC-01"]
+    # measured and roadmap are disjoint (a card is measured XOR roadmap, never both)
+    assert set(c["measuredTypologies"]).isdisjoint(c["roadmapTypologies"])
+    assert "floor" in c["coverageNote"]  # framed as a floor, not a ceiling claim
+
+
+def test_coverage_partitions_every_typology_card():
+    # Guard: if a 6th card is added to typologies.json without classifying its held-out
+    # coverage, this fails — the disclosure can't silently go stale (no tokens; file read).
+    from agents.knowledge_base import load_cards
+
+    all_codes = {card.code for card in load_cards()}
+    classified = set(MEASURED_TYPOLOGIES) | set(ROADMAP_TYPOLOGIES)
+    assert classified == all_codes
+
+
+def test_metrics_carries_coverage_fields():
+    # The coverage disclosure merges into the Metrics wire contract (extra="forbid", so the
+    # schema must actually carry them) and survives validation.
+    base = compute_metrics(["dismiss"], ["dismiss"])
+    base.update(coverage_fields())
+    m = Metrics.model_validate(base)
+    assert m.measured_typologies == ["PT-01", "DA-01"]
+    assert m.roadmap_typologies == ["FI-01", "ST-01", "KYC-01"]
+    assert m.coverage_note
+
+
+def test_per_typology_recall_buckets_reports_by_true_typology():
+    # SAML-D measurement (ADR-0012): recall within each true typology, Reports only.
+    from eval.evaluate_samld import per_typology_recall
+
+    meta = [
+        {"outcome": "escalate", "typology": "FI-01", "coverageGap": False},
+        {"outcome": "escalate", "typology": "FI-01", "coverageGap": False},
+        {"outcome": "escalate", "typology": None, "coverageGap": True},   # coverage-gap Report
+        {"outcome": "dismiss", "typology": None, "coverageGap": False},   # not a Report -> ignored
+    ]
+    preds = ["escalate", "dismiss", "escalate", "escalate"]
+    out = per_typology_recall(meta, preds)
+    assert out["FI-01"] == {"recall": 0.5, "caught": 1, "total": 2}
+    assert out["COVERAGE_GAP"] == {"recall": 1.0, "caught": 1, "total": 1}
+    assert "UNMAPPED" not in out and len(out) == 2  # dismisses never bucketed
+
+
+def test_per_typology_recall_excludes_error_rows():
+    from eval.evaluate_samld import per_typology_recall
+
+    out = per_typology_recall([{"outcome": "escalate", "typology": "ST-01", "coverageGap": False}], ["error"])
+    assert out == {}  # a failed call is missing data, not a miss
 
 
 def test_all_correct_gives_perfect_accuracy():

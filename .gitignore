@@ -12,6 +12,10 @@ backend/data/datasets/
 *.csv
 *.log
 
+# SAML-D held-out eval slice — large generated artifact (~1.6 MB); regenerate via
+# `python -m data.saml_d_loader`. The small served demo queue + metrics ARE committed.
+backend/data/saml_d_holdout.json
+
 # Python
 backend/.venv/
 __pycache__/

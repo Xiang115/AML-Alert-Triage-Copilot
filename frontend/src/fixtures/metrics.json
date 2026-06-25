@@ -15,5 +15,8 @@
   "avgReviewTimeBaselineMin": 14.0,
   "avgReviewTimeWithCopilotMin": 4.5,
   "autoClearedShare": 0.9,
-  "autoClearPrecision": 0.8704
+  "autoClearPrecision": 0.8704,
+  "measuredTypologies": ["PT-01", "DA-01"],
+  "roadmapTypologies": ["FI-01", "ST-01", "KYC-01"],
+  "coverageNote": "Held-out recall exercises only the 2 of 5 curated typologies SynthAML's amount-less, counterparty-less features can express (PT-01 pass-through, DA-01 dormant-then-active). FI-01/ST-01/KYC-01 need counterparty counts, currency amounts vs the RM25,000 CTR threshold, and customer profile — fields SynthAML omits — so they are demonstrated on curated data, not measured here (representation gap). Separately, the 5-card KB is a curated FATF/BNM subset, so a real Report matching no card is correctly dismissed and counted as a miss (coverage gap). This number is a floor over the measurable detectors; the levers are richer data (SAML-D / IBM-AML) + a broader card library, not prompt tuning."
 }

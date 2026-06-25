@@ -53,6 +53,51 @@ _OUT = _DATA / "metrics.json"
 _BASELINE_MIN = 14.0
 _COPILOT_MIN = 4.5
 
+# --- Held-out typology coverage (ADR-0004) -------------------------------------------
+# The held-out metric can only exercise typologies whose signal survives SynthAML's
+# aggregate feature view (synthaml_loader.FEATURE_COLUMNS). Pass-through (PT-01) and
+# dormant-then-active (DA-01) DO survive — they are timing/gap patterns the features
+# encode (medianCreditToDebitHours, postDormancyBurstFrac). Fan-in (FI-01), structuring
+# (ST-01) and KYC mismatch (KYC-01) do NOT: they need distinct-counterparty counts,
+# currency amounts vs the RM25,000 CTR threshold, and customer profile — fields SynthAML
+# omits — so they are demonstrated on curated demo/hero data only and cannot fire here.
+# Surfacing this in the metric itself makes the blended recall an explicit FLOOR over
+# 2 of 5 detectors, instead of one accuracy figure that silently hides three data-blind
+# detectors. The honest implication: the top accuracy lever is the DATA (a richer set like
+# SAML-D / IBM-AML that carries those fields), not prompt tuning.
+MEASURED_TYPOLOGIES = ("PT-01", "DA-01")
+ROADMAP_TYPOLOGIES = ("FI-01", "ST-01", "KYC-01")
+# Two independent gaps cap this number, and they need different levers (see ADR-0004):
+#   1. REPRESENTATION — SynthAML's amount-less/counterparty-less features can't express
+#      FI-01/ST-01/KYC-01 even when present (fixed by richer data: SAML-D / IBM-AML).
+#   2. COVERAGE — the KB is 5 curated FATF/BNM cards (ADR-0002), not exhaustive; a Report
+#      whose pattern matches NO card is correctly NO_MATCH-dismissed and counted as a miss
+#      (fixed by a broader card library). On Report/Dismiss-only SynthAML the two can't be
+#      separated, but both land outside the 2 measurable detectors.
+COVERAGE_NOTE = (
+    "Held-out recall exercises only the 2 of 5 curated typologies SynthAML's amount-less, "
+    "counterparty-less features can express (PT-01 pass-through, DA-01 dormant-then-active). "
+    "FI-01/ST-01/KYC-01 need counterparty counts, currency amounts vs the RM25,000 CTR "
+    "threshold, and customer profile — fields SynthAML omits — so they are demonstrated on "
+    "curated data, not measured here (representation gap). Separately, the 5-card KB is a "
+    "curated FATF/BNM subset, so a real Report matching no card is correctly dismissed and "
+    "counted as a miss (coverage gap). This number is a floor over the measurable detectors; "
+    "the levers are richer data (SAML-D / IBM-AML) + a broader card library, not prompt tuning."
+)
+
+
+def coverage_fields() -> dict:
+    """Held-out typology-coverage disclosure, merged into the Metrics wire shape (ADR-0004).
+
+    Pure (no data, no LLM, no tokens). Makes the blended recall honest about WHICH detectors
+    it actually measures, so a single accuracy number can't mask the three typologies the
+    public dataset structurally cannot express."""
+    return {
+        "measuredTypologies": list(MEASURED_TYPOLOGIES),
+        "roadmapTypologies": list(ROADMAP_TYPOLOGIES),
+        "coverageNote": COVERAGE_NOTE,
+    }
+
 # Feature-evidence triage reasons harder than the demo prompts; give the visible
 # JSON headroom so it isn't truncated to empty. Calls are I/O-bound on the API,
 # so run them through a small thread pool to cut wall-time (same token count).
@@ -241,6 +286,7 @@ def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> N
     _, kept_routings, _ = drop_error_predictions(predictions, routings)
     metrics = compute_metrics(preds, acts)
     metrics.update(auto_clear_metrics(kept_routings, acts))
+    metrics.update(coverage_fields())  # honest typology coverage (ADR-0004): measure 2 of 5
     _OUT.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print("\n================ EVALUATION (held-out, measured) ================")
     print(f"  cost-sensitive          {cost_sensitive}")
@@ -254,6 +300,8 @@ def main(n: int = 60, seed: int = RANDOM_SEED, cost_sensitive: bool = True) -> N
     print(f"  autoClearPrecision      {metrics['autoClearPrecision']:.1%}  (of auto-cleared, truly benign)")
     print(f"  confusion               {metrics['confusionMatrix']}")
     print(f"  reviewTime baseline->copilot  {_BASELINE_MIN}->{_COPILOT_MIN} min (modeled)")
+    print(f"  coverage                measured {list(MEASURED_TYPOLOGIES)} of 5; "
+          f"roadmap {list(ROADMAP_TYPOLOGIES)} (data-blind on SynthAML — ADR-0004)")
     print(f"Wrote {_OUT}")
 
 
