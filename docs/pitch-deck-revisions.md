@@ -61,11 +61,11 @@ Sources used (verified 2026-06-22):
 > `metrics.json`. Until then, treat the slide numbers as provisional.
 
 **Measured on SAML-D (real amounts + counterparties; Oztas et al., 2023, n=250) — we *did* the fix:**
-- **61.6% accuracy vs 40.0% always-dismiss baseline** — on data that can express the patterns, the AI
-  beats do-nothing by **+21.6 pts** (on SynthAML it merely *equalled* baseline).
-- **55% recall** overall, and the two detectors SynthAML couldn't even fire now measured & strongest:
-  **Fan-in (FI-01) 68%** · **Structuring (ST-01) 63%** · **Pass-through (PT-01) 51%**.
-- **Coverage gap, quantified:** patterns outside the 5-card library (e.g. over-invoicing) score **10%** —
+- **68.8% accuracy vs 40.0% always-dismiss baseline** — on data that can express the patterns, the AI
+  beats do-nothing by **+28.8 pts** (on SynthAML it merely *equalled* baseline).
+- **72% recall** overall at **75% precision**, and the two detectors SynthAML couldn't even fire are now
+  the strongest: **Fan-in (FI-01) 84%** · **Pass-through (PT-01) 77%** · **Structuring (ST-01) 74%**.
+- **Coverage gap, quantified:** patterns outside the 5-card library (e.g. over-invoicing) score **25%** —
   honest proof the KB is a curated subset, not exhaustive.
 
 **The honest line (now it names the fix, not just the gap):**
@@ -76,7 +76,7 @@ Sources used (verified 2026-06-22):
 > it needs customer profile no public dataset carries.
 
 **Caveat to state plainly:** the SAML-D slice is report-enriched for measurement power, so **recall and the
-per-typology numbers are the honest, mix-independent figures** — lead with those, not the 61.6% accuracy.
+per-typology numbers are the honest, mix-independent figures** — lead with those, not the 68.8% accuracy.
 
 **Presenter line:** Don't lead with accuracy. Lead with workload relief + the human-in-the-loop safety net — then own the floor honestly (data + coverage), don't spin it.
 

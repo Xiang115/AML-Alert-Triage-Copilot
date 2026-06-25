@@ -1,40 +1,40 @@
 {
   "totalAlerts": 250,
-  "accuracyVsLabels": 0.616,
+  "accuracyVsLabels": 0.688,
   "baselineAccuracy": 0.4,
-  "recall": 0.5533,
-  "precision": 0.7411,
-  "specificity": 0.71,
-  "falsePositiveReduction": 0.5145,
+  "recall": 0.72,
+  "precision": 0.75,
+  "specificity": 0.64,
+  "falsePositiveReduction": 0.6038,
   "confusionMatrix": {
-    "tp": 83,
-    "fp": 29,
-    "fn": 67,
-    "tn": 71
+    "tp": 108,
+    "fp": 36,
+    "fn": 42,
+    "tn": 64
   },
   "avgReviewTimeBaselineMin": 14.0,
   "avgReviewTimeWithCopilotMin": 4.5,
-  "autoClearedShare": 0.552,
-  "autoClearPrecision": 0.5145,
+  "autoClearedShare": 0.424,
+  "autoClearPrecision": 0.6038,
   "perTypologyRecall": {
     "COVERAGE_GAP": {
-      "recall": 0.1,
-      "caught": 2,
+      "recall": 0.25,
+      "caught": 5,
       "total": 20
     },
     "PT-01": {
-      "recall": 0.5143,
-      "caught": 18,
+      "recall": 0.7714,
+      "caught": 27,
       "total": 35
     },
     "ST-01": {
-      "recall": 0.6316,
-      "caught": 24,
+      "recall": 0.7368,
+      "caught": 28,
       "total": 38
     },
     "FI-01": {
-      "recall": 0.6842,
-      "caught": 39,
+      "recall": 0.8421,
+      "caught": 48,
       "total": 57
     }
   },

@@ -46,7 +46,12 @@ _COST_SENSITIVE_NOTE = (
     "COST-SENSITIVE MODE: a missed suspicious case (false negative) is far costlier than an "
     "unnecessary review (false positive), and a second-line verifier and a human analyst review "
     "every escalation. When the evidence is borderline or only partially matches a card, prefer "
-    "Escalate over Dismiss."
+    "Escalate over Dismiss. This governs the MATCH decision too: do NOT return "
+    f'"{NO_MATCH_CODE}" merely because the fit is imperfect — if the evidence shows a suspicious '
+    "laundering-like pattern (e.g. running balance draining toward zero, rapid in-then-out movement, "
+    "many unrelated counterparties, or repeated sub-threshold amounts) that resembles a candidate "
+    "typology, match the CLOSEST card and escalate; the verifier will challenge it. Reserve "
+    f'"{NO_MATCH_CODE}" for evidence with no suspicious pattern at all.'
 )
 
 
