@@ -24,6 +24,24 @@ from agents.verifier import challenge, re_verdict, verify
 from schemas import AlertInput, Debate, IndicatorCoverage, Reverdict, TriageResult, Verifier
 
 
+def resolve_concession(prior: str, fired_count: int, min_fired_to_resist: int) -> tuple[str, bool]:
+    """Cost-sensitive gate on a Triage concession in the adversarial debate (ADR-0011/0012).
+
+    A concession flips the disposition. We **honour a dismiss→escalate concession always** (catching
+    more is the safe direction in AML), but **resist an escalate→dismiss concession when the typology
+    match is strong** (>= `min_fired_to_resist` indicators fired): a multi-indicator escalation must
+    not be silently dropped by a generic benign hypothesis — it HOLDS as escalate and routes to a
+    human (needsReview), because a missed report is the costly error. This is what makes the debate
+    *discriminative*: on SAML-D the verifier's "retained balance / no full forwarding" challenge fires
+    the same on real consolidation and benign collection, so without this gate Triage conceded away
+    true FI/ST reports. Returns (recommendation, flipped). Pure — unit-tested without tokens."""
+    if prior == "dismiss":
+        return "escalate", True
+    if fired_count >= min_fired_to_resist:
+        return "escalate", False  # strong match: resist the drop, hold for a human
+    return "dismiss", True         # weak match: honour the concession
+
+
 def run_triage_events(
     alert: AlertInput, *, client=None, cost_sensitive: bool = False
 ) -> Iterator[dict]:
@@ -131,9 +149,17 @@ def run_triage_events(
                "detail": ("Conceded — " if rb.conceded else "Defends the call — ") + rb.argument,
                "tone": "verified" if rb.conceded else "escalate"}
         if rb.conceded:
-            recommendation = "escalate" if tri.recommendation == "dismiss" else "dismiss"
-            rev = Reverdict(outcome="conceded", disposition_changed=True,
-                            note=f"Triage conceded the challenge; disposition changed to {recommendation}.")
+            recommendation, flipped = resolve_concession(
+                tri.recommendation, len(tri.fired_indicators), config.DEBATE_RESIST_MIN_FIRED)
+            if flipped:
+                rev = Reverdict(outcome="conceded", disposition_changed=True,
+                                note=f"Triage conceded the challenge; disposition changed to {recommendation}.")
+            else:
+                # Cost-sensitive gate (ADR-0012): a strong multi-indicator escalation is not dropped
+                # by the concession — it holds as escalate and routes to a human, never auto-dismissed.
+                rev = Reverdict(outcome="holds", disposition_changed=False,
+                                note=(f"Triage conceded, but {len(tri.fired_indicators)} indicators fired — "
+                                      f"too strong a match to auto-dismiss; held as escalate for human review."))
         else:
             rev = re_verdict(evidence, tri.recommendation, card, ch, rb, client=client)
         final_status = "flagged" if rev.outcome == "holds" else "agreed"

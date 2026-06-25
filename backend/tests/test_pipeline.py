@@ -7,8 +7,19 @@ escalate) the STR narrative.
 import json
 
 from agents.knowledge_base import get_card
-from agents.pipeline import run_triage, run_triage_events
+from agents.pipeline import resolve_concession, run_triage, run_triage_events
 from schemas import Alert, TriageResult
+
+
+def test_resolve_concession_gate():
+    # ADR-0012: dismiss->escalate concession always honoured (recall-positive).
+    assert resolve_concession("dismiss", 0, 2) == ("escalate", True)
+    # A strong escalate (>= threshold fired) resists the drop -> holds as escalate.
+    assert resolve_concession("escalate", 2, 2) == ("escalate", False)
+    assert resolve_concession("escalate", 4, 2) == ("escalate", False)
+    # A weak escalate (< threshold) is allowed to flip to dismiss.
+    assert resolve_concession("escalate", 1, 2) == ("dismiss", True)
+    assert resolve_concession("escalate", 0, 2) == ("dismiss", True)
 
 
 def _alert():
@@ -95,6 +106,47 @@ def test_debate_concede_flips_dismiss_to_escalate(make_client):
     assert out.debate.reverdict.disposition_changed is True
     assert out.str_draft is not None  # the saved alert now gets an STR
     assert out.confidence == 0.5  # 2 of 4 coverage as an escalate, not capped (agreed)
+
+
+def test_debate_resists_conceding_away_a_strong_escalation(make_client):
+    # ADR-0012 recall fix: triage CONCEDES an escalate with a strong match (2 of 4 fired), but the
+    # cost-sensitive gate resists — the call is NOT dropped to dismiss; it holds as escalate and
+    # routes to a human (flagged -> needsReview). This is the fix for the debate dropping true reports.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client(
+        [
+            _triage_json(two, "escalate"),
+            json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign merchant."}),
+            json.dumps({"counterHypothesis": "Legit merchant.", "distinguishingTestAssessment": "Retains balance."}),
+            json.dumps({"argument": "On reflection it might be a merchant.", "conceded": True}),
+            json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),  # STR still drafted (escalate)
+        ]
+    )
+    out = run_triage(_alert(), client=fake)
+    assert out.recommendation == "escalate"  # NOT dropped despite the concession
+    assert out.verifier.status == "flagged"  # holds -> flagged -> needsReview (human decides)
+    assert out.debate.reverdict.outcome == "holds"
+    assert out.debate.reverdict.disposition_changed is False
+    assert out.str_draft is not None
+
+
+def test_debate_honours_concession_on_a_weak_escalation(make_client):
+    # The gate only protects STRONG matches: a thin escalate (1 of 4 fired) that triage concedes is
+    # still allowed to flip to dismiss (no STR drafted).
+    one = get_card("PT-01").indicators[:1]
+    fake = make_client(
+        [
+            _triage_json(one, "escalate"),
+            json.dumps({"agreesWithRecommendation": False, "note": "Likely benign."}),
+            json.dumps({"counterHypothesis": "Benign.", "distinguishingTestAssessment": "Evidence is thin."}),
+            json.dumps({"argument": "Agreed, the match is too thin.", "conceded": True}),
+        ]
+    )
+    out = run_triage(_alert(), client=fake)
+    assert out.recommendation == "dismiss"  # weak match: concession honoured, flips
+    assert out.debate.reverdict.outcome == "conceded"
+    assert out.debate.reverdict.disposition_changed is True
+    assert out.str_draft is None
 
 
 def test_debate_convinced_resolves_flag_without_flipping(make_client):

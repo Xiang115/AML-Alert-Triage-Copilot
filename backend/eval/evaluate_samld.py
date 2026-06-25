@@ -26,6 +26,7 @@ import llm
 from agents.confidence import compute_confidence
 from agents.evidence import render_alert_evidence
 from agents.knowledge_base import get_card, load_cards
+from agents.pipeline import run_triage
 from agents.queue_agent import auto_clear_policy
 from agents.triage import NO_MATCH_CODE, triage
 from agents.verifier import verify
@@ -39,14 +40,22 @@ _EVAL_MAX_TOKENS = 8192
 _MAX_ATTEMPTS = 2
 
 
-def _predict(alert_dict: dict, cards) -> tuple[str, str]:
-    """Run one SAML-D alert through triage -> verifier -> confidence -> Auto-Clear Policy,
-    on the rich evidence path. Returns (recommendation, routing); ("error","error") on a
-    persistent failure so the row is EXCLUDED rather than scored as a dismiss (ADR-0004)."""
+def _predict(alert_dict: dict, cards, debate: bool = False) -> tuple[str, str]:
+    """Run one SAML-D alert and return (recommendation, routing); ("error","error") on a
+    persistent failure so the row is EXCLUDED rather than scored as a dismiss (ADR-0004).
+
+    Default = triage -> verifier -> confidence -> Auto-Clear (same operating point as
+    eval.evaluate, so SynthAML/SAML-D are comparable). `debate=True` runs the FULL production
+    pipeline incl. the adversarial debate + concession gate (ADR-0011/0012) — use it to measure
+    the production-path recall and confirm the gate stops the debate dropping true reports."""
     alert = AlertInput.model_validate(alert_dict)
-    evidence = render_alert_evidence(alert)
     for attempt in range(_MAX_ATTEMPTS):
         try:
+            if debate:
+                res = run_triage(alert, cost_sensitive=True)
+                return res.recommendation, auto_clear_policy(
+                    res.recommendation, res.confidence, res.verifier.status, config.AUTO_CLEAR_THRESHOLD)
+            evidence = render_alert_evidence(alert)
             tri = triage(evidence, cards, max_tokens=_EVAL_MAX_TOKENS, cost_sensitive=True)
             rec = tri.recommendation if tri.recommendation in ("escalate", "dismiss") else "dismiss"
             if tri.matched_typology.code == NO_MATCH_CODE:
@@ -80,7 +89,7 @@ def per_typology_recall(meta: list[dict], predictions: list[str]) -> dict:
                 "caught": v["caught"], "total": v["total"]} for k, v in buckets.items()}
 
 
-def main(n: int = 250, workers: int = 24) -> None:
+def main(n: int = 250, workers: int = 24, debate: bool = False) -> None:
     llm.use_offline_timeout()
     if not _HOLDOUT.exists():
         print(f"Missing {_HOLDOUT} — run `python -m data.saml_d_loader` first.")
@@ -91,12 +100,13 @@ def main(n: int = 250, workers: int = 24) -> None:
         alerts, meta = alerts[:n], meta[:n]
     cards = load_cards()
     actuals = [m["outcome"] for m in meta]
-    print(f"Evaluating {len(alerts)} SAML-D held-out alerts (rich evidence, {workers} workers)...", flush=True)
+    mode = "full pipeline incl. debate+gate" if debate else "triage+verifier"
+    print(f"Evaluating {len(alerts)} SAML-D held-out alerts ({mode}, {workers} workers)...", flush=True)
 
     results: list[tuple[str, str]] = [("error", "error")] * len(alerts)
     done = 0
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = {pool.submit(_predict, a, cards): i for i, a in enumerate(alerts)}
+        futs = {pool.submit(_predict, a, cards, debate): i for i, a in enumerate(alerts)}
         for fut in as_completed(futs):
             results[futs[fut]] = fut.result()
             done += 1
@@ -111,7 +121,9 @@ def main(n: int = 250, workers: int = 24) -> None:
     metrics.update(auto_clear_metrics(kept_routings, a))
     metrics["perTypologyRecall"] = per_typology_recall(meta, preds)
     metrics["nExcludedErrors"] = n_excl
-    _OUT.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+    # Keep the canonical no-debate metric separate from the production-path (with-debate) number.
+    out = _DATA / ("saml_d_metrics_debate.json" if debate else "saml_d_metrics.json")
+    out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
     print("\n==== SAML-D HELD-OUT (measured, rich evidence) ====")
     for k in ("totalAlerts", "accuracyVsLabels", "baselineAccuracy", "recall", "precision",
@@ -121,12 +133,14 @@ def main(n: int = 250, workers: int = 24) -> None:
     print("  per-typology recall (Reports):")
     for k, v in sorted(metrics["perTypologyRecall"].items()):
         print(f"    {k:14} {v['recall']}  ({v['caught']}/{v['total']})")
-    print(f"Wrote {_OUT}")
+    print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=250, help="cap alerts (0=all)")
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--debate", action="store_true",
+                    help="run the FULL pipeline incl. adversarial debate + concession gate (ADR-0012)")
     args = ap.parse_args()
-    main(args.n, args.workers)
+    main(args.n, args.workers, debate=args.debate)
