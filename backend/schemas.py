@@ -289,3 +289,11 @@ class Metrics(CamelModel):
     # pre-Queue-Agent metrics.json predates them and compute_metrics() omits them.
     auto_cleared_share: float | None = None
     auto_clear_precision: float | None = None
+    # Honest typology coverage of the held-out metric (ADR-0004): which of the 5 cards this
+    # number can actually measure vs those demonstrated on curated data only (SynthAML omits
+    # the fields they need). Makes the blended recall an explicit floor over 2 of 5 detectors,
+    # not one accuracy figure that hides three data-blind ones. Optional: pre-coverage
+    # metrics.json predates them.
+    measured_typologies: list[str] | None = None
+    roadmap_typologies: list[str] | None = None
+    coverage_note: str | None = None

@@ -62,10 +62,10 @@ def test_get_alerts_filters_by_routing():
 # --- GET /alerts/{id} ---
 
 def test_get_alert_detail_embeds_transactions_and_triage():
-    r = client.get("/alerts/DQ-001")
+    r = client.get("/alerts/HERO-002")
     assert r.status_code == 200
     d = r.json()
-    assert d["alertId"] == "DQ-001"
+    assert d["alertId"] == "HERO-002"
     assert d["transactions"] and d["transactions"][0]["transactionId"]
     assert d["triage"]["recommendation"] in {"escalate", "dismiss"}
     Alert.model_validate(d)
@@ -81,14 +81,14 @@ def test_get_unknown_alert_returns_error_shaped_404():
 # --- POST /alerts/{id}/decision ---
 
 def test_decision_approve_sets_status_approved():
-    r = client.post("/alerts/DQ-001/decision", json={"action": "approve", "finalDisposition": "escalate"})
+    r = client.post("/alerts/HERO-002/decision", json={"action": "approve", "finalDisposition": "escalate"})
     assert r.status_code == 200
     assert r.json()["status"] == "approved"
-    assert client.get("/alerts/DQ-001").json()["status"] == "approved"  # persists in session
+    assert client.get("/alerts/HERO-002").json()["status"] == "approved"  # persists in session
 
 
 def test_decision_override_to_dismiss_nulls_str_draft():
-    r = client.post("/alerts/DQ-003/decision", json={"action": "override", "finalDisposition": "dismiss"})
+    r = client.post("/alerts/HERO-003/decision", json={"action": "override", "finalDisposition": "dismiss"})
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "overridden"
@@ -104,7 +104,7 @@ def test_decision_on_unknown_alert_returns_error_shaped_404():
 def test_invalid_request_body_returns_error_shaped_422():
     # Bad enum value: the error contract must hold for validation failures too,
     # not leak FastAPI's default {"detail": [...]} shape.
-    r = client.post("/alerts/DQ-001/decision", json={"action": "nope", "finalDisposition": "escalate"})
+    r = client.post("/alerts/HERO-002/decision", json={"action": "nope", "finalDisposition": "escalate"})
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "VALIDATION_ERROR"
     assert r.json()["error"]["message"]
@@ -122,20 +122,20 @@ def test_live_triage_returns_fresh_result_without_persisting(make_client):
     ])
     app.dependency_overrides[get_llm_client] = lambda: fake
 
-    before = client.get("/alerts/DQ-001").json()["triage"]
-    r = client.post("/alerts/DQ-001/triage")
+    before = client.get("/alerts/HERO-002").json()["triage"]
+    r = client.post("/alerts/HERO-002/triage")
     assert r.status_code == 200
     fresh = r.json()
     TriageResult.model_validate(fresh)
     assert fresh["explanation"] == "LIVE-RUN-MARKER"
     # the stored/precomputed triage is untouched (demo stays deterministic, ADR-0003)
-    assert client.get("/alerts/DQ-001").json()["triage"] == before
+    assert client.get("/alerts/HERO-002").json()["triage"] == before
 
 
 def test_live_triage_falls_back_to_precomputed_on_provider_failure(raising_client):
     app.dependency_overrides[get_llm_client] = lambda: raising_client
-    precomputed = client.get("/alerts/DQ-001").json()["triage"]
-    r = client.post("/alerts/DQ-001/triage")
+    precomputed = client.get("/alerts/HERO-002").json()["triage"]
+    r = client.post("/alerts/HERO-002/triage")
     assert r.status_code == 200  # demo resilience (ADR-0003): never 500 on camera
     assert r.json() == precomputed
 
@@ -158,8 +158,8 @@ def test_live_triage_stream_emits_stage_events_then_result(make_client):
     ])
     app.dependency_overrides[get_llm_client] = lambda: fake
 
-    before = client.get("/alerts/DQ-001").json()["triage"]
-    r = client.get("/alerts/DQ-001/triage/stream")
+    before = client.get("/alerts/HERO-002").json()["triage"]
+    r = client.get("/alerts/HERO-002/triage/stream")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/event-stream")
 
@@ -171,7 +171,7 @@ def test_live_triage_stream_emits_stage_events_then_result(make_client):
     assert '"type": "result"' in body
     assert "STREAM-MARKER" in body
     # the precomputed demo source is untouched (ADR-0003)
-    assert client.get("/alerts/DQ-001").json()["triage"] == before
+    assert client.get("/alerts/HERO-002").json()["triage"] == before
 
 
 # --- GET /alerts/{id}/str.xml (goAML export) ---
@@ -182,14 +182,14 @@ def _decide(alert_id, action, disposition):
 
 def test_export_blocked_until_adjudicated():
     # No decision yet: nothing can be filed (no sign-off).
-    r = client.get("/alerts/DQ-001/str.xml")
+    r = client.get("/alerts/HERO-002/str.xml")
     assert r.status_code == 409
     assert r.json()["error"]["code"] == "STR_NOT_ADJUDICATED"
 
 
 def test_export_after_approve_escalate_returns_schema_valid_goaml():
-    _decide("DQ-001", "approve", "escalate")
-    r = client.get("/alerts/DQ-001/str.xml")
+    _decide("HERO-002", "approve", "escalate")
+    r = client.get("/alerts/HERO-002/str.xml")
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("application/xml")
     root = etree.fromstring(r.content)
@@ -199,25 +199,25 @@ def test_export_after_approve_escalate_returns_schema_valid_goaml():
 
 def test_override_to_escalate_can_file():
     # The beat-3 hero path: analyst overrides a call up to escalate -> must file.
-    _decide("DQ-001", "override", "escalate")
-    r = client.get("/alerts/DQ-001/str.xml")
+    _decide("HERO-002", "override", "escalate")
+    r = client.get("/alerts/HERO-002/str.xml")
     assert r.status_code == 200
     assert etree.fromstring(r.content).findtext("report_code") == "STR"
 
 
 def test_export_blocked_when_dismissed():
-    _decide("DQ-001", "approve", "dismiss")
-    r = client.get("/alerts/DQ-001/str.xml")
+    _decide("HERO-002", "approve", "dismiss")
+    r = client.get("/alerts/HERO-002/str.xml")
     assert r.status_code == 409
     assert r.json()["error"]["code"] == "STR_DISMISSED"
 
 
 def test_change_of_mind_to_dismiss_revokes_export():
     # Gate is recomputed live from the current decision, never cached.
-    _decide("DQ-001", "approve", "escalate")
-    assert client.get("/alerts/DQ-001/str.xml").status_code == 200
-    _decide("DQ-001", "override", "dismiss")
-    r = client.get("/alerts/DQ-001/str.xml")
+    _decide("HERO-002", "approve", "escalate")
+    assert client.get("/alerts/HERO-002/str.xml").status_code == 200
+    _decide("HERO-002", "override", "dismiss")
+    r = client.get("/alerts/HERO-002/str.xml")
     assert r.status_code == 409
     assert r.json()["error"]["code"] == "STR_DISMISSED"
 
@@ -231,26 +231,26 @@ def test_export_unknown_alert_returns_error_shaped_404():
 # --- POST /alerts/{id}/str/submit (goAML filing acknowledgement) ---
 
 def test_submit_files_an_escalated_str_and_returns_an_accepted_ack():
-    _decide("DQ-001", "approve", "escalate")
-    r = client.post("/alerts/DQ-001/str/submit")
+    _decide("HERO-002", "approve", "escalate")
+    r = client.post("/alerts/HERO-002/str/submit")
     assert r.status_code == 200
     ack = r.json()
     assert ack["status"] == "accepted"
-    assert ack["alertId"] == "DQ-001"
+    assert ack["alertId"] == "HERO-002"
     assert ack["submissionRef"].startswith("MYFIU-2026-")
 
 
 def test_submit_is_gated_like_export():
-    assert client.post("/alerts/DQ-001/str/submit").json()["error"]["code"] == "STR_NOT_ADJUDICATED"
-    _decide("DQ-001", "approve", "dismiss")
-    assert client.post("/alerts/DQ-001/str/submit").json()["error"]["code"] == "STR_DISMISSED"
+    assert client.post("/alerts/HERO-002/str/submit").json()["error"]["code"] == "STR_NOT_ADJUDICATED"
+    _decide("HERO-002", "approve", "dismiss")
+    assert client.post("/alerts/HERO-002/str/submit").json()["error"]["code"] == "STR_DISMISSED"
 
 
 def test_submission_appends_a_submission_event_to_the_audit_trail():
-    _decide("DQ-001", "approve", "escalate")
-    ack = client.post("/alerts/DQ-001/str/submit").json()
+    _decide("HERO-002", "approve", "escalate")
+    ack = client.post("/alerts/HERO-002/str/submit").json()
     entry = next(e for e in client.get("/audit").json() if e["event"] == "submission")
-    assert entry["alertId"] == "DQ-001"
+    assert entry["alertId"] == "HERO-002"
     assert entry["submissionRef"] == ack["submissionRef"]
 
 
@@ -267,11 +267,11 @@ def test_audit_trail_opens_seeded_with_autoclear_events():
 def test_decision_appends_audit_entry_pairing_ai_call_with_human_disposition():
     # The audit trail's whole point: record what the AI recommended next to what
     # the human decided, so an override is accountable after the fact.
-    triage = client.get("/alerts/DQ-001").json()["triage"]
-    _decide("DQ-001", "approve", "escalate")
+    triage = client.get("/alerts/HERO-002").json()["triage"]
+    _decide("HERO-002", "approve", "escalate")
 
     log = client.get("/audit").json()
-    entry = next(e for e in log if e["alertId"] == "DQ-001" and e["event"] == "decision")
+    entry = next(e for e in log if e["alertId"] == "HERO-002" and e["event"] == "decision")
     assert entry["aiRecommendation"] == triage["recommendation"]
     assert entry["finalDisposition"] == "escalate"
     assert entry["confidence"] == triage["confidence"]
@@ -280,24 +280,24 @@ def test_decision_appends_audit_entry_pairing_ai_call_with_human_disposition():
 
 
 def test_override_records_the_analyst_note_in_the_audit_trail():
-    client.post("/alerts/DQ-001/decision",
+    client.post("/alerts/HERO-002/decision",
                 json={"action": "override", "finalDisposition": "dismiss", "note": "Confirmed legitimate salary run with HR."})
-    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "DQ-001")
+    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "HERO-002")
     assert entry["action"] == "override"
     assert entry["note"] == "Confirmed legitimate salary run with HR."
 
 
 def test_approve_without_a_note_leaves_note_null():
-    _decide("DQ-001", "approve", "escalate")
-    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "DQ-001")
+    _decide("HERO-002", "approve", "escalate")
+    entry = next(e for e in client.get("/audit").json() if e["alertId"] == "HERO-002")
     assert entry["note"] is None
 
 
 def test_audit_trail_is_append_only_across_a_change_of_mind():
     # A reversed decision must not erase the first: both are kept, newest first.
-    _decide("DQ-001", "approve", "escalate")
-    _decide("DQ-001", "override", "dismiss")
-    entries = [e for e in client.get("/audit").json() if e["alertId"] == "DQ-001" and e["event"] == "decision"]
+    _decide("HERO-002", "approve", "escalate")
+    _decide("HERO-002", "override", "dismiss")
+    entries = [e for e in client.get("/audit").json() if e["alertId"] == "HERO-002" and e["event"] == "decision"]
     assert len(entries) == 2
     assert entries[0]["finalDisposition"] == "dismiss"   # newest first
     assert entries[1]["finalDisposition"] == "escalate"
@@ -307,7 +307,7 @@ def test_reset_restores_the_audit_trail_to_the_autoclear_seed():
     # reset drops session decisions/submissions but restores the Queue Agent's seed (autoClear
     # events, ADR-0010, plus debateResolved events, ADR-0011), so the trail returns to its
     # cold-open state, not empty.
-    _decide("DQ-001", "approve", "escalate")
+    _decide("HERO-002", "approve", "escalate")
     assert any(e["event"] == "decision" for e in client.get("/audit").json())
     client.post("/reset")
     log = client.get("/audit").json()
@@ -325,9 +325,9 @@ def test_audit_summary_starts_with_no_decisions_and_null_agreement():
 
 
 def test_audit_summary_counts_approvals_and_overrides():
-    _decide("DQ-001", "approve", "escalate")   # agree with the AI
-    _decide("DQ-003", "override", "dismiss")    # disagree
-    _decide("DQ-005", "approve", "escalate")   # agree
+    _decide("HERO-002", "approve", "escalate")   # agree with the AI
+    _decide("HERO-003", "override", "dismiss")    # disagree
+    _decide("HERO-001", "approve", "escalate")   # agree
     s = client.get("/audit/summary").json()
     assert s["decisions"] == 3
     assert s["approvals"] == 2
@@ -338,8 +338,8 @@ def test_audit_summary_counts_approvals_and_overrides():
 def test_audit_summary_ignores_autoclear_and_submission_events():
     # only human approve/override decisions count toward agreement — the seeded autoClear /
     # debateResolved events and a goAML submission must not inflate the denominator.
-    _decide("DQ-001", "approve", "escalate")
-    client.post("/alerts/DQ-001/str/submit")  # appends a submission event
+    _decide("HERO-002", "approve", "escalate")
+    client.post("/alerts/HERO-002/str/submit")  # appends a submission event
     s = client.get("/audit/summary").json()
     assert s["decisions"] == 1
     assert s["approvals"] == 1
@@ -349,10 +349,10 @@ def test_audit_summary_ignores_autoclear_and_submission_events():
 # --- POST /reset ---
 
 def test_reset_restores_status_and_clears_decisions():
-    client.post("/alerts/DQ-001/decision", json={"action": "approve", "finalDisposition": "escalate"})
+    client.post("/alerts/HERO-002/decision", json={"action": "approve", "finalDisposition": "escalate"})
     r = client.post("/reset")
     assert r.status_code == 200 and r.json()["status"] == "success"
-    assert client.get("/alerts/DQ-001").json()["status"] == "pending"  # back to source state
+    assert client.get("/alerts/HERO-002").json()["status"] == "pending"  # back to source state
 
 
 # --- GET /queue/briefing (Queue Agent shift briefing) ---

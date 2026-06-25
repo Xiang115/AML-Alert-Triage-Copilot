@@ -54,12 +54,33 @@ Sources used (verified 2026-06-22):
 
 **Confusion matrix:** TP 1 · FP 19 · FN 42 · TN 188  (n=250)
 
-**The honest line (pre-empts "you only catch 1 of 43"):**
-> Public SynthAML features are **amount-less and counterparty-less** — the running-balance "mule tell" the copilot reasons over (and shows live in the demo) is stripped out. So this held-out number is a **conservative floor**, not the product's ceiling.
+> ⚠️ **NUMBERS-CONSISTENCY TODO (found 2026-06-25):** these n=250 figures **disagree with the served
+> `metrics.json`** (n=60: 83.3% accuracy, 30% recall, baseline 83.3%). The live dashboard and this slide
+> would show contradictory numbers under judging. **Resolve before recording:** run `python -m eval.evaluate
+> --n 250` once on current code (fixed seed) and let that one authoritative run populate BOTH the slide and
+> `metrics.json`. Until then, treat the slide numbers as provisional.
 
-**Presenter line:** Don't lead with accuracy. Lead with workload relief + the human-in-the-loop safety net.
+**Measured on SAML-D (real amounts + counterparties; Oztas et al., 2023, n=250) — we *did* the fix:**
+- **61.6% accuracy vs 40.0% always-dismiss baseline** — on data that can express the patterns, the AI
+  beats do-nothing by **+21.6 pts** (on SynthAML it merely *equalled* baseline).
+- **55% recall** overall, and the two detectors SynthAML couldn't even fire now measured & strongest:
+  **Fan-in (FI-01) 68%** · **Structuring (ST-01) 63%** · **Pass-through (PT-01) 51%**.
+- **Coverage gap, quantified:** patterns outside the 5-card library (e.g. over-invoicing) score **10%** —
+  honest proof the KB is a curated subset, not exhaustive.
 
-**Source footer:** `Measured on held-out SynthAML (Jensen et al., 2023), n=250, ADR-0004. Time figures modeled/illustrative.`
+**The honest line (now it names the fix, not just the gap):**
+> SynthAML is amount-less and counterparty-less, so 3 of 5 detectors **can't even fire** — that number is
+> a floor. So we re-measured on **SAML-D**, which carries the real signals: **fan-in and structuring jump
+> from un-measurable to 68% / 63%**, and the copilot beats the dismiss-all baseline for the first time.
+> Across both public sets we now measure **4 of 5 typologies**; KYC-mismatch is the one honest residual —
+> it needs customer profile no public dataset carries.
+
+**Caveat to state plainly:** the SAML-D slice is report-enriched for measurement power, so **recall and the
+per-typology numbers are the honest, mix-independent figures** — lead with those, not the 61.6% accuracy.
+
+**Presenter line:** Don't lead with accuracy. Lead with workload relief + the human-in-the-loop safety net — then own the floor honestly (data + coverage), don't spin it.
+
+**Source footer:** `Measured on held-out SynthAML (Jensen et al., 2023), n=250, ADR-0004. Coverage: 2 of 5 typologies measurable (data + KB gaps). Time figures modeled/illustrative.`
 
 ---
 

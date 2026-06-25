@@ -25,6 +25,39 @@ held-out accuracy number plus honest labeling survives Q&A; fake precision does 
 alerts)** that preserves the ~17% reported ratio. It is still a real measured number; note the sample
 size (n) on the metric slide so the claim is honest. Fix the random seed for reproducibility.
 
+## Typology coverage — the held-out number measures 2 of 5 detectors (added 2026-06-25)
+
+Re-measuring exposed that the held-out recall is **structurally capped**, and that the cap has
+**two independent causes** which need different fixes. The metric now discloses this in-band
+(`measuredTypologies` / `roadmapTypologies` / `coverageNote` on `GET /metrics`, computed by
+`evaluate.coverage_fields()`), rather than leaving it as slide prose only:
+
+- **Representation gap.** `synthaml_loader` reduces each alert to an aggregate feature row that is
+  **amount-less and counterparty-less** (real SynthAML carries no currency amount, counterparty, or
+  customer profile — ADR-0005). Only **PT-01** (pass-through) and **DA-01** (dormant-then-active) are
+  expressible as timing/gap features (`medianCreditToDebitHours`, `postDormancyBurstFrac`). **FI-01**
+  (needs distinct-counterparty counts), **ST-01** (needs cash amounts vs the RM25,000 CTR threshold),
+  and **KYC-01** (needs declared profile) **cannot fire even when present**, so they are demonstrated on
+  curated demo/hero data only and excluded from the measured number.
+- **Coverage gap.** The KB is **5 curated FATF/BNM cards** (ADR-0002), deliberately not exhaustive. A
+  real Report whose pattern matches **no** card is correctly `NO_MATCH`-dismissed by triage — and
+  counted as a false negative. This is a hole in the typology library, not a triage error.
+
+On Report/Dismiss-only SynthAML the two gaps **cannot be separated** (there is no per-alert typology
+label), but both land **outside the 2 measurable detectors**, so the blended recall is an honest
+**floor**, not the product ceiling. **Implication for the roadmap, stated plainly:** adding cards alone
+will *not* move the SynthAML number (the data still can't express them) — the levers are **richer data
+(SAML-D / IBM-AML)** to close representation *and* **a broader card library** to close coverage. Neither
+is prompt tuning. The two-of-five disclosure is unit-tested (`test_evaluate.py`), including a partition
+guard that fails if a future card is added without classifying its coverage.
+
+**Update (2026-06-25): the data lever was acted on (ADR-0012).** Re-measuring on **SAML-D** (which
+carries amount + counterparty) lifted **FI-01 to 68% and ST-01 to 63%** recall — from *structurally
+unmeasurable* on SynthAML — and the copilot beat the always-dismiss baseline for the first time (61.6%
+vs 40.0%, n=250, `saml_d_metrics.json`). The coverage gap was also quantified: typologies outside the
+5-card KB scored 10% recall. Across both public sets, **4 of 5 cards are now measured**; KYC-01 is the
+honest residual (no public set carries customer profile).
+
 ## Supporting external figures (deck Problem / Metric slides)
 
 Every statistic shown on the pitch slides carries a real source — never a fabricated citation. Vetted

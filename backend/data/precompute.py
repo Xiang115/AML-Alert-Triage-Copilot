@@ -28,7 +28,12 @@ from agents.str_drafter import recommended_action
 from schemas import Alert, AlertInput, TriageResult
 
 _DATA = Path(__file__).resolve().parent
-_SOURCES = ["demo_queue.json", "hero_cases.json"]
+# Real-data demo (ADR-0012): the served queue is now built from REAL SAML-D alerts
+# (saml_d_demo_queue.json) — no hand-written cases — so the demo can't be dismissed as
+# "works only on crafted cases". hero_cases.json is kept ONLY as a labelled fallback for
+# the Beat-3 verifier wow if the mined real catch (SD-00013) is ever unavailable. The old
+# hand-authored demo_queue*.json are retired from the demo (kept in git history).
+_SOURCES = ["saml_d_demo_queue.json", "hero_cases.json"]
 _OUT = _DATA / "results.json"
 _AUDIT_SEED = _DATA / "audit_seed.json"
 _BRIEFING = _DATA / "shift_briefing.json"
@@ -53,33 +58,62 @@ def _run_with_retry(alert: AlertInput, client, attempts: int = 4, *,
     raise RuntimeError(f"run_triage failed for {alert.alert_id} after {attempts} attempts: {last}")
 
 
+def _assemble_one(raw: dict, client, cost_sensitive: bool) -> tuple[dict, TriageResult, str]:
+    """Run one alert through the pipeline and assemble its validated Alert dict.
+    Independent per alert (no shared mutable state), so it is safe to fan out across threads."""
+    alert = AlertInput.model_validate(raw)  # input has no triage yet
+    triage = _run_with_retry(alert, client, cost_sensitive=cost_sensitive)
+    # Alert is AlertInput + triage; build it and re-dump camelCase as canonical.
+    assembled = Alert(**alert.model_dump(), triage=triage)
+    return assembled.model_dump(by_alias=True, mode="json"), triage, alert.alert_id
+
+
 def build_results(alerts: list[dict], *, client=None, cost_sensitive: bool = False,
-                  progress: bool = False) -> list[dict]:
+                  progress: bool = False, workers: int = 1) -> list[dict]:
     """Run the pipeline over each input alert and assemble validated Alert dicts.
 
     Pure of file I/O so it can be tested with a fake LLM client (no tokens). The demo
     serves the cost-sensitive operating point so it matches the held-out eval metric.
-    `progress=True` prints a flushed line before and after each alert (which alert,
-    outcome, and per-alert seconds) so a long sequential run isn't a black box.
+
+    Each alert is an independent multi-call pipeline run (triage -> verify -> draft, ~2-4
+    DeepSeek calls), so `workers > 1` fans them out across a thread pool (the OpenAI client
+    is thread-safe) — for a 20+ alert real-data queue this cuts wall-time ~Nx with the same
+    token count. `workers=1` (default) keeps the deterministic sequential path the fake-client
+    tests rely on. Results are always returned in input order. `progress=True` prints a flushed
+    line per completed alert so a long run isn't a black box.
     """
     import time
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    results = []
     total = len(alerts)
-    for i, raw in enumerate(alerts, 1):
-        alert = AlertInput.model_validate(raw)  # input has no triage yet
-        if progress:
-            print(f"  [{i}/{total}] {alert.alert_id:9} running (triage->verify->draft)...", flush=True)
-        t0 = time.perf_counter()
-        triage = _run_with_retry(alert, client, cost_sensitive=cost_sensitive)
-        # Alert is AlertInput + triage; build it and re-dump camelCase as canonical.
-        assembled = Alert(**alert.model_dump(), triage=triage)
-        results.append(assembled.model_dump(by_alias=True, mode="json"))
-        if progress:
-            print(f"  [{i}/{total}] {alert.alert_id:9} {triage.recommendation:8} "
-                  f"verifier={triage.verifier.status:7} conf={triage.confidence}  "
-                  f"({time.perf_counter() - t0:.1f}s)", flush=True)
-    return results
+    results: list[dict | None] = [None] * total
+
+    if workers <= 1 or total <= 1:
+        for i, raw in enumerate(alerts):
+            if progress:
+                print(f"  [{i + 1}/{total}] running (triage->verify->draft)...", flush=True)
+            t0 = time.perf_counter()
+            res, triage, aid = _assemble_one(raw, client, cost_sensitive)
+            results[i] = res
+            if progress:
+                print(f"  [{i + 1}/{total}] {aid:9} {triage.recommendation:8} "
+                      f"verifier={triage.verifier.status:7} conf={triage.confidence}  "
+                      f"({time.perf_counter() - t0:.1f}s)", flush=True)
+        return [r for r in results if r is not None]
+
+    done = 0
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(_assemble_one, raw, client, cost_sensitive): i
+                   for i, raw in enumerate(alerts)}
+        for fut in as_completed(futures):
+            i = futures[fut]
+            res, triage, aid = fut.result()
+            results[i] = res  # placed by index -> input order preserved
+            done += 1
+            if progress:
+                print(f"  [{done}/{total}] {aid:9} {triage.recommendation:8} "
+                      f"verifier={triage.verifier.status:7} conf={triage.confidence}", flush=True)
+    return [r for r in results if r is not None]
 
 
 def _load_inputs() -> list[dict]:
@@ -140,8 +174,8 @@ def main() -> None:
     import llm
     llm.use_offline_timeout()  # long timeout: don't abort+retry valid slow reasoning calls
     alerts = _load_inputs()
-    print(f"Precomputing triage for {len(alerts)} alerts (live DeepSeek calls, cost-sensitive)...", flush=True)
-    results = build_results(alerts, cost_sensitive=True, progress=True)
+    print(f"Precomputing triage for {len(alerts)} alerts (live DeepSeek calls, cost-sensitive, parallel)...", flush=True)
+    results = build_results(alerts, cost_sensitive=True, progress=True, workers=8)
     _write_artifacts(results, narrate=True)
 
 
