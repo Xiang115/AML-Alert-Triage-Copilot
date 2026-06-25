@@ -38,5 +38,11 @@ REVIEW_THRESHOLD = float(os.getenv("REVIEW_THRESHOLD", "0.6"))
 # confidence (ADR-0010). Strictly above REVIEW_THRESHOLD so a flagged alert — capped just
 # below the review threshold — can never auto-clear; tune from held-out auto-clear precision.
 AUTO_CLEAR_THRESHOLD = float(os.getenv("AUTO_CLEAR_THRESHOLD", "0.85"))
+# Adversarial-debate concession gate (ADR-0011/0012). A Triage concession flips the
+# disposition; an escalate->dismiss flip is RESISTED when at least this many of the matched
+# card's indicators fired — a strong multi-indicator match must not be silently dropped by a
+# generic benign hypothesis (it holds as escalate -> needsReview, a human decides). Mirrors the
+# cost-sensitive Triage operating point; raise very high to disable the gate.
+DEBATE_RESIST_MIN_FIRED = int(os.getenv("DEBATE_RESIST_MIN_FIRED", "2"))
 # Fixed for reproducible three-bucket split + eval sampling (ADR-0004/0005).
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))

@@ -72,3 +72,13 @@ auto-clear)* — bolder autonomy but reopens the recall risk and puts the 87% pr
 out; rejected in favour of the firewall. (c) *Third adjudicator agent* — more orchestration branding,
 more cost and determinism surface. (d) *Pull Mule-Network (ADR-0009) into the prelim* — higher ceiling
 but a 6-day build with a frontend long-pole; stays the final-round depth play.
+
+**Addendum (2026-06-25) — concession gate, after measuring on real data (ADR-0012).** On SAML-D the
+Verifier's benign-look-alike challenge ("retained balance / no full forwarding") is **not
+discriminative** — it fires the same on real consolidation and benign collection, so Triage conceded
+away *true* FI/ST reports, tanking recall. Fix: `pipeline.resolve_concession` (config
+`DEBATE_RESIST_MIN_FIRED=2`) makes the concession **cost-sensitive** — a dismiss→escalate concession is
+always honoured, but an escalate→dismiss concession is **resisted when ≥2 indicators fired**: the strong
+match HOLDS as escalate → `needsReview` rather than being silently dropped. The debate can still flip a
+*weak* escalate or correct a dismiss; it can no longer auto-dismiss a strong, multi-indicator
+escalation. This is what makes the debate discriminative in practice when the evidence alone isn't.

@@ -74,8 +74,15 @@ The *same* benign-merchant challenge that correctly clears SD-00013 also flipped
 reports to dismiss (SD-00005, SD-00009/10/11), because "retained balance / no full forwarding" is
 **not discriminative** on SAML-D — real consolidation accounts also retain a balance. So the debate
 lowers matched-card recall. This was invisible while everything was hand-crafted; it is now measured,
-not hidden. Lever: a more discriminative distinguishing test, or gate the debate so it cannot concede
-away a strong multi-indicator match.
+not hidden.
+
+**FIXED (2026-06-25) — cost-sensitive concession gate (`pipeline.resolve_concession`, config
+`DEBATE_RESIST_MIN_FIRED=2`).** A Triage concession flips the disposition; we now honour a
+dismiss→escalate concession always, but **resist an escalate→dismiss concession when ≥2 of the card's
+indicators fired** — a strong multi-indicator match is never silently dropped by a generic benign
+hypothesis. It HOLDS as escalate and routes to a human (`needsReview`), mirroring the cost-sensitive
+Triage operating point (a missed report is the costly error). Unit-tested in `test_pipeline.py`; the
+production-path (with-debate) recall is now measurable via `python -m eval.evaluate_samld --debate`.
 
 **Determinism caveat (amends ADR-0003).** DeepSeek V4 is not bit-deterministic even at temperature 0
 (SD-00002 flipped dismiss↔escalate between two runs). The precomputed `results.json` and the mined

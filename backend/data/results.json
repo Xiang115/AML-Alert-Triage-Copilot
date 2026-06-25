@@ -193,7 +193,7 @@
       "alertId": "SD-00001",
       "recommendation": "escalate",
       "confidence": 1.0,
-      "explanation": "Account opened 2022-10-09 and immediately active. Large inbound of 15,473.64 on 10/11 followed by outbound of 14,366.06 within 11 hours. Running balance spiked to 40,287.61 then drained rapidly to 5,000 after a series of outbounds, retaining little relative to throughput. Pattern matches pass-through typology with newly opened account, warranting escalation for second-line review.",
+      "explanation": "Account opened 2022-10-09, first activity same day. Large inbound £15,473.64 on Oct 11 (SDT-1-2) spiked balance to £40,287.61, followed within 24 hours by an outbound of £14,366.06 (SDT-1-3) and another outbound of £15,350.29 on Oct 13 (SDT-1-6), draining the balance to £9,888.55. This pattern of near-immediate pass-through of similar amounts, combined with the newly opened account, matches PT-01 indicators. Escalate for further review.",
       "matchedTypology": {
         "code": "PT-01",
         "name": "Pass-through / Rapid Movement",
@@ -201,7 +201,8 @@
       },
       "citedTransactionIds": [
         "SDT-1-2",
-        "SDT-1-3"
+        "SDT-1-3",
+        "SDT-1-6"
       ],
       "indicatorCoverage": {
         "indicators": [
@@ -220,11 +221,11 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "The transactions show irregular timing and diverse counterparties with no apparent commercial rationale, consistent with pass-through laundering rather than a benign sweep."
+        "note": "Irregular timing, diverse counterparties, and no commercial rationale support pass-through laundering rather than benign sweep."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T21:58:58.987898",
+        "reportDate": "2026-06-25T22:47:01.144659",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-9749980386",
@@ -239,9 +240,9 @@
         },
         "period": {
           "from": "2022-10-11T16:38:57",
-          "to": "2022-10-12T03:18:57"
+          "to": "2022-10-13T20:49:51"
         },
-        "activitySummary": "Account 9749980386, opened on 09 October 2022, received an inbound credit of £15,473.64 on 11 October. Within 11 hours, £14,366.06 was transferred out, and the balance rapidly drained to around £5,000 after additional outflows, with no retention of funds for any apparent economic purpose.",
+        "activitySummary": "The account received a large inbound transfer of £15,473.64 on 11 October 2022, which spiked the running balance to £40,287.61. Within 24 hours, an outbound transfer of £14,366.06 was made, followed by another outbound of £15,350.29 on 13 October, draining the balance to £9,888.55. The rapid movement of similar amounts with minimal funds retained indicates a pass-through pattern with no apparent economic purpose.",
         "citedTransactions": [
           {
             "transactionId": "SDT-1-2",
@@ -258,18 +259,26 @@
             "currency": "UK pounds",
             "counterpartyName": "Acct 7470491695",
             "runningBalance": 25921.55
+          },
+          {
+            "transactionId": "SDT-1-6",
+            "timestamp": "2022-10-13T20:49:51",
+            "amount": 15350.29,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6279030684",
+            "runningBalance": 9888.55
           }
         ],
         "groundsForSuspicion": [
-          "Large inbound credit followed by a similar-value outbound debit within a short time frame (11 hours).",
-          "Account balance spiked and then quickly returned to near zero, indicating pass-through activity.",
-          "No transactions consistent with a stated economic purpose; the account functions solely as a conduit.",
-          "Account newly opened and immediately used for rapid movement of funds."
+          "Inbound credit followed by outbound debit of similar amount within a short window (hours to two days).",
+          "Running balance spikes on the inbound then rapidly drains back to a low level.",
+          "Account is newly opened with first activity on the same day, consistent with being set up for pass-through.",
+          "No legitimate economic rationale apparent; the account serves solely as a conduit for rapid movement of funds."
         ],
         "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:58:58.987958"
+      "generatedAt": "2026-06-25T22:47:01.144747"
     },
     "routing": "needsReview"
   },
@@ -465,95 +474,30 @@
     ],
     "triage": {
       "alertId": "SD-00002",
-      "recommendation": "escalate",
-      "confidence": 0.5,
-      "explanation": "Account opened 2022-10-07, recently activated, with rapid movement of large sums and little retention (balance falls to 5000). The inbound 9578.04 (SDT-2-4) and large outbounds (SDT-2-10, SDT-2-11) contribute to a pattern consistent with pass-through, despite missing an immediate similar-amount outbound. Escalating due to cost-sensitivity and partial indicator match.",
+      "recommendation": "dismiss",
+      "confidence": 1.0,
+      "explanation": "The alert evidence does not match any candidate typology. A single inbound followed by multiple outflows over a week, with a pre-existing account balance, does not fit the rapid pass-through pattern of PT-01, the consolidation pattern of FI-01, cash-based structuring of ST-01, dormancy reactivation of DA-01, or any KYC profile mismatch indicators (no KYC data provided).",
       "matchedTypology": {
-        "code": "PT-01",
-        "name": "Pass-through / Rapid Movement",
-        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+        "code": "NONE",
+        "name": "No typology matched",
+        "source": "—"
       },
-      "citedTransactionIds": [
-        "SDT-2-4",
-        "SDT-2-10",
-        "SDT-2-11"
-      ],
+      "citedTransactionIds": [],
       "indicatorCoverage": {
-        "indicators": [
-          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
-          "runningBalance spikes on the inbound then drains back to ~0",
-          "Little to no funds retained; no spending consistent with the stated purpose of the account",
-          "Often a newly opened or recently dormant account"
-        ],
-        "fired": [
-          "Little to no funds retained; no spending consistent with the stated purpose of the account",
-          "Often a newly opened or recently dormant account"
-        ]
+        "indicators": [],
+        "fired": []
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Evidence shows irregular timing, diverse counterparties, and no commercial rationale for the unknown account holder, consistent with pass-through laundering rather than regular benign sweeps."
+        "note": "No candidate typology matched the evidence; no laundering pattern to escalate."
       },
       "debate": null,
-      "strDraft": {
-        "reportDate": "2026-06-25T21:59:30.543665",
-        "reportingInstitution": "Demo Bank Berhad",
-        "subject": {
-          "accountId": "ACC-188929394",
-          "holderName": "SAML-D account 188929394",
-          "accountType": "unknown",
-          "openedAt": "2022-10-07T15:50:02"
-        },
-        "typology": {
-          "code": "PT-01",
-          "name": "Pass-through / Rapid Movement",
-          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
-        },
-        "period": {
-          "from": "2022-10-15T23:12:04",
-          "to": "2022-10-22T23:05:59"
-        },
-        "activitySummary": "Account 188929394 received a large deposit of 9,578.04 UK pounds on 15 October 2022, followed by two rapid outbound transfers totaling 26,062.18 UK pounds on 22 October 2022, leaving a balance of just 5,000. The account shows no spending consistent with a stated economic purpose and exhibits classic pass-through behavior with minimal fund retention.",
-        "citedTransactions": [
-          {
-            "transactionId": "SDT-2-4",
-            "timestamp": "2022-10-15T23:12:04",
-            "amount": 9578.04,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 6767692560",
-            "runningBalance": 35409.17
-          },
-          {
-            "transactionId": "SDT-2-10",
-            "timestamp": "2022-10-22T18:20:14",
-            "amount": 12538.89,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 9873536189",
-            "runningBalance": 18523.29
-          },
-          {
-            "transactionId": "SDT-2-11",
-            "timestamp": "2022-10-22T23:05:59",
-            "amount": 13523.29,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 9873536189",
-            "runningBalance": 5000.0
-          }
-        ],
-        "groundsForSuspicion": [
-          "Account recently activated and exhibits rapid movement of funds",
-          "Inbound 9,578.04 GBP on 15 Oct 2022 quickly followed by two large outbound transfers (12,538.89 and 13,523.29 GBP) on 22 Oct 2022",
-          "Balance reduced to 5,000 GBP, indicating little to no funds retained",
-          "No evidence of economic purpose or spending consistent with account profile",
-          "Pattern matches pass-through / rapid movement typology"
-        ],
-        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
-      },
+      "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:59:30.543719"
+      "generatedAt": "2026-06-25T22:47:04.428568"
     },
-    "routing": "needsReview"
+    "routing": "autoCleared"
   },
   {
     "alertId": "SD-00003",
@@ -756,8 +700,8 @@
     "triage": {
       "alertId": "SD-00003",
       "recommendation": "escalate",
-      "confidence": 0.75,
-      "explanation": "Multiple cycles of inbound credits followed within days by outbound debits of similar amounts (SDT-3-0/1, SDT-3-3/4, SDT-3-6/7) cause the running balance to spike and then drain, and the account was only opened on the day of the first inbound, matching the pass-through typology indicators.",
+      "confidence": 1.0,
+      "explanation": "The account, opened on 2022-10-17, immediately engaged in a pattern of receiving funds and quickly moving them out in similar amounts, indicative of a pass-through vehicle. Specific instances include an inbound of 2192.29 followed by an outbound of 2150.35 within two days, and an inbound of 6204.16 followed by an outbound of 6043.32 the next day. The running balance spikes on the inbound and subsequently returns to near the prior level, demonstrating minimal funds retained. The account also had a large initial balance (approximately 289k) that was drained via a 284k outbound within a month, consistent with rapid movement of funds. The account is newly opened, fitting the typology. Given the pattern, the alert is escalated for further investigation.",
       "matchedTypology": {
         "code": "PT-01",
         "name": "Pass-through / Rapid Movement",
@@ -782,17 +726,18 @@
         "fired": [
           "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
           "runningBalance spikes on the inbound then drains back to ~0",
+          "Little to no funds retained; no spending consistent with the stated purpose of the account",
           "Often a newly opened or recently dormant account"
         ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Evidence shows irregular timing, diverse counterparties, and no commercial rationale, consistent with pass-through laundering rather than a benign sweep."
+        "note": "Transactions show irregular timing, diverse counterparties (8 distinct), and no commercial rationale, which matches the pass-through laundering pattern rather than benign regular sweeps."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T21:59:07.838321",
+        "reportDate": "2026-06-25T22:48:00.502414",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-2166563883",
@@ -809,7 +754,7 @@
           "from": "2022-10-17T20:54:56",
           "to": "2022-12-29T01:46:28"
         },
-        "activitySummary": "Between October and December 2022, the account received three inbound credits (GBP 2,192.29 on 17 Oct, GBP 6,204.16 on 9 Dec, GBP 3,779.89 on 28 Dec), each followed within 1-2 days by outbound debits of nearly identical amounts (GBP 2,150.35 on 19 Oct, GBP 6,043.32 on 10 Dec, GBP 3,884.42 on 29 Dec). The running balance spiked on each inbound and then drained back to a low level, with the account only opened on the same day as the first transaction.",
+        "activitySummary": "Account 2166563883, opened in October 2022, received multiple inbound credits and rapidly sent nearly identical amounts out within one to two days, retaining minimal balances. Notable instances include a £2,192.29 credit on 17-Oct-2022 followed by a £2,150.35 debit on 19-Oct-2022, a £6,204.16 credit on 9-Dec-2022 followed by a £6,043.32 debit the next day, and a large initial balance of approximately £284,851 drained in a single transfer on 17-Nov-2022. The account displayed no spending consistent with a legitimate purpose, functioning as a pass-through vehicle.",
         "citedTransactions": [
           {
             "transactionId": "SDT-3-0",
@@ -869,15 +814,17 @@
           }
         ],
         "groundsForSuspicion": [
-          "Newly opened account (opened on the day of the first inbound credit)",
-          "Inbound credits rapidly followed by outbound debits of similar value",
-          "Running balance repeatedly spikes and drains to a minimal amount",
-          "No apparent economic purpose beyond passing funds through the account"
+          "Inbound credit of £2,192.29 on 17-Oct-2022 followed by outbound debit of £2,150.35 on 19-Oct-2022, nearly equal in amount and within two days.",
+          "Inbound credit of £6,204.16 on 9-Dec-2022 followed by outbound debit of £6,043.32 on 10-Dec-2022, repeating the rapid movement pattern.",
+          "Account balance spikes on receipt of funds and returns to near-zero after outflows, indicating no long-term retention.",
+          "Large initial balance of approximately £284,851 drained via a single outbound of £284,851.42 on 17-Nov-2022, leaving only £5,000.",
+          "No evident economic purpose or spending consistent with the stated use; funds merely pass through the account.",
+          "Account newly opened in October 2022 and immediately engaged in suspicious pass-through activity."
         ],
         "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:59:07.838376"
+      "generatedAt": "2026-06-25T22:48:00.502468"
     },
     "routing": "needsReview"
   },
@@ -1072,8 +1019,8 @@
     "triage": {
       "alertId": "SD-00004",
       "recommendation": "escalate",
-      "confidence": 0.5,
-      "explanation": "Newly opened account (8 days old) with a large initial balance that is rapidly drained through multiple outbound transfers to numerous unrelated counterparties, leaving only £5000 from ~£97,000, consistent with pass-through typology. Inbound credit is inferred from the high starting balance and occurred within a short window prior to the outbound chain.",
+      "confidence": 0.75,
+      "explanation": "Account opened 2022-10-08, initial balance of approximately 96,921.96 (inferred). From 2022-10-16, funds are rapidly moved out through 11 outbound transfers totaling ~97,930.07, leaving a balance of 5,000. The single inbound of 6,008.11 on 2022-10-18 is minimal. The pattern indicates a large inbound (likely soon after account opening) followed by swift depletion through multiple debits, consistent with pass-through activity.",
       "matchedTypology": {
         "code": "PT-01",
         "name": "Pass-through / Rapid Movement",
@@ -1081,15 +1028,6 @@
       },
       "citedTransactionIds": [
         "SDT-4-0",
-        "SDT-4-1",
-        "SDT-4-3",
-        "SDT-4-4",
-        "SDT-4-5",
-        "SDT-4-6",
-        "SDT-4-7",
-        "SDT-4-8",
-        "SDT-4-9",
-        "SDT-4-10",
         "SDT-4-11"
       ],
       "indicatorCoverage": {
@@ -1100,18 +1038,19 @@
           "Often a newly opened or recently dormant account"
         ],
         "fired": [
-          "Little to no funds retained; no spending consistent with the stated purpose of the account",
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
           "Often a newly opened or recently dormant account"
         ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Evidence shows irregular timing, diverse counterparties, no commercial rationale, fitting pass-through laundering rather than benign regular sweeping."
+        "note": "Evidence shows irregular timing, diverse counterparties, and no commercial rationale, consistent with pass-through laundering."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T21:59:22.513848",
+        "reportDate": "2026-06-25T22:47:11.289768",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-1813079910",
@@ -1128,7 +1067,7 @@
           "from": "2022-10-16T13:22:49",
           "to": "2022-10-25T09:42:57"
         },
-        "activitySummary": "Account 1813079910 was opened on an unknown date and received approximately £97,000 shortly thereafter. Over nine days starting 2022-10-16, a series of 11 outbound transfers totalling £97,929.07 were made to numerous unrelated third-party accounts, leaving a residual balance of £5,000. There is no evidence of any legitimate economic purpose for these transactions, and the account appears to have served solely as a temporary conduit for funds.",
+        "activitySummary": "SAML-D account 1813079910, opened on 2022-10-08, received an initial credit of approximately 96,921.96 UK pounds, followed by rapid depletion through 11 outbound debits totaling roughly 97,930.07 UK pounds between 2022-10-16 and 2022-10-25, leaving a balance of 5,000. A small inbound of 6,008.11 UK pounds on 2022-10-18 did not alter the pattern, and no other economic activity is evident.",
         "citedTransactions": [
           {
             "transactionId": "SDT-4-0",
@@ -1137,78 +1076,6 @@
             "currency": "UK pounds",
             "counterpartyName": "Acct 378616418",
             "runningBalance": 86493.64
-          },
-          {
-            "transactionId": "SDT-4-1",
-            "timestamp": "2022-10-17T22:47:53",
-            "amount": 4092.52,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 6073420558",
-            "runningBalance": 82401.12
-          },
-          {
-            "transactionId": "SDT-4-3",
-            "timestamp": "2022-10-18T12:26:43",
-            "amount": 20227.45,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 1046185753",
-            "runningBalance": 68181.78
-          },
-          {
-            "transactionId": "SDT-4-4",
-            "timestamp": "2022-10-19T13:06:57",
-            "amount": 6211.86,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 7404592457",
-            "runningBalance": 61969.92
-          },
-          {
-            "transactionId": "SDT-4-5",
-            "timestamp": "2022-10-19T13:35:34",
-            "amount": 13325.69,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 1046185753",
-            "runningBalance": 48644.23
-          },
-          {
-            "transactionId": "SDT-4-6",
-            "timestamp": "2022-10-20T11:41:48",
-            "amount": 3879.9,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 2610140320",
-            "runningBalance": 44764.33
-          },
-          {
-            "transactionId": "SDT-4-7",
-            "timestamp": "2022-10-20T12:48:23",
-            "amount": 6056.61,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 8673365646",
-            "runningBalance": 38707.72
-          },
-          {
-            "transactionId": "SDT-4-8",
-            "timestamp": "2022-10-21T04:40:16",
-            "amount": 2050.64,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 3509167302",
-            "runningBalance": 36657.08
-          },
-          {
-            "transactionId": "SDT-4-9",
-            "timestamp": "2022-10-21T22:45:47",
-            "amount": 5249.4,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 8935178822",
-            "runningBalance": 31407.68
-          },
-          {
-            "transactionId": "SDT-4-10",
-            "timestamp": "2022-10-24T15:14:04",
-            "amount": 24988.48,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 9741073632",
-            "runningBalance": 6419.2
           },
           {
             "transactionId": "SDT-4-11",
@@ -1220,15 +1087,16 @@
           }
         ],
         "groundsForSuspicion": [
-          "Account was newly opened (likely within 8 days of first transaction) and exhibited rapid pass-through activity.",
-          "Incoming funds of ~£97,000 were almost entirely depleted within 9 days via multiple transfers to unrelated parties, leaving only £5,000.",
-          "No spending or transactions consistent with a stated business or personal purpose; funds were not retained or used for legitimate expenses.",
-          "The pattern is indicative of a pass-through scheme where the account is used to quickly move illicit funds and obscure their origin."
+          "Newly opened account receives a large initial credit (~96,921.96 UK pounds) and swiftly moves nearly all funds out.",
+          "Outbound debits total ~97,930.07 UK pounds, closely matching the initial credit, within 9 days.",
+          "Running balance spikes then drains to near zero, consistent with pass-through/rapid movement typology.",
+          "No apparent legitimate economic purpose for the transactions; activity resembles layering or structuring.",
+          "Account shows minimal residual balance and no other meaningful activity."
         ],
         "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:59:22.513901"
+      "generatedAt": "2026-06-25T22:47:11.289826"
     },
     "routing": "needsReview"
   },
@@ -1422,9 +1290,9 @@
     ],
     "triage": {
       "alertId": "SD-00005",
-      "recommendation": "dismiss",
-      "confidence": 0.25,
-      "explanation": "The account received 10 inbound transfers from 10 different counterparties over 13 days, aggregating to a high balance, followed by a large outbound transfer. This pattern matches Fan-in/Fan-out consolidation, with no apparent relationship among the senders, and the behavior is inconsistent with typical personal account usage.",
+      "recommendation": "escalate",
+      "confidence": 0.59,
+      "explanation": "The account received 10 inbound transfers from 9 different accounts within 10 days, aggregating approximately 99k in funds, followed by a substantial outbound transfer, consistent with a fan-in consolidation pattern. The senders appear unrelated, and the activity is suspicious.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -1457,28 +1325,146 @@
         ]
       },
       "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
       },
       "debate": {
         "challenge": {
-          "counterHypothesis": "Legitimate merchant or business account receiving payments for goods/services.",
-          "distinguishingTestAssessment": "The evidence does not satisfy the mule consolidation pattern because: (1) the outbound transactions are not rapid full forwarding—only two outbounds, one before any inbound and one partial; (2) the account retains a significant working balance (retained >86k after outbound); (3) the inbound amounts are large and varied, not typical of many small customer payments; (4) the counterparty Acct 3456018904 appears both as sender and recipient, suggesting a possible refund or legitimate business relationship; (5) we lack information on whether senders are personal or business, and the account type is unknown."
+          "counterHypothesis": "Legitimate merchant account receiving customer payments for goods/services, with outbound transfers to suppliers or for expenses.",
+          "distinguishingTestAssessment": "unrelatedPersonalSenders: The senders are not explicitly identified as personal; they could be business counterparties or customers.; rapidFullForwarding: Funds are not rapidly forwarded in full; only two outbound transactions occur, and the account retains a significant balance (86,142.28 after the last outbound).; personalAccountType: The account type is not specified as personal; it could be a business account (SAML-D account type not defined)."
         },
         "rebuttal": {
-          "argument": "The evidence shows a retained working balance over 86k, an outbound before any inbound, and a counterparty appearing as both sender and recipient, which aligns better with a legitimate business than rapid mule consolidation.",
+          "argument": "The account shows multiple inbound payments from various counterparties, only two outbound transfers, and retains a large balance (86,142.28). There is no rapid full forwarding, and the account type is unspecified. These are consistent with a legitimate merchant receiving customer payments and making occasional outbound payments, not mule consolidation.",
           "conceded": true
         },
         "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
         }
       },
-      "strDraft": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:48:17.565585",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-1275365067",
+          "holderName": "SAML-D account 1275365067",
+          "accountType": "unknown",
+          "openedAt": "2022-10-11T11:24:32"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2023-02-09T15:54:54",
+          "to": "2023-02-21T23:06:55"
+        },
+        "activitySummary": "Between 9 and 21 February 2023, account 1275365067 received ten inbound transfers from nine distinct counterparty accounts, aggregating approximately £99,662. The funds were consolidated rapidly, with the running balance peaking before a single outbound transfer of 13,519.28 Mexican Pesos, which reduced the balance significantly. The pattern exhibits a classic fan-in consolidation with no apparent legitimate economic rationale.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-5-1",
+            "timestamp": "2023-02-09T15:54:54",
+            "amount": 2551.89,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8698368133",
+            "runningBalance": 7551.89
+          },
+          {
+            "transactionId": "SDT-5-2",
+            "timestamp": "2023-02-14T15:20:56",
+            "amount": 11686.13,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 7390438805",
+            "runningBalance": 19238.02
+          },
+          {
+            "transactionId": "SDT-5-3",
+            "timestamp": "2023-02-14T21:20:42",
+            "amount": 16396.73,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1408775586",
+            "runningBalance": 35634.75
+          },
+          {
+            "transactionId": "SDT-5-4",
+            "timestamp": "2023-02-14T22:36:34",
+            "amount": 4302.33,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3255044891",
+            "runningBalance": 39937.08
+          },
+          {
+            "transactionId": "SDT-5-5",
+            "timestamp": "2023-02-16T02:47:17",
+            "amount": 5873.74,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6972614413",
+            "runningBalance": 45810.82
+          },
+          {
+            "transactionId": "SDT-5-6",
+            "timestamp": "2023-02-16T22:10:14",
+            "amount": 14767.96,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5605126789",
+            "runningBalance": 60578.78
+          },
+          {
+            "transactionId": "SDT-5-7",
+            "timestamp": "2023-02-17T14:16:20",
+            "amount": 3360.03,
+            "currency": "Naira",
+            "counterpartyName": "Acct 5131113315",
+            "runningBalance": 63938.81
+          },
+          {
+            "transactionId": "SDT-5-8",
+            "timestamp": "2023-02-17T15:36:11",
+            "amount": 9873.11,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1459199611",
+            "runningBalance": 73811.92
+          },
+          {
+            "transactionId": "SDT-5-9",
+            "timestamp": "2023-02-17T21:06:46",
+            "amount": 19257.0,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1666395444",
+            "runningBalance": 93068.92
+          },
+          {
+            "transactionId": "SDT-5-10",
+            "timestamp": "2023-02-18T09:10:03",
+            "amount": 6592.64,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3456018904",
+            "runningBalance": 99661.56
+          },
+          {
+            "transactionId": "SDT-5-11",
+            "timestamp": "2023-02-21T23:06:55",
+            "amount": 13519.28,
+            "currency": "Mexican Peso",
+            "counterpartyName": "Acct 3198186594",
+            "runningBalance": 86142.28
+          }
+        ],
+        "groundsForSuspicion": [
+          "10 inbound credits from 9 unrelated counterparties over a 10-day period",
+          "Funds aggregated to over £99,000 before a single large outbound payment",
+          "Outbound transfer in Mexican Pesos while inbound payments were predominantly in GBP, with one in Naira—suggesting cross-border layering",
+          "Currency recording anomalies: Naira and Peso amounts appear treated as equivalent to GBP, indicating possible manipulation or fictitious transactions",
+          "Account holder profile does not support receiving numerous transfers from unrelated individuals",
+          "Pattern consistent with money mule activity or terrorist financing consolidation"
+        ],
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
+      },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:59:06.566233"
+      "generatedAt": "2026-06-25T22:48:17.565641"
     },
     "routing": "needsReview"
   },
@@ -1677,41 +1663,47 @@
     "triage": {
       "alertId": "SD-00006",
       "recommendation": "escalate",
-      "confidence": 0.75,
-      "explanation": "Account opened 2022-11-08 with a single inbound (SDT-6-0) then went dormant for over six weeks. Beginning 2022-12-24, it received a series of large inbound transfers (SDT-6-1 through SDT-6-6), spiking the balance to 118k, and within days initiated large outbound transfers (SDT-6-7 onward). The sudden activation and rapid movement of funds are inconsistent with the account's short and inactive history, matching DA-01 Dormant-then-Active indicators.",
+      "confidence": 0.5,
+      "explanation": "Account opened with a small credit then lay dormant for ~46 days. A burst of seven inbound transfers from distinct counterparties over a week rapidly inflated the balance to 118k, followed within days by five outbound transfers that drained roughly half the balance. The rapid movement through a recently dormant account aligns with PT-01 (Pass-through / Rapid Movement), even though the balance did not fully drain and the outbound total is lower than inbound. Escalated for further verification.",
       "matchedTypology": {
-        "code": "DA-01",
-        "name": "Dormant-then-Active",
-        "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
       },
       "citedTransactionIds": [
         "SDT-6-0",
         "SDT-6-1",
+        "SDT-6-2",
         "SDT-6-3",
         "SDT-6-4",
-        "SDT-6-7"
+        "SDT-6-5",
+        "SDT-6-6",
+        "SDT-6-7",
+        "SDT-6-8",
+        "SDT-6-9",
+        "SDT-6-10",
+        "SDT-6-11"
       ],
       "indicatorCoverage": {
         "indicators": [
-          "Long period of no/low activity followed by sudden large throughput",
-          "Reactivation not accompanied by a KYC/CDD refresh",
-          "Funds often move straight out after arriving",
-          "Activity profile inconsistent with the account's history"
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
+          "Little to no funds retained; no spending consistent with the stated purpose of the account",
+          "Often a newly opened or recently dormant account"
         ],
         "fired": [
-          "Long period of no/low activity followed by sudden large throughput",
-          "Funds often move straight out after arriving",
-          "Activity profile inconsistent with the account's history"
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "Often a newly opened or recently dormant account"
         ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "No documented rationale or CDD update, and rapid onward movement of funds after dormancy."
+        "note": "Transactions show irregular timing and diverse counterparties, consistent with pass-through activity rather than regular benign sweeps."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T21:59:09.648518",
+        "reportDate": "2026-06-25T22:47:24.472984",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-8216575630",
@@ -1720,15 +1712,15 @@
           "openedAt": "2022-11-08T07:11:52"
         },
         "typology": {
-          "code": "DA-01",
-          "name": "Dormant-then-Active",
-          "source": "FATF Recommendations (2012), R.10 (ongoing CDD); BNM AML/CFT Policy Document"
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
         },
         "period": {
           "from": "2022-11-08T07:11:52",
-          "to": "2023-01-02T13:46:58"
+          "to": "2023-01-07T21:03:14"
         },
-        "activitySummary": "Account opened on 2022-11-08 with a single inbound credit of £3,185.31, then remained completely dormant for over six weeks. Starting 2022-12-24, it received a series of large inbound transfers in multiple currencies, rapidly building a balance of approximately £118,000, and within days initiated large outbound transfers, with funds exiting the account almost immediately.",
+        "activitySummary": "The account opened with a small credit and remained dormant for 46 days, then received seven inbound transfers from distinct counterparties between 24 December 2022 and 30 December 2022, totaling approximately £118,000. Within days, five outbound transfers totaling around £63,000 were executed, leaving a balance of about £55,000. The rapid movement through a recently dormant account lacks clear economic purpose.",
         "citedTransactions": [
           {
             "transactionId": "SDT-6-0",
@@ -1747,6 +1739,14 @@
             "runningBalance": 27514.04
           },
           {
+            "transactionId": "SDT-6-2",
+            "timestamp": "2022-12-25T09:25:31",
+            "amount": 6527.06,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5094992526",
+            "runningBalance": 34041.1
+          },
+          {
             "transactionId": "SDT-6-3",
             "timestamp": "2022-12-25T15:40:13",
             "amount": 35902.2,
@@ -1763,24 +1763,74 @@
             "runningBalance": 105450.97
           },
           {
+            "transactionId": "SDT-6-5",
+            "timestamp": "2022-12-27T15:11:37",
+            "amount": 3328.07,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 21609978",
+            "runningBalance": 108779.04
+          },
+          {
+            "transactionId": "SDT-6-6",
+            "timestamp": "2022-12-30T14:01:15",
+            "amount": 9229.26,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5237424990",
+            "runningBalance": 118008.3
+          },
+          {
             "transactionId": "SDT-6-7",
             "timestamp": "2023-01-02T13:46:58",
             "amount": 14358.0,
             "currency": "UK pounds",
             "counterpartyName": "Acct 9909968964",
             "runningBalance": 103650.3
+          },
+          {
+            "transactionId": "SDT-6-8",
+            "timestamp": "2023-01-06T10:26:51",
+            "amount": 6964.41,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6896171417",
+            "runningBalance": 96685.89
+          },
+          {
+            "transactionId": "SDT-6-9",
+            "timestamp": "2023-01-07T19:37:21",
+            "amount": 28763.35,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 2494434938",
+            "runningBalance": 67922.54
+          },
+          {
+            "transactionId": "SDT-6-10",
+            "timestamp": "2023-01-07T20:43:05",
+            "amount": 9451.53,
+            "currency": "Yen",
+            "counterpartyName": "Acct 8508425009",
+            "runningBalance": 58471.01
+          },
+          {
+            "transactionId": "SDT-6-11",
+            "timestamp": "2023-01-07T21:03:14",
+            "amount": 3398.95,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3844967554",
+            "runningBalance": 55072.06
           }
         ],
         "groundsForSuspicion": [
-          "Account was dormant for over six weeks after opening, then suddenly activated with high-value cross-currency transfers.",
-          "The large volume and rapid movement of funds are inconsistent with the account’s short and previously inactive history.",
-          "Incoming funds were swiftly followed by outbound transfers, indicative of layering or pass-through activity.",
-          "No refreshed customer due diligence was performed to verify the source of funds or purpose of activity after dormancy."
+          "Account dormant for 46 days before sudden influx of multiple large inbound transfers.",
+          "Inbound credits quickly followed by outbound debits of similar amounts within a short window.",
+          "Over half of the received funds were moved out within days, indicative of pass-through activity.",
+          "No apparent economic rationale (e.g., no payroll, bills, or business transactions) for the pattern.",
+          "Transactions involved multiple currencies (GBP, TRY, JPY), suggesting potential layering or cross-border movement.",
+          "Activity inconsistent with account's prior dormant state and typical personal or business profile."
         ],
-        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Dormant-then-Active pattern."
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:59:09.648573"
+      "generatedAt": "2026-06-25T22:47:24.473038"
     },
     "routing": "needsReview"
   },
@@ -1977,8 +2027,8 @@
     "triage": {
       "alertId": "SD-00007",
       "recommendation": "escalate",
-      "confidence": 0.75,
-      "explanation": "The account received six inbound credits from six different counterparties within 5 days (Feb 18-23), aggregating ~74k GBP, then quickly forwarded the funds via multiple large outbound transfers (Feb 26-28). This pattern of multiple unrelated inbound payments consolidated and moved out rapidly is characteristic of fan-in/fan-out (consolidation) often seen in money mule or scam operations.",
+      "confidence": 0.59,
+      "explanation": "The account received 7 inbound payments from distinct counterparties within a short period, then executed multiple large outbound transfers, consistent with fan-in/fan-out consolidation. The senders likely have no relationship to the account holder, and the activity pattern matches the consolidation typology.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -1992,7 +2042,6 @@
         "SDT-7-6",
         "SDT-7-7",
         "SDT-7-8",
-        "SDT-7-9",
         "SDT-7-10",
         "SDT-7-11"
       ],
@@ -2010,13 +2059,27 @@
         ]
       },
       "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Evidence shows multiple unrelated inbound payments and rapid outbound forwarding with no retained working balance, consistent with mule consolidation rather than a legitimate merchant."
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
       },
-      "debate": null,
+      "debate": {
+        "challenge": {
+          "counterHypothesis": "The account is a legitimate merchant or crowdfunding platform receiving payments from customers and subsequently making payments to suppliers or expenses, with retained working balance.",
+          "distinguishingTestAssessment": "Merchants receive payments FOR goods/services (consistent amounts, business account type, retained/working balance): Inbound amounts are varied (795.16, 10204.32, etc.) but could represent different products or services; account type unknown; retained balance exists (running balance ends at 21499.62).; Mule consolidation shows unrelated PERSONAL senders: No evidence that senders are personal; they could be business customers.; rapid full forwarding: Outbound transactions occur over 2-3 days after inbound cluster, not rapid; not all funds forwarded (balance remains).; personal account type: Account type is unknown (SAML-D account); not confirmed personal."
+        },
+        "rebuttal": {
+          "argument": "The evidence better fits a legitimate merchant: varied inbound amounts consistent with customer payments, outbound transactions not immediate (2-3 days after last inbound), significant retained balance, and account type unknown (not confirmed personal).",
+          "conceded": true
+        },
+        "reverdict": {
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
+        }
+      },
       "strDraft": {
-        "reportDate": "2026-06-25T21:58:52.729253",
+        "reportDate": "2026-06-25T22:48:04.398153",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-4063617528",
@@ -2033,7 +2096,7 @@
           "from": "2023-02-18T00:50:19",
           "to": "2023-02-28T20:25:17"
         },
-        "activitySummary": "Between Feb 18 and 23, 2023, account 4063617528 received six inbound credits from six distinct counterparties, totaling approximately 74,000 GBP. Within four days (Feb 26–28), the accumulated funds were largely transferred out in four transactions to different external accounts, leaving a minimal balance. The rapid aggregation and forwarding of funds is characteristic of a fan-in/fan-out consolidation pattern.",
+        "activitySummary": "The account received six inbound credits totaling approximately GBP 73,792 from six distinct, seemingly unrelated third-party accounts between 18 and 23 February 2023. The aggregated funds were then rapidly disbursed via three large outbound transfers to three different external accounts between 26 and 28 February 2023, leaving a residual balance of GBP 21,499. This pattern of multiple small inflows from unconnected parties followed by a few large outflows is consistent with fan-in/fan-out consolidation activity, which is often indicative of money laundering.",
         "citedTransactions": [
           {
             "transactionId": "SDT-7-2",
@@ -2092,14 +2155,6 @@
             "runningBalance": 59480.76
           },
           {
-            "transactionId": "SDT-7-9",
-            "timestamp": "2023-02-26T18:46:39",
-            "amount": 192.34,
-            "currency": "UK pounds",
-            "counterpartyName": "Acct 7827862072",
-            "runningBalance": 59288.42
-          },
-          {
             "transactionId": "SDT-7-10",
             "timestamp": "2023-02-27T09:29:32",
             "amount": 8148.02,
@@ -2117,16 +2172,15 @@
           }
         ],
         "groundsForSuspicion": [
-          "Multiple inbound payments (6) from unrelated counterparties in a short period (5 days).",
-          "No apparent relationship between the senders and the account holder, inconsistent with legitimate activity.",
-          "Funds were consolidated (balance peaked at 79,564.57 GBP) then quickly forwarded in large outbound transfers.",
-          "Outbound transfers occurred within 3 days of receiving the last inbound credit, rapidly depleting the account.",
-          "Pattern matches fan-in/fan-out typology suggestive of money mule or scam operations."
+          "Six unrelated counterparties sent credits with no apparent connection to the account holder or each other",
+          "Funds were quickly consolidated and then moved out in large, rounded amounts to three distinct third-party accounts",
+          "Account activity is inconsistent with the expected profile, suggesting potential use as a temporary pass-through or shell account",
+          "Short time frame between credits and subsequent debits indicates rapid layering with no legitimate economic purpose"
         ],
-        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:58:52.729314"
+      "generatedAt": "2026-06-25T22:48:04.398207"
     },
     "routing": "needsReview"
   },
@@ -2320,30 +2374,87 @@
     ],
     "triage": {
       "alertId": "SD-00008",
-      "recommendation": "dismiss",
-      "confidence": 1.0,
-      "explanation": "The transactions do not match any of the specified typologies. There is no clear pass-through with similar amounts and balance draining, no fan-in with aggregation into large outbound, no structuring, no dormant-then-active (account recently opened), and no KYC mismatch data. The pattern is of multiple inbound and outbound transfers but without the distinguishing features of the given typologies.",
+      "recommendation": "escalate",
+      "confidence": 0.75,
+      "explanation": "The account was opened on 2022-10-07 and shows an initial high balance (approx 30156 GBP) followed by large outbound transfers of 13244.12 and 11912.25 GBP within hours on 2022-10-15, draining the balance to 5000 GBP. This pattern of a large inbound credit (implied by the starting balance) rapidly moved out via similar-sized debits matches PT-01 pass-through activity. The account is newly opened, further supporting the typology.",
       "matchedTypology": {
-        "code": "NONE",
-        "name": "No typology matched",
-        "source": "—"
+        "code": "PT-01",
+        "name": "Pass-through / Rapid Movement",
+        "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
       },
-      "citedTransactionIds": [],
+      "citedTransactionIds": [
+        "SDT-8-0",
+        "SDT-8-1"
+      ],
       "indicatorCoverage": {
-        "indicators": [],
-        "fired": []
+        "indicators": [
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
+          "Little to no funds retained; no spending consistent with the stated purpose of the account",
+          "Often a newly opened or recently dormant account"
+        ],
+        "fired": [
+          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+          "runningBalance spikes on the inbound then drains back to ~0",
+          "Often a newly opened or recently dormant account"
+        ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "No candidate typology matched the evidence; no laundering pattern to escalate."
+        "note": "The transactions show irregular timing and diverse counterparties with no observed commercial rationale, matching the pass-through laundering typology rather than a benign regular sweep."
       },
       "debate": null,
-      "strDraft": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:47:22.674862",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-3001717656",
+          "holderName": "SAML-D account 3001717656",
+          "accountType": "unknown",
+          "openedAt": "2022-10-07T20:43:15"
+        },
+        "typology": {
+          "code": "PT-01",
+          "name": "Pass-through / Rapid Movement",
+          "source": "FATF Recommendations (2012), R.10/R.20; BNM AML/CFT Policy Document"
+        },
+        "period": {
+          "from": "2022-10-15T04:36:21",
+          "to": "2022-10-15T07:38:23"
+        },
+        "activitySummary": "Account 3001717656, opened on 2022-10-07, received an initial credit of approximately 30,156 GBP and on 2022-10-15 transferred out 13,244.12 GBP and 11,912.25 GBP within hours, draining the balance to 5,000 GBP. The rapid, near-total depletion of newly deposited funds lacks any discernible economic purpose.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-8-0",
+            "timestamp": "2022-10-15T04:36:21",
+            "amount": 13244.12,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8222094213",
+            "runningBalance": 16912.25
+          },
+          {
+            "transactionId": "SDT-8-1",
+            "timestamp": "2022-10-15T07:38:23",
+            "amount": 11912.25,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8334566852",
+            "runningBalance": 5000.0
+          }
+        ],
+        "groundsForSuspicion": [
+          "Recently opened account (2022-10-07) with immediate high balance activity",
+          "Large inbound credit rapidly moved out via two similar-sized outbound debits within a 3-hour window on 2022-10-15",
+          "Balance was drained from ~30,156 GBP to 5,000 GBP, returning near zero",
+          "No apparent legitimate business or personal reason for the rapid pass-through of funds",
+          "Pattern consistent with pass-through / rapid movement typology, often associated with money laundering"
+        ],
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
+      },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T21:58:50.534987"
+      "generatedAt": "2026-06-25T22:47:22.674912"
     },
-    "routing": "autoCleared"
+    "routing": "needsReview"
   },
   {
     "alertId": "SD-00009",
@@ -2541,9 +2652,9 @@
     ],
     "triage": {
       "alertId": "SD-00009",
-      "recommendation": "dismiss",
+      "recommendation": "escalate",
       "confidence": 0.5,
-      "explanation": "The account exhibits a fan-in pattern of multiple inbound credits from various unrelated counterparties over a short period, consistent with the accumulation phase of a consolidation scheme. Although an outbound transfer has not yet occurred, the absence does not preclude the typology, as the pattern matches the precursor stage of layering. Cost-sensitive policy prefers escalation to avoid false negatives.",
+      "explanation": "The account, opened on 2022-11-15, immediately received 12 inbound transfers from 10 distinct counterparties within a short period, aggregating over £43,000. No outbound transfers have occurred yet, but the accumulation pattern mirrors the fan-in phase of consolidation typology FI-01. The senders are unrelated to the new account holder, and the activity is inconsistent with a typical new personal account. Escalation is recommended for further review to determine if an onward transfer is imminent or to investigate source of funds.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -2555,13 +2666,7 @@
         "SDT-9-2",
         "SDT-9-3",
         "SDT-9-4",
-        "SDT-9-5",
-        "SDT-9-6",
-        "SDT-9-7",
-        "SDT-9-8",
-        "SDT-9-9",
-        "SDT-9-10",
-        "SDT-9-11"
+        "SDT-9-5"
       ],
       "indicatorCoverage": {
         "indicators": [
@@ -2576,28 +2681,105 @@
         ]
       },
       "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Triage conceded, but 2 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
       },
       "debate": {
         "challenge": {
-          "counterHypothesis": "This account appears to be a legitimate merchant or crowdfunding recipient, collecting payments from various customers. The funds are retained in the account without rapid forwarding, and the transaction amounts vary but are consistent with business receipts.",
-          "distinguishingTestAssessment": "sendersAreUnrelatedPersonal: Unknown; counterparties are diverse but no evidence they are personal accounts.; rapidFullForwarding: Not present; no outbound transactions occur.; personalAccountType: Account type is unknown (SAML-D), not specified as personal.; retainedWorkingBalance: True; balance increases and is not forwarded.; consistentAmounts: Partially; amounts vary but within a range typical for small business payments."
+          "counterHypothesis": "Legitimate business or freelancer receiving payments from multiple customers for services rendered.",
+          "distinguishingTestAssessment": "1. Merchants receive payments FOR goods/services: Not directly evidenced; could be true but no proof of goods/services. 2. Consistent amounts: Amounts are not consistent (range 317 to 4046, with different currencies). 3. Business account type: Not specified; could be personal. 4. Retained/working balance: Yes, balance is retained. Mule consolidation: Unrelated PERSONAL senders: Unclear, but different counterparties. Rapid full forwarding: No outbound transactions at all, so condition not met. Personal account type: Not known."
         },
         "rebuttal": {
-          "argument": "The evidence does not satisfy the mule consolidation test: there is no rapid forwarding (zero outbound), the account type is unknown, and the retained balance with varied but partially consistent inbound amounts fits a legitimate merchant or crowdfunding scenario. The verifier's counter-hypothesis is more consistent.",
+          "argument": "The absence of any outbound transactions contradicts the crucial 'rapid full forwarding' indicator for mule consolidation, and the inconsistent amounts/currencies do not satisfy the merchant pattern; the verifier's benign business or freelancer explanation fits better.",
           "conceded": true
         },
         "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "Triage conceded, but 2 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
         }
       },
-      "strDraft": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:48:59.521135",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-6844529387",
+          "holderName": "SAML-D account 6844529387",
+          "accountType": "unknown",
+          "openedAt": "2022-11-15T11:17:53"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2022-11-15T11:17:53",
+          "to": "2022-11-19T18:58:01"
+        },
+        "activitySummary": "Account 6844529387, opened on 15/11/2022, rapidly accumulated over £43,000 through multiple inbound credits from numerous unrelated individuals, including six cited transactions totaling over £21,000 within five days. No outbound transactions have occurred, and the account shows no other activity consistent with a genuine personal use, matching the fan-in phase of a consolidation typology.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-9-0",
+            "timestamp": "2022-11-15T11:17:53",
+            "amount": 3972.59,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 2295495393",
+            "runningBalance": 8972.59
+          },
+          {
+            "transactionId": "SDT-9-1",
+            "timestamp": "2022-11-16T03:41:04",
+            "amount": 3911.38,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5207991584",
+            "runningBalance": 12883.97
+          },
+          {
+            "transactionId": "SDT-9-2",
+            "timestamp": "2022-11-16T07:39:28",
+            "amount": 1550.51,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6201599867",
+            "runningBalance": 14434.48
+          },
+          {
+            "transactionId": "SDT-9-3",
+            "timestamp": "2022-11-17T17:53:13",
+            "amount": 4046.92,
+            "currency": "Indian rupee",
+            "counterpartyName": "Acct 4202589878",
+            "runningBalance": 18481.4
+          },
+          {
+            "transactionId": "SDT-9-4",
+            "timestamp": "2022-11-18T16:17:31",
+            "amount": 3782.23,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 28968986",
+            "runningBalance": 22263.63
+          },
+          {
+            "transactionId": "SDT-9-5",
+            "timestamp": "2022-11-19T18:58:01",
+            "amount": 3904.53,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5622928657",
+            "runningBalance": 26168.16
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple inbound credits from at least six distinct counterparties within days of account opening, all of whom appear unrelated to the account holder.",
+          "Senders are numerous and have no apparent relationship to the account holder, with no common purpose identified.",
+          "One credit was received in Indian rupee (INR) while all others were in British pounds, indicating possible currency structuring.",
+          "The rapid accumulation of funds without any outbound transactions is highly suggestive of fan-in consolidation, often a precursor to a large onward transfer.",
+          "The account activity is inconsistent with the profile of a newly opened personal account, raising concerns over the source of funds."
+        ],
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
+      },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:00:21.228740"
+      "generatedAt": "2026-06-25T22:48:59.521202"
     },
     "routing": "needsReview"
   },
@@ -2795,9 +2977,9 @@
     ],
     "triage": {
       "alertId": "SD-00010",
-      "recommendation": "dismiss",
-      "confidence": 0.75,
-      "explanation": "The account received 10 inbound credits from 10 different counterparties within 10 days, indicative of fan-in activity. Although no large outbound consolidation has been observed yet, the pattern suggests potential mule account accumulation. Cost-sensitive mode: escalate for verification.",
+      "recommendation": "escalate",
+      "confidence": 0.5,
+      "explanation": "The account shows multiple inbound credits from 10 different counterparties in various currencies over a 10-day period, indicating potential fan-in consolidation. Although no large outbound transfers have occurred yet, the aggregation pattern is suspicious and warrants further investigation to determine if funds will later be moved onward.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -2823,32 +3005,142 @@
           "Amounts and frequency inconsistent with the account holder's profile"
         ],
         "fired": [
-          "Multiple inbound credits from many unrelated individuals over a short period"
+          "Multiple inbound credits from many unrelated individuals over a short period",
+          "Senders have no apparent relationship to the account holder"
         ]
       },
       "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Triage conceded, but 2 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
       },
       "debate": {
         "challenge": {
-          "counterHypothesis": "Legitimate merchant account receiving payments for goods/services in various currencies, with only minor outflows for operational expenses.",
-          "distinguishingTestAssessment": "merchantReceivesPaymentsForGoodsServices: Unclear but plausible; amounts are roughly similar across currencies, suggesting fixed pricing, but currencies vary widely which is unusual for a local merchant.; consistentAmounts: Not fully consistent due to different currencies, but nominal values are similar (around 2700-2900).; businessAccountType: Account type is 'unknown', not confirmed as business.; retainedWorkingBalance: Yes, most funds are retained (outflows are only ~262 pounds out of ~32727).; unrelatedPersonalSenders: Counterparties appear diverse, but no evidence they are personal accounts; could be customers.; rapidFullForwarding: No rapid full forwarding; only two small outbound transactions well after inbound period.; personalAccountType: Account type is unknown, not specified as personal."
+          "counterHypothesis": "Legitimate merchant receiving payments in multiple currencies for goods/services.",
+          "distinguishingTestAssessment": "1) Merchants receive payments FOR goods/services: plausible but amounts are in multiple currencies and not perfectly consistent. 2) Consistent amounts: amounts vary across currencies (e.g., 2735.15 Naira, 2791.79 GBP, 2850.79 INR) and are not identical. 3) Business account type: unknown, not confirmed. 4) Retained/working balance: yes, large balance retained after small outflows. Mule consolidation indicators: unrelated personal senders (unknown sender types), rapid full forwarding (only two small outbound after nearly a month), personal account type (unknown). Evidence does not satisfy mule characteristics; thus typology distinguishing test not met."
         },
         "rebuttal": {
-          "argument": "The account receives varied currency inbound payments with minimal delayed outflows, fitting a merchant scenario but lacking rapid full forwarding and personal account evidence required for mule consolidation.",
+          "argument": "The account retains most funds after receiving multiple currency payments over a short period, with only minor outflows a month later, consistent with a merchant holding working capital rather than rapid forwarding typical of mule consolidation.",
           "conceded": true
         },
         "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "Triage conceded, but 2 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
         }
       },
-      "strDraft": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:48:45.778860",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-1665774528",
+          "holderName": "SAML-D account 1665774528",
+          "accountType": "unknown",
+          "openedAt": "2022-11-09T13:45:36"
+        },
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+        },
+        "period": {
+          "from": "2022-11-09T13:45:36",
+          "to": "2022-11-19T20:42:03"
+        },
+        "activitySummary": "Over a 10-day period, the SAML-D account received 10 incoming transfers totaling approximately 32,728 in various currencies (GBP, NGN, INR, TRY, ALL) from 10 different individual counterparties with no apparent relationship to the account holder. The funds were sequentially consolidated, with no corresponding outward transfers, suggesting a typical fan-in pattern potentially preceding onward movement.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-10-0",
+            "timestamp": "2022-11-09T13:45:36",
+            "amount": 2735.15,
+            "currency": "Naira",
+            "counterpartyName": "Acct 1509134836",
+            "runningBalance": 7735.15
+          },
+          {
+            "transactionId": "SDT-10-1",
+            "timestamp": "2022-11-10T12:33:51",
+            "amount": 2791.79,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 297935499",
+            "runningBalance": 10526.94
+          },
+          {
+            "transactionId": "SDT-10-2",
+            "timestamp": "2022-11-11T20:10:18",
+            "amount": 2722.71,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5102725210",
+            "runningBalance": 13249.65
+          },
+          {
+            "transactionId": "SDT-10-3",
+            "timestamp": "2022-11-12T07:04:12",
+            "amount": 2697.95,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3596394670",
+            "runningBalance": 15947.6
+          },
+          {
+            "transactionId": "SDT-10-4",
+            "timestamp": "2022-11-13T23:29:27",
+            "amount": 2790.11,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6606864787",
+            "runningBalance": 18737.71
+          },
+          {
+            "transactionId": "SDT-10-5",
+            "timestamp": "2022-11-14T17:53:38",
+            "amount": 2850.79,
+            "currency": "Indian rupee",
+            "counterpartyName": "Acct 1147093613",
+            "runningBalance": 21588.5
+          },
+          {
+            "transactionId": "SDT-10-6",
+            "timestamp": "2022-11-16T22:06:03",
+            "amount": 2673.58,
+            "currency": "Turkish lira",
+            "counterpartyName": "Acct 1769787997",
+            "runningBalance": 24262.08
+          },
+          {
+            "transactionId": "SDT-10-7",
+            "timestamp": "2022-11-17T09:40:57",
+            "amount": 2692.98,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8779336259",
+            "runningBalance": 26955.06
+          },
+          {
+            "transactionId": "SDT-10-8",
+            "timestamp": "2022-11-18T21:39:38",
+            "amount": 2887.09,
+            "currency": "Albanian lek",
+            "counterpartyName": "Acct 5709364779",
+            "runningBalance": 29842.15
+          },
+          {
+            "transactionId": "SDT-10-9",
+            "timestamp": "2022-11-19T20:42:03",
+            "amount": 2885.66,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 4639821031",
+            "runningBalance": 32727.81
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple inbound credits from 10 unrelated individuals over a short 10-day window.",
+          "Senders have no apparent connection to the account holder or each other.",
+          "Transactions involve a mix of currencies (GBP, NGN, INR, TRY, ALL) inconsistent with a single legitimate business purpose.",
+          "Consolidation pattern (accumulation without offsetting debits) mirrors fan-in typology often preceding layering or outward dispersal.",
+          "Account profile (SAML-D) does not align with receiving small, rapid-fire transfers from diverse personal counterparties."
+        ],
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
+      },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:00:31.747864"
+      "generatedAt": "2026-06-25T22:48:45.778914"
     },
     "routing": "needsReview"
   },
@@ -3040,26 +3332,27 @@
     ],
     "triage": {
       "alertId": "SD-00011",
-      "recommendation": "dismiss",
-      "confidence": 0.0,
-      "explanation": "New account receives multiple inbound credits (8 transactions) from eight different counterparties over a short period (Oct 13-20). Inbound amounts cluster around 4,400-4,700 GBP (or equivalent Naira), suggesting unrelated senders. Funds are then aggregated and sent out in larger outbound transfers (e.g., 11,639.17 GBP and 11,302.51 GBP), with a smaller outbound of 1,506.68 GBP. The pattern is classic fan-in consolidation, inconsistent with a personal account's expected activity, especially given the account was only opened one day before the first transaction.",
+      "recommendation": "escalate",
+      "confidence": 1.0,
+      "explanation": "The account received 8 inbound credits from 8 different counterparties within 8 days, followed by large outbound transfers, notably two totaling ~23k UK pounds to the same external account. This matches the fan-in pattern where funds from multiple unrelated senders are aggregated and moved onward. The account is newly opened, and the activity is inconsistent with a typical personal account profile.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
         "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
       },
       "citedTransactionIds": [
+        "SDT-11-0",
+        "SDT-11-1",
         "SDT-11-2",
         "SDT-11-3",
+        "SDT-11-4",
         "SDT-11-5",
         "SDT-11-6",
         "SDT-11-7",
+        "SDT-11-8",
         "SDT-11-9",
         "SDT-11-10",
-        "SDT-11-11",
-        "SDT-11-1",
-        "SDT-11-4",
-        "SDT-11-8"
+        "SDT-11-11"
       ],
       "indicatorCoverage": {
         "indicators": [
@@ -3078,26 +3371,137 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "note": "Evidence shows rapid forwarding of incoming funds from multiple unrelated senders to few accounts, consistent with mule consolidation rather than legitimate merchant activity."
       },
-      "debate": {
-        "challenge": {
-          "counterHypothesis": "The account may be a legitimate merchant receiving regular payments (e.g., subscription or invoice payments) of approximately 4700 GBP from multiple customers, with periodic withdrawals to business partners or for operational expenses. The presence of Naira payments suggests cross-border business. The balance is not fully forwarded; some is retained, consistent with a working balance.",
-          "distinguishingTestAssessment": "consistent amounts: Satisfied partially: most inbound amounts are around 4700 GBP, showing consistency.; business account type: Not determined: account type is unknown, but could be business.; retained/working balance: Satisfied: running balance shows retained funds after outbound transfers, not fully forwarded.; unrelated personal senders: Not satisfied: senders may be customers (related by business).; rapid full forwarding: Not satisfied: outbound are partial and not immediate; there are delays and balance accumulation.; personal account type: Not satisfied: account type unknown; no evidence it is personal."
+      "debate": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:49:04.503819",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-6123421761",
+          "holderName": "SAML-D account 6123421761",
+          "accountType": "unknown",
+          "openedAt": "2022-10-08T14:31:00"
         },
-        "rebuttal": {
-          "argument": "The evidence shows consistent inbound amounts, retained working balance, and no rapid full forwarding or clear personal account usage, fitting a legitimate merchant better than mule consolidation.",
-          "conceded": true
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
         },
-        "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
-        }
+        "period": {
+          "from": "2022-10-09T13:44:39",
+          "to": "2022-10-20T08:46:14"
+        },
+        "activitySummary": "Between 9 and 20 October 2022, the personal account received 11 inbound payments from 9 distinct counterparties, accumulating over £30,000. The funds were rapidly consolidated and moved onward via three outbound transfers, including two large ones totaling £22,942 to the same external entity. This pattern of aggregation followed by immediate dispersal is highly anomalous for a retail account and indicates potential layering.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-11-0",
+            "timestamp": "2022-10-09T13:44:39",
+            "amount": 2700.03,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 2174290769",
+            "runningBalance": 18633.35
+          },
+          {
+            "transactionId": "SDT-11-1",
+            "timestamp": "2022-10-10T15:39:20",
+            "amount": 11639.17,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6331687329",
+            "runningBalance": 6994.18
+          },
+          {
+            "transactionId": "SDT-11-2",
+            "timestamp": "2022-10-13T14:20:11",
+            "amount": 4624.05,
+            "currency": "Naira",
+            "counterpartyName": "Acct 1860351715",
+            "runningBalance": 11618.23
+          },
+          {
+            "transactionId": "SDT-11-3",
+            "timestamp": "2022-10-14T07:02:04",
+            "amount": 4684.28,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3761094857",
+            "runningBalance": 16302.51
+          },
+          {
+            "transactionId": "SDT-11-4",
+            "timestamp": "2022-10-15T13:10:29",
+            "amount": 11302.51,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6331687329",
+            "runningBalance": 5000.0
+          },
+          {
+            "transactionId": "SDT-11-5",
+            "timestamp": "2022-10-15T15:12:50",
+            "amount": 4722.28,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 487845226",
+            "runningBalance": 9722.28
+          },
+          {
+            "transactionId": "SDT-11-6",
+            "timestamp": "2022-10-16T08:51:50",
+            "amount": 4406.11,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 9186785530",
+            "runningBalance": 14128.39
+          },
+          {
+            "transactionId": "SDT-11-7",
+            "timestamp": "2022-10-17T15:27:37",
+            "amount": 4394.55,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6068920356",
+            "runningBalance": 18522.94
+          },
+          {
+            "transactionId": "SDT-11-8",
+            "timestamp": "2022-10-17T17:57:03",
+            "amount": 1506.68,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8841491953",
+            "runningBalance": 17016.26
+          },
+          {
+            "transactionId": "SDT-11-9",
+            "timestamp": "2022-10-18T12:19:39",
+            "amount": 4748.08,
+            "currency": "Naira",
+            "counterpartyName": "Acct 7190719389",
+            "runningBalance": 21764.34
+          },
+          {
+            "transactionId": "SDT-11-10",
+            "timestamp": "2022-10-19T21:56:18",
+            "amount": 4711.19,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 9784821557",
+            "runningBalance": 26475.53
+          },
+          {
+            "transactionId": "SDT-11-11",
+            "timestamp": "2022-10-20T08:46:14",
+            "amount": 4704.84,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1209741468",
+            "runningBalance": 31180.37
+          }
+        ],
+        "groundsForSuspicion": [
+          "Multiple rapid inbound credits from 9 unrelated individuals/accounts within a short timeframe.",
+          "Funds aggregated and then siphoned out via large, round-amount transfers to a single external account.",
+          "Senders have no apparent connection to the account holder, suggesting third-party money laundering.",
+          "Transaction pattern (fan-in/fan-out) matches typical money laundering layering typology.",
+          "Activity is inconsistent with the personal account profile and lacks economic rationale."
+        ],
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
-      "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:00:42.202234"
+      "generatedAt": "2026-06-25T22:49:04.503866"
     },
     "routing": "needsReview"
   },
@@ -3290,17 +3694,22 @@
     "triage": {
       "alertId": "SD-00012",
       "recommendation": "escalate",
-      "confidence": 0.5,
-      "explanation": "Account received 6 inbound transfers from 6 different counterparties over 6 days, then made large outbound transfers including a final outbound of 13,384.15 GBP, consistent with a fan-in/fan-out consolidation pattern indicative of a mule account or layering.",
+      "confidence": 0.59,
+      "explanation": "The account shows a fan-in/fan-out pattern: six inbound credits from six different counterparties over eight days, with funds aggregated and then sent out in large outbound transfers (e.g., two consecutive large outbounds to the same account on Jan 17, and a final large outbound after three smaller inbounds). Senders appear unrelated to the account holder, consistent with a mule account consolidating and forwarding funds.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
         "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
       },
       "citedTransactionIds": [
+        "SDT-12-0",
+        "SDT-12-1",
         "SDT-12-2",
         "SDT-12-3",
+        "SDT-12-4",
+        "SDT-12-5",
         "SDT-12-6",
+        "SDT-12-7",
         "SDT-12-8",
         "SDT-12-9",
         "SDT-12-10",
@@ -3315,17 +3724,32 @@
         ],
         "fired": [
           "Multiple inbound credits from many unrelated individuals over a short period",
-          "Funds aggregated then forwarded onward in one or few large outbound transfers"
+          "Funds aggregated then forwarded onward in one or few large outbound transfers",
+          "Senders have no apparent relationship to the account holder"
         ]
       },
       "verifier": {
-        "status": "agreed",
-        "agreesWithRecommendation": true,
-        "note": "Rapid forwarding of incoming funds to different accounts with no sustained balance fits mule consolidation pattern."
+        "status": "flagged",
+        "agreesWithRecommendation": false,
+        "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
       },
-      "debate": null,
+      "debate": {
+        "challenge": {
+          "counterHypothesis": "Legitimate merchant account receiving payments from multiple customers and subsequently disbursing funds to suppliers or own accounts, with varying amounts and currencies consistent with business operations.",
+          "distinguishingTestAssessment": "unrelated personal senders: Not established; counterparties could be business customers or personal, but evidence does not specify sender type.; rapid full forwarding: Not fully satisfied; outbound transactions do not immediately follow each inbound, and final balance is 5000, indicating residual funds.; personal account type: Not satisfied; account type is 'unknown', not explicitly personal or business."
+        },
+        "rebuttal": {
+          "argument": "The evidence lacks key indicators of mule consolidation: account type is unknown, not personal; outbound transactions do not immediately follow inbound, leaving a residual balance of 5000; and counterparties' personal status is unestablished. The pattern is consistent with a legitimate merchant account.",
+          "conceded": true
+        },
+        "reverdict": {
+          "outcome": "holds",
+          "dispositionChanged": false,
+          "note": "Triage conceded, but 3 indicators fired — too strong a match to auto-dismiss; held as escalate for human review."
+        }
+      },
       "strDraft": {
-        "reportDate": "2026-06-25T22:00:49.481565",
+        "reportDate": "2026-06-25T22:49:49.804869",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-8227126673",
@@ -3339,11 +3763,27 @@
           "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
         },
         "period": {
-          "from": "2023-01-15T03:21:13",
+          "from": "2023-01-12T10:21:27",
           "to": "2023-01-20T23:26:21"
         },
-        "activitySummary": "Account 8227126673 received six inbound transfers from six different counterparty accounts over six days, with total credits exceeding £18,000. The accumulated funds were then forwarded via a single large outbound payment of £13,384.15 to a seventh account, leaving a residual balance of £5,000.",
+        "activitySummary": "The account received seven inbound transfers from seven different counterparties in various currencies (Albanian lek, UK pounds, Euro) over a nine-day period, with no apparent relationship between the senders and the account holder. The accumulated funds were then rapidly sent out in large outbound transfers, including two consecutive large payments to the same external account and a final transfer that cleared most of the balance, leaving a nominal amount. This consolidation-and-onward-movement pattern is inconsistent with the expected transaction profile of a SAML-D account.",
         "citedTransactions": [
+          {
+            "transactionId": "SDT-12-0",
+            "timestamp": "2023-01-12T10:21:27",
+            "amount": 8728.74,
+            "currency": "Albanian lek",
+            "counterpartyName": "Acct 2345223077",
+            "runningBalance": 21028.77
+          },
+          {
+            "transactionId": "SDT-12-1",
+            "timestamp": "2023-01-12T21:51:39",
+            "amount": 538.33,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6273250421",
+            "runningBalance": 20490.44
+          },
           {
             "transactionId": "SDT-12-2",
             "timestamp": "2023-01-15T03:21:13",
@@ -3361,12 +3801,36 @@
             "runningBalance": 29279.52
           },
           {
+            "transactionId": "SDT-12-4",
+            "timestamp": "2023-01-17T11:02:42",
+            "amount": 11751.36,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5070545031",
+            "runningBalance": 17528.16
+          },
+          {
+            "transactionId": "SDT-12-5",
+            "timestamp": "2023-01-17T12:52:42",
+            "amount": 9250.4,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5070545031",
+            "runningBalance": 8277.76
+          },
+          {
             "transactionId": "SDT-12-6",
             "timestamp": "2023-01-18T10:31:45",
             "amount": 4279.58,
             "currency": "UK pounds",
             "counterpartyName": "Acct 4344611958",
             "runningBalance": 12557.34
+          },
+          {
+            "transactionId": "SDT-12-7",
+            "timestamp": "2023-01-18T18:15:43",
+            "amount": 4814.65,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1168651266",
+            "runningBalance": 7742.69
           },
           {
             "transactionId": "SDT-12-8",
@@ -3402,15 +3866,17 @@
           }
         ],
         "groundsForSuspicion": [
-          "Multiple inbound transfers from various individuals in a short timeframe",
-          "Funds aggregated and then moved out through one large outbound transfer",
-          "Pattern indicative of a fan-in/fan-out consolidation typical of mule accounts or layering",
-          "Potential mismatch between account holder profile (individual) and the high-volume, multi-party transaction activity"
+          "Seven inbound credits from seven distinct, apparently unrelated counterparties in a short timeframe.",
+          "Multiple inbound transfers in foreign currencies (Albanian lek, Euro) without clear economic reason.",
+          "Funds rapidly aggregated and then forwarded in large outbound transfers, characteristic of a fan-in/fan-out scheme.",
+          "Two consecutive large outbound transfers (GBP 11,751.36 and GBP 9,250.40) to the same recipient on the same day.",
+          "Final outbound transfer of GBP 13,384.15 cleared the majority of the balance, leaving only GBP 5,000.00.",
+          "Transaction pattern and volumes do not align with the expected activity of a SAML-D account holder."
         ],
-        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
+        "recommendedAction": "Hold for analyst confirmation before filing — the verifier flagged this Fan-in / Fan-out (Consolidation) call; escalate to the Financial Intelligence and Enforcement Department (FIED) only once the pattern is substantiated."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:00:49.481618"
+      "generatedAt": "2026-06-25T22:49:49.804921"
     },
     "routing": "needsReview"
   },
@@ -3604,9 +4070,9 @@
     ],
     "triage": {
       "alertId": "SD-00013",
-      "recommendation": "dismiss",
+      "recommendation": "escalate",
       "confidence": 0.5,
-      "explanation": "The newly opened account received 11 inbound transfers from 10 different counterparties within a 2.5-hour window, aggregating over £110k. This strongly matches the fan-in pattern of consolidation, with multiple unrelated senders and rapid accumulation. Although no onward forwarding has yet been observed, the volume and speed are highly suspicious and consistent with a mule account collecting funds for later layering or integration. Escalating for further investigation.",
+      "explanation": "Account received 11 inbound transfers from 10 distinct counterparties within a 2.5-hour window, totaling over £114k. The rapid aggregation of funds from multiple unrelated senders closely matches the fan-in pattern, despite the absence of an observed large outbound consolidation in this alert window. The initial small outbound does not align with the inbound volume, and the pattern is highly consistent with a mule account collecting scam proceeds. Cost-sensitive escalation is warranted given the heightened risk of missing a suspicious case.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -3640,26 +4106,130 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "note": "Evidence shows an account with multiple inbound transfers from unrelated counterparties shortly after opening, with inconsistent amounts and no business account type, consistent with mule consolidation rather than legitimate merchant activity."
       },
-      "debate": {
-        "challenge": {
-          "counterHypothesis": "Legitimate merchant account receiving payments for goods/services",
-          "distinguishingTestAssessment": "rapidFullForwarding: Evidence shows only one outbound transaction at the start, followed by multiple inbound transactions with no subsequent outbound forwarding, failing the rapid full forwarding criterion.; unrelatedPersonalSenders: Counterparties are accounts, not explicitly identified as personal, and one counterparty appears twice (Acct 781307862), which could indicate a regular customer rather than unrelated personal senders.; personalAccountType: Account type is unknown (SAML-D), not specified as personal, so this criterion is not satisfied."
+      "debate": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:49:06.355882",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-9683990807",
+          "holderName": "SAML-D account 9683990807",
+          "accountType": "unknown",
+          "openedAt": "2022-10-07T20:17:35"
         },
-        "rebuttal": {
-          "argument": "The evidence lacks rapid full forwarding, shows potential repeat customers, and the account type is not personal. Thus, the pattern fits better with a legitimate merchant account receiving payments.",
-          "conceded": true
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
         },
-        "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
-        }
+        "period": {
+          "from": "2022-10-08T00:07:08",
+          "to": "2022-10-08T02:45:43"
+        },
+        "activitySummary": "On 8 October 2022, account 9683990807 received 11 inbound payments from 10 distinct counterparties within a 2.5-hour period, aggregating to approximately £115k. The rapid consolidation of funds from unrelated senders, with no apparent connection to the account holder, matches a classic fan-in pattern indicative of money mule activity. The collected funds are likely to be transferred out imminently, representing potential money laundering.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-13-1",
+            "timestamp": "2022-10-08T00:07:08",
+            "amount": 11762.36,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1848307303",
+            "runningBalance": 16762.36
+          },
+          {
+            "transactionId": "SDT-13-2",
+            "timestamp": "2022-10-08T00:12:11",
+            "amount": 9323.27,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 1473434608",
+            "runningBalance": 26085.63
+          },
+          {
+            "transactionId": "SDT-13-3",
+            "timestamp": "2022-10-08T00:15:09",
+            "amount": 8376.89,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 4010628734",
+            "runningBalance": 34462.52
+          },
+          {
+            "transactionId": "SDT-13-4",
+            "timestamp": "2022-10-08T00:16:05",
+            "amount": 10062.44,
+            "currency": "Euro",
+            "counterpartyName": "Acct 781307862",
+            "runningBalance": 44524.96
+          },
+          {
+            "transactionId": "SDT-13-5",
+            "timestamp": "2022-10-08T00:29:59",
+            "amount": 19164.19,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 297205588",
+            "runningBalance": 63689.15
+          },
+          {
+            "transactionId": "SDT-13-6",
+            "timestamp": "2022-10-08T00:30:34",
+            "amount": 8410.5,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3567242119",
+            "runningBalance": 72099.65
+          },
+          {
+            "transactionId": "SDT-13-7",
+            "timestamp": "2022-10-08T00:36:15",
+            "amount": 4443.97,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6458771768",
+            "runningBalance": 76543.62
+          },
+          {
+            "transactionId": "SDT-13-8",
+            "timestamp": "2022-10-08T00:56:13",
+            "amount": 6693.2,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8372642044",
+            "runningBalance": 83236.82
+          },
+          {
+            "transactionId": "SDT-13-9",
+            "timestamp": "2022-10-08T02:04:08",
+            "amount": 21496.43,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 6131254278",
+            "runningBalance": 104733.25
+          },
+          {
+            "transactionId": "SDT-13-10",
+            "timestamp": "2022-10-08T02:15:53",
+            "amount": 10104.91,
+            "currency": "Euro",
+            "counterpartyName": "Acct 781307862",
+            "runningBalance": 114838.16
+          },
+          {
+            "transactionId": "SDT-13-11",
+            "timestamp": "2022-10-08T02:45:43",
+            "amount": 4960.81,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 271416248",
+            "runningBalance": 119798.97
+          }
+        ],
+        "groundsForSuspicion": [
+          "11 inbound payments received in under 3 hours, totalling over £114k.",
+          "Funds originated from 10 distinct counterparties with no identifiable relationship to the account holder.",
+          "Transactions include both GBP and EUR, indicating potential cross-border element.",
+          "Low initial balance (£5,000) followed by disproportionate high-value inflows, inconsistent with expected account usage.",
+          "Activity mirrors known fan-in typology where the account aggregates funds from multiple sources for later consolidation and onward transfer.",
+          "No supporting documentation or legitimate rationale for the concentration of payments from unrelated third parties."
+        ],
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
-      "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:25.847724"
+      "generatedAt": "2026-06-25T22:49:06.355936"
     },
     "routing": "needsReview"
   },
@@ -3849,9 +4419,9 @@
     ],
     "triage": {
       "alertId": "SD-00014",
-      "recommendation": "dismiss",
-      "confidence": 0.25,
-      "explanation": "The account received 11 rapid large inbound transfers from 10 different counterparties within 2.5 hours, aggregating over £109,000. This pattern matches the fan-in (consolidation) typology, commonly seen in money laundering where funds from multiple sources are aggregated into one account. The account is newly opened, and the transaction activity is highly inconsistent with a typical personal account, raising strong suspicion. Although the subsequent fan-out transfer is not yet observed, the aggregation phase alone warrants escalation.",
+      "recommendation": "escalate",
+      "confidence": 0.75,
+      "explanation": "A newly opened account received 11 inbound credits from 10 different counterparties within 2.5 hours, aggregating over 114k pounds. This fan-in pattern is consistent with consolidation/mule activity. No onward transfer has occurred yet, but the volume and speed are highly inconsistent with the account's history and typical new-account behaviour. Escalate for further investigation.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -3886,26 +4456,130 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Triage conceded the challenge; disposition changed to dismiss."
+        "note": "Many inbound transactions from distinct counterparties to a newly opened account with no evidence of goods/services, consistent with mule consolidation, though forwarding not yet observed."
       },
-      "debate": {
-        "challenge": {
-          "counterHypothesis": "Legitimate merchant or crowdfunding account receiving many small customer payments.",
-          "distinguishingTestAssessment": "The inbound amounts vary widely (not consistent), the account type is unknown (not business but also not proven personal), there is no rapid full forwarding (only one outbound at start, and it's small relative to inbound), the account retains a large balance, and the outbound occurs before the inbound, not after consolidation."
+      "debate": null,
+      "strDraft": {
+        "reportDate": "2026-06-25T22:49:31.127022",
+        "reportingInstitution": "Demo Bank Berhad",
+        "subject": {
+          "accountId": "ACC-1491736788",
+          "holderName": "SAML-D account 1491736788",
+          "accountType": "unknown",
+          "openedAt": "2022-10-07T21:41:48"
         },
-        "rebuttal": {
-          "argument": "The outbound occurs before any inbound, and the account retains a large balance with no subsequent forwarding, which contradicts the mule consolidation pattern of rapid full forwarding after accumulation. The verifier's benign explanation of a merchant or crowdfunding account receiving customer payments is a better fit.",
-          "conceded": true
+        "typology": {
+          "code": "FI-01",
+          "name": "Fan-in / Fan-out (Consolidation)",
+          "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
         },
-        "reverdict": {
-          "outcome": "conceded",
-          "dispositionChanged": true,
-          "note": "Triage conceded the challenge; disposition changed to dismiss."
-        }
+        "period": {
+          "from": "2022-10-08T00:12:29",
+          "to": "2022-10-08T02:32:38"
+        },
+        "activitySummary": "Account 1491736788 received 11 credits totaling over £114,000 from 9 distinct counterparties within 2.5 hours, all during the early morning. The funds were consolidated into this newly opened account, with no subsequent debits, which is highly inconsistent with the account's profile and normal new-account behaviour.",
+        "citedTransactions": [
+          {
+            "transactionId": "SDT-14-1",
+            "timestamp": "2022-10-08T00:12:29",
+            "amount": 10318.14,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 734986295",
+            "runningBalance": 15318.14
+          },
+          {
+            "transactionId": "SDT-14-2",
+            "timestamp": "2022-10-08T00:14:23",
+            "amount": 5939.63,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 3277684947",
+            "runningBalance": 21257.77
+          },
+          {
+            "transactionId": "SDT-14-3",
+            "timestamp": "2022-10-08T00:54:34",
+            "amount": 4989.05,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 8164248320",
+            "runningBalance": 26246.82
+          },
+          {
+            "transactionId": "SDT-14-4",
+            "timestamp": "2022-10-08T01:23:43",
+            "amount": 8256.78,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 7755992826",
+            "runningBalance": 34503.6
+          },
+          {
+            "transactionId": "SDT-14-5",
+            "timestamp": "2022-10-08T01:29:29",
+            "amount": 4540.95,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 7760175305",
+            "runningBalance": 39044.55
+          },
+          {
+            "transactionId": "SDT-14-6",
+            "timestamp": "2022-10-08T01:50:03",
+            "amount": 7431.81,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 4272180664",
+            "runningBalance": 46476.36
+          },
+          {
+            "transactionId": "SDT-14-7",
+            "timestamp": "2022-10-08T01:55:37",
+            "amount": 14571.15,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 5527104386",
+            "runningBalance": 61047.51
+          },
+          {
+            "transactionId": "SDT-14-8",
+            "timestamp": "2022-10-08T02:05:40",
+            "amount": 17298.64,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 4978229312",
+            "runningBalance": 78346.15
+          },
+          {
+            "transactionId": "SDT-14-9",
+            "timestamp": "2022-10-08T02:27:36",
+            "amount": 17507.97,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 7109813473",
+            "runningBalance": 95854.12
+          },
+          {
+            "transactionId": "SDT-14-10",
+            "timestamp": "2022-10-08T02:30:11",
+            "amount": 10334.67,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 734986295",
+            "runningBalance": 106188.79
+          },
+          {
+            "transactionId": "SDT-14-11",
+            "timestamp": "2022-10-08T02:32:38",
+            "amount": 8206.4,
+            "currency": "UK pounds",
+            "counterpartyName": "Acct 7755992826",
+            "runningBalance": 114395.19
+          }
+        ],
+        "groundsForSuspicion": [
+          "Fan-in pattern: multiple large inbound credits from 9 unrelated counterparties in a very short timeframe.",
+          "Senders have no apparent relationship to the account holder, and two counterparties made repeat transfers.",
+          "Amounts and frequency are inconsistent with the account's history and typical new-account activity.",
+          "High aggregate value (£114k) and rapid consolidation suggest potential money mule or layering activity.",
+          "Transactions occurred during unusual late-night hours, which may indicate an attempt to avoid detection.",
+          "No legitimate economic purpose for such consolidation has been identified, and the funds remain idle, awaiting likely onward transfer."
+        ],
+        "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
-      "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:12.910965"
+      "generatedAt": "2026-06-25T22:49:31.127079"
     },
     "routing": "needsReview"
   },
@@ -4097,27 +4771,34 @@
       "alertId": "SD-00015",
       "recommendation": "dismiss",
       "confidence": 0.75,
-      "explanation": "Account opened 2022-10-07 with no KYC information; immediately after, it receives 11 inbound transfers totaling over 82,000 GBP within 6 hours from 9 different counterparties. This throughput far exceeds expected activity for a newly opened personal account, indicating a potential KYC profile mismatch.",
+      "explanation": "Newly opened account receives 11 inbound transfers from 9 different counterparties within 6 hours, totaling over 82k GBP, indicative of the fan-in/consolidation phase of a money mule or layering scheme.",
       "matchedTypology": {
-        "code": "KYC-01",
-        "name": "KYC Profile Mismatch",
-        "source": "FATF Recommendations (2012), R.10 (CDD); BNM AML/CFT Policy Document"
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
       },
       "citedTransactionIds": [
         "SDT-15-1",
+        "SDT-15-2",
+        "SDT-15-3",
         "SDT-15-4",
+        "SDT-15-5",
+        "SDT-15-6",
+        "SDT-15-7",
         "SDT-15-8",
+        "SDT-15-9",
+        "SDT-15-10",
         "SDT-15-11"
       ],
       "indicatorCoverage": {
         "indicators": [
-          "Throughput far exceeds declared income or expected activity",
-          "Transaction types inconsistent with account type (e.g. heavy international wires on a basic personal account)",
-          "Counterparties or geographies inconsistent with the customer profile",
-          "Stated occupation does not explain the flows"
+          "Multiple inbound credits from many unrelated individuals over a short period",
+          "Funds aggregated then forwarded onward in one or few large outbound transfers",
+          "Senders have no apparent relationship to the account holder",
+          "Amounts and frequency inconsistent with the account holder's profile"
         ],
         "fired": [
-          "Throughput far exceeds declared income or expected activity"
+          "Multiple inbound credits from many unrelated individuals over a short period"
         ]
       },
       "verifier": {
@@ -4127,11 +4808,11 @@
       },
       "debate": {
         "challenge": {
-          "counterHypothesis": "The customer opened the account specifically to receive multiple payments from various clients (e.g., as a freelancer or small business) and can provide invoices or contracts for each transaction. The initial outbound may be a payment to a supplier or a test transaction. All transactions are documentable and legitimate.",
-          "distinguishingTestAssessment": "The distinguishing test states that a mismatch is flagged when the activity has NO consistent explanation against the known profile and no updated CDD on file. In this case, the profile is unknown, but the activity can be consistently explained as legitimate business receipts. The timing and pattern, while unusual, are not inherently inconsistent with a genuine business consolidation event. Furthermore, the customer could provide documentation to support each transaction. Therefore, the evidence does NOT satisfy the 'no consistent explanation' part of the test, making the escalation premature."
+          "counterHypothesis": "The account is a legitimate merchant receiving payments for goods/services from multiple customers, possibly during a promotion or fundraising event. The initial outbound could be a transaction fee or transfer to a supplier's account.",
+          "distinguishingTestAssessment": "rapidFullForwarding: Evidence shows only one outbound transaction at account opening time, followed by 11 inbound transactions with no further outflows. No rapid forwarding of funds after receipt.; personalAccountType: Account type is 'SAML-D' (unknown), but the transaction pattern (multiple inbound from diverse counterparties with some repeat senders) is more consistent with a business account, not a personal account.; unrelatedPersonalSenders: Counterparties include repeat accounts (e.g., Acct 9608627445 and Acct 634967186 each appear twice), suggesting regular customers rather than unrelated individuals. The amounts vary but are plausible for e-commerce transactions."
         },
         "rebuttal": {
-          "argument": "The account has no established profile, so the transactions cannot be deemed inconsistent with any known profile. The pattern is readily explainable as a business receiving client payments, and documentation could support this, satisfying the distinguishing test for a genuine profile.",
+          "argument": "The evidence lacks rapid full forwarding, show repeat counterparties suggesting business relationships, and an unknown account type not clearly personal. The pattern aligns better with a legitimate merchant receiving payments.",
           "conceded": true
         },
         "reverdict": {
@@ -4142,7 +4823,7 @@
       },
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:02:34.068403"
+      "generatedAt": "2026-06-25T22:49:31.297331"
     },
     "routing": "needsReview"
   },
@@ -4335,8 +5016,8 @@
     "triage": {
       "alertId": "SD-00016",
       "recommendation": "escalate",
-      "confidence": 0.5,
-      "explanation": "Newly opened account receives 12 inbound credits from 10 distinct counterparty accounts within 3.5 hours, indicative of a fan-in consolidation phase. Although no outbound transfers are yet observed, the aggregation pattern strongly suggests mule activity; escalate to enable monitoring for subsequent forwarding.",
+      "confidence": 0.25,
+      "explanation": "Account received 12 inbound transfers from 10 different counterparty accounts within a few hours on the same day it was opened, totaling over 140,000 GBP. This pattern matches the initial stage of fan-in activity, where funds are aggregated from multiple sources. Although no outbound transfer is yet observed, the rapid accumulation of funds from numerous unrelated parties is suspicious and warrants escalation for further review.",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -4364,18 +5045,17 @@
           "Amounts and frequency inconsistent with the account holder's profile"
         ],
         "fired": [
-          "Multiple inbound credits from many unrelated individuals over a short period",
-          "Senders have no apparent relationship to the account holder"
+          "Multiple inbound credits from many unrelated individuals over a short period"
         ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Evidence shows rapid inbound consolidation from multiple sources with no outbound, consistent with mule consolidation rather than legitimate merchant activity."
+        "note": "Evidence shows many inbound transactions from diverse senders to a newly opened account, with varying amounts and one foreign currency, consistent with mule consolidation rather than legitimate merchant activity."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T22:01:05.379569",
+        "reportDate": "2026-06-25T22:49:42.346087",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-5251195293",
@@ -4392,7 +5072,7 @@
           "from": "2022-10-09T00:01:43",
           "to": "2022-10-09T03:53:30"
         },
-        "activitySummary": "A newly opened account received 12 inbound credits from 10 distinct counterparty accounts within 3.5 hours, accumulating over £140,000, with no apparent relationship to the account holder. This rapid aggregation of funds from multiple unrelated individuals strongly indicates a consolidation phase, likely preceding onward transfers consistent with money mule activity.",
+        "activitySummary": "On the same day account 5251195293 was opened, it received 12 inbound transfers from 10 distinct counterparties within a few hours, totaling over 140,000 GBP. The rapid accumulation of funds from multiple unrelated individuals suggests a fan-in consolidation pattern, though no outbound transfer has occurred yet. The account holder is a SAML-D, which may be inconsistent with personal transfers from many individuals.",
         "citedTransactions": [
           {
             "transactionId": "SDT-16-0",
@@ -4492,17 +5172,17 @@
           }
         ],
         "groundsForSuspicion": [
-          "12 inbound credits from 10 distinct counterparties in under 4 hours.",
-          "Counterparties have no evident relationship to the account holder.",
-          "Aggregation of over £140,000 without any outgoing transfers to date.",
-          "Mixed currency transaction (Albanian lek) suggests cross-border layering.",
-          "Pattern matches known fan-in consolidation typology used by money mules.",
-          "Account holder profile (SAML-D) inconsistent with high-volume personal transactions."
+          "Account opened and immediately received a high volume of inbound transfers from numerous unrelated parties within a few hours, consistent with a fan-in consolidation structure.",
+          "12 transactions from 10 distinct counterparties, totaling over 140,000 GBP, with no apparent business or personal rationale.",
+          "Two counterparties sent multiple transfers (Acct 5459165910 twice, Acct 6004401816 twice), possibly indicating layering.",
+          "One transfer was in Albanian lek (ALL), indicating cross-border activity which may not align with the account profile.",
+          "The account holder is a SAML-D (likely a business entity), yet the credits appear to come from individual accounts, suggesting a profile mismatch.",
+          "No outbound transfer observed yet, but the rapid accumulation of funds is indicative of preparation for a large onward movement."
         ],
         "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Fan-in / Fan-out (Consolidation) pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:05.379623"
+      "generatedAt": "2026-06-25T22:49:42.346140"
     },
     "routing": "needsReview"
   },
@@ -4606,7 +5286,7 @@
       "alertId": "SD-00017",
       "recommendation": "dismiss",
       "confidence": 1.0,
-      "explanation": "No candidate typology indicators present in the evidence. The account shows only outbound transfers to a single counterparty over several months after an initial credit, which does not match the pass-through, fan-in, structuring, dormant-then-active, or KYC mismatch patterns.",
+      "explanation": "No typology matches: transactions are only outbound with no inbound credits (PT-01, FI-01), no cash deposits (ST-01), no dormant period (DA-01), and no customer profile information to assess KYC-01 mismatch.",
       "matchedTypology": {
         "code": "NONE",
         "name": "No typology matched",
@@ -4625,7 +5305,7 @@
       "debate": null,
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:00:51.231648"
+      "generatedAt": "2026-06-25T22:49:06.287639"
     },
     "routing": "autoCleared"
   },
@@ -4713,7 +5393,7 @@
       "alertId": "SD-00018",
       "recommendation": "dismiss",
       "confidence": 1.0,
-      "explanation": "No typology card matches the evidence. The transactions show two cycles of inbound PKR followed by outbound GBP with delays of 51 and 47 days, which does not meet the 'short window' indicator of PT-01. The amounts, while numerically close, are in different currencies with vastly different values, so the 'similar amount' indicator also fails. Other typologies are not supported: no multiple inbound from unrelated parties (FI-01), no cash deposits or structuring (ST-01), no dormancy (DA-01), and insufficient KYC data to assess profile mismatch (KYC-01).",
+      "explanation": "The activity shows two inbound-outbound cycles with the same counterparty, with similar amounts but separated by ~50 days and retaining a residual balance. This does not match the short window of PT-01, the multiple senders of FI-01, the cash patterns of ST-01, the dormant behavior of DA-01, or any KYC-01 indicator with the provided information.",
       "matchedTypology": {
         "code": "NONE",
         "name": "No typology matched",
@@ -4732,7 +5412,7 @@
       "debate": null,
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:14.467362"
+      "generatedAt": "2026-06-25T22:49:51.242274"
     },
     "routing": "autoCleared"
   },
@@ -4932,7 +5612,7 @@
       "alertId": "SD-00019",
       "recommendation": "dismiss",
       "confidence": 1.0,
-      "explanation": "No candidate typology matches the evidence. Only outbound transactions to a single counterparty are observed, with no inbound credits, structuring, dormant activity, or KYC profile information.",
+      "explanation": "Alert shows only outbound transfers to a single counterparty over several months with no inbound credits, rapid movement, structuring, or dormancy. None of the candidate typologies apply.",
       "matchedTypology": {
         "code": "NONE",
         "name": "No typology matched",
@@ -4951,7 +5631,7 @@
       "debate": null,
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:11.391132"
+      "generatedAt": "2026-06-25T22:49:20.807958"
     },
     "routing": "autoCleared"
   },
@@ -5143,7 +5823,7 @@
       "alertId": "SD-00020",
       "recommendation": "dismiss",
       "confidence": 1.0,
-      "explanation": "The alert shows a newly opened account receiving 12 inbound transfers from a single counterparty within a day, with no outbound transactions. None of the candidate typologies fit: Pass-through requires outbound; Fan-in requires multiple unrelated senders; Structuring specifies cash deposits; Dormant requires prior inactivity; KYC requires profile information not provided.",
+      "explanation": "No matching typology: all transactions are inbound from a single counterparty with no outbound, no cash deposits, no dormancy, no fan-in from multiple unrelated senders, and no KYC profile information to assess mismatch.",
       "matchedTypology": {
         "code": "NONE",
         "name": "No typology matched",
@@ -5162,7 +5842,7 @@
       "debate": null,
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:22.838282"
+      "generatedAt": "2026-06-25T22:49:35.443058"
     },
     "routing": "autoCleared"
   },
@@ -5270,7 +5950,7 @@
       "alertId": "SD-00021",
       "recommendation": "dismiss",
       "confidence": 1.0,
-      "explanation": "Alert shows only inbound credits from a single counterparty over many months with no outbound transactions, no rapid movement, no structuring, no fan-in pattern, no dormant-then-active activity, and no KYC profile data to suggest mismatch. None of the candidate typologies are present.",
+      "explanation": "Alert shows only inbound credits from a single counterparty over 10 months with no outbound debits. No typology matches: PT-01 lacks outbound, FI-01 lacks multiple senders, ST-01 lacks cash and threshold indicators, DA-01 lacks dormancy, KYC-01 lacks profile information. No pattern of concern.",
       "matchedTypology": {
         "code": "NONE",
         "name": "No typology matched",
@@ -5289,7 +5969,7 @@
       "debate": null,
       "strDraft": null,
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:01:12.922821"
+      "generatedAt": "2026-06-25T22:49:25.432271"
     },
     "routing": "autoCleared"
   },
@@ -5480,8 +6160,8 @@
     "triage": {
       "alertId": "SD-00022",
       "recommendation": "escalate",
-      "confidence": 1.0,
-      "explanation": "Account 638906690 was opened on 2023-07-05 and immediately received a large deposit (approx. 61,500 UK pounds), followed by 12 rapid outbound transfers to a single counterparty within the same day, each around 4,700 pounds, draining the balance to 5,000. This matches PT-01 pass-through/rapid movement: inbound credit, similar outbound transfers in a short window, balance spike then drain, newly opened account, and minimal funds retained.",
+      "confidence": 0.5,
+      "explanation": "Account opened on 2023-07-05 immediately shows a high running balance (implied inbound credit) which is then rapidly drained via 12 outbound transfers of similar amounts (approx. £4,700 each) to the same counterparty within the same day, ending with a low residual balance (£5,000). This matches the pass-through/rapid movement typology (PT-01).",
       "matchedTypology": {
         "code": "PT-01",
         "name": "Pass-through / Rapid Movement",
@@ -5509,20 +6189,18 @@
           "Often a newly opened or recently dormant account"
         ],
         "fired": [
-          "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
           "runningBalance spikes on the inbound then drains back to ~0",
-          "Little to no funds retained; no spending consistent with the stated purpose of the account",
           "Often a newly opened or recently dormant account"
         ]
       },
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Pattern shows multiple outbound transfers to single counterparty on same day with irregular timing, no commercial rationale, and account opened same day—consistent with pass-through laundering rather than regular benign sweeps."
+        "note": "Evidence shows multiple outbound transactions in one day to the same counterparty with irregular timing and no commercial rationale, consistent with pass-through laundering rather than a regular sweep."
       },
       "debate": null,
       "strDraft": {
-        "reportDate": "2026-06-25T22:02:05.964388",
+        "reportDate": "2026-06-25T22:50:39.585197",
         "reportingInstitution": "Demo Bank Berhad",
         "subject": {
           "accountId": "ACC-638906690",
@@ -5539,7 +6217,7 @@
           "from": "2023-07-05T08:26:50",
           "to": "2023-07-05T23:31:46"
         },
-        "activitySummary": "On 5 July 2023, a newly opened account (638906690) received an inbound credit of approximately £61,500. Within hours, the account executed 12 rapid outbound transfers to a single external account (915444634), each around £4,700, leaving a minimal balance of £5,000. No other activity occurred, and the funds were moved without any apparent legitimate economic purpose.",
+        "activitySummary": "On 5 July 2023, account 638906690 received an inbound credit of approximately £61,526. Immediately after, 12 outbound transfers totalling £56,526 were made to the same counterparty (account 915444634) within the same day, leaving a residual balance of £5,000. The account was opened on the same day, and the rapid movement of funds lacks any apparent economic or legitimate purpose.",
         "citedTransactions": [
           {
             "transactionId": "SDT-22-0",
@@ -5639,15 +6317,17 @@
           }
         ],
         "groundsForSuspicion": [
-          "Account opened same day as the transactions, with no prior history.",
-          "Inbound credit of ~£61,500 followed by 12 outbound debits totaling ~£56,500 within hours, all to the same counterparty.",
-          "Running balance spiked then rapidly drained to near zero (£5,000), indicating a pass-through/layering pattern.",
-          "No funds were retained, and no spending consistent with a stated purpose; the activity lacks economic rationale."
+          "Account opened on same day as activity",
+          "Large single inbound credit",
+          "Funds rapidly transferred out within hours",
+          "Multiple transfers to same beneficiary in similar amounts",
+          "No apparent legitimate economic purpose",
+          "Ending balance near zero after activity"
         ],
         "recommendedAction": "File an STR with the Financial Intelligence and Enforcement Department (FIED) for the identified Pass-through / Rapid Movement pattern."
       },
       "model": "deepseek-v4-pro",
-      "generatedAt": "2026-06-25T22:02:05.964453"
+      "generatedAt": "2026-06-25T22:50:39.585250"
     },
     "routing": "needsReview"
   },

@@ -1,0 +1,42 @@
+{
+  "totalAlerts": 150,
+  "accuracyVsLabels": 0.4467,
+  "baselineAccuracy": 0.0,
+  "recall": 0.4467,
+  "precision": 1.0,
+  "specificity": 0.0,
+  "falsePositiveReduction": 0.0,
+  "confusionMatrix": {
+    "tp": 67,
+    "fp": 0,
+    "fn": 83,
+    "tn": 0
+  },
+  "avgReviewTimeBaselineMin": 14.0,
+  "avgReviewTimeWithCopilotMin": 4.5,
+  "autoClearedShare": 0.54,
+  "autoClearPrecision": 0.0,
+  "perTypologyRecall": {
+    "COVERAGE_GAP": {
+      "recall": 0.15,
+      "caught": 3,
+      "total": 20
+    },
+    "PT-01": {
+      "recall": 0.4286,
+      "caught": 15,
+      "total": 35
+    },
+    "ST-01": {
+      "recall": 0.4211,
+      "caught": 16,
+      "total": 38
+    },
+    "FI-01": {
+      "recall": 0.5789,
+      "caught": 33,
+      "total": 57
+    }
+  },
+  "nExcludedErrors": 0
+}
