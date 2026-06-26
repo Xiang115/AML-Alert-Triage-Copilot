@@ -8,7 +8,7 @@ VerdictAML is a multi-agent system designed to assist banking anti-money launder
 > - 📺 **7-min demo video:** _placeholder — add YouTube URL before the 26 Jun submission_
 > - 📊 **Pitch deck:** _placeholder — attach `docs/pitch-deck.pdf` (or link the slides used in the video)_
 > - 💻 **GitHub repository:** https://github.com/Xiang115/AML-Alert-Triage-Copilot
-> - 🌐 **Live console (Render):** _placeholder — add the Render URL once the Blueprint is applied (see [CI/CD](#continuous-integration--delivery))_
+> - 🌐 **Live console (Render):** https://aml-alert-triage-copilot-1.onrender.com — backend API: https://aml-alert-triage-copilot.onrender.com (free tier; first load may take ~50s if the API is cold)
 
 ---
 
