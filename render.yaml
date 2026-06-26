@@ -1,0 +1,54 @@
+# Render Blueprint — full-stack Continuous Delivery for VerdictAML.
+#
+# One-time setup: on Render, New > Blueprint > connect this repo > Apply. Render reads this
+# file and creates BOTH services. Thereafter every push to `main` redeploys automatically —
+# but only AFTER CI checks pass (autoDeployTrigger: checksPass), so a red pipeline never ships.
+#
+# Live everywhere it counts: the hosted console talks to the hosted FastAPI API, so the real
+# goAML XSD export, DB persistence, and audit trail all work end-to-end. The API is deployed
+# WITHOUT a DeepSeek key on purpose: the live /triage run then falls back to the precomputed
+# result (main.py), so the public instance burns no tokens and exposes no secret — set
+# DEEPSEEK_API_KEY in the Render dashboard to make /triage call DeepSeek for real.
+#
+# NOTE (ADR-0003): the filmed 7-min video is still recorded off precomputed data locally — this
+# deploy is the clickable "it's genuinely live" artifact, not the filmed critical path.
+services:
+  # --- FastAPI backend (precomputed serving + live /triage with graceful fallback) ---
+  - name: verdictaml-api
+    type: web
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14"
+      # DATABASE_URL is unset → defaults to SQLite (backend/data/app.db). On Render's free tier
+      # the disk is ephemeral and re-seeds from results.json on each boot (store.init), so the
+      # demo self-heals; session decisions reset on restart. Point at Postgres for durability.
+      # DEEPSEEK_API_KEY is intentionally unset → live /triage serves the precomputed fallback.
+
+  # --- React/Vite analyst console, served live against the API above ---
+  - name: verdictaml-console
+    type: web
+    runtime: static
+    rootDir: frontend
+    # --include=dev so Vite/tsc/eslint (devDependencies) install even if Render sets
+    # NODE_ENV=production for the build; without them `npm run build` cannot run.
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: VITE_MOCK
+        value: "false"
+      # Inject the API's host at build time (Vite inlines VITE_* into the bundle). Render's
+      # fromService yields a bare host (e.g. verdictaml-api.onrender.com); api.ts adds https://.
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: verdictaml-api
+          property: host
