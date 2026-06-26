@@ -13,6 +13,10 @@ interface TriageCardProps {
 
 export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, busy }: TriageCardProps) {
   const escalate = triage.recommendation === 'escalate'
+  const flagged = triage.verifier.status === 'flagged'
+  // Only a flagged DISMISS is capped below the review line (so it can't auto-clear). A
+  // flagged escalate keeps its true coverage — the verifier's disagreement routes it to review.
+  const capped = flagged && !escalate
   const pct = Math.round(triage.confidence * 100)
   const { indicators, fired } = triage.indicatorCoverage
   const firedSet = new Set(fired)
@@ -54,12 +58,19 @@ export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, bus
             </div>
             <div className="grow">
               <div className="mb-1 flex items-baseline justify-between">
-                <span className="label">Confidence</span>
-                <span className="font-mono text-[13px] font-medium tabular-nums text-ink">{pct}%</span>
+                <span className="label">Confidence{capped ? ' · capped' : ''}</span>
+                <span className={`font-mono text-[13px] font-medium tabular-nums ${capped ? 'text-flag' : 'text-ink'}`}>{pct}%</span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-                <div className="h-full rounded-full bg-ink" style={{ width: `${pct}%` }}></div>
+                <div className={`h-full rounded-full ${capped ? 'bg-flag' : 'bg-ink'}`} style={{ width: `${pct}%` }}></div>
               </div>
+              {flagged && (
+                <p className="mt-1.5 text-[12px] leading-snug text-flag">
+                  {escalate
+                    ? 'All typology indicators present — the independent verifier disagrees and routes this to human review.'
+                    : 'Capped below the review line by the verifier’s flag, so it can’t auto-clear — human review.'}
+                </p>
+              )}
             </div>
           </div>
 

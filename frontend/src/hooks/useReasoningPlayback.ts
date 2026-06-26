@@ -102,7 +102,9 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
     detail:
       total > 0
         ? `${t.indicatorCoverage.fired.length}/${total} indicators fired → ${pct}%` +
-          (t.verifier.status === 'flagged' ? ' (capped below review threshold)' : '')
+          (t.verifier.status === 'flagged' && t.recommendation === 'dismiss'
+            ? ' (capped below review threshold)'
+            : '')
         : `${pct}% — no pattern to score`,
   })
 

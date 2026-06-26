@@ -22,7 +22,7 @@ export function VerifierPanel({ verifier }: VerifierPanelProps) {
           <div className="text-[12px] font-semibold uppercase tracking-wide text-flag">Distinguishing test alert</div>
           <p className="mt-1 text-[13px] leading-relaxed text-ink">{verifier.note}</p>
           <p className="mt-2 text-[12px] text-ink-soft">
-            Confidence capped below threshold (0.60). Manual override required to finalize.
+            The verifier disagrees with this call — manual review required to finalize.
           </p>
         </div>
       ) : (

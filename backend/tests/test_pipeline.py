@@ -62,9 +62,10 @@ def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     assert out.cited_transaction_ids == ["T-1001", "T-1002"]
 
 
-def test_debate_holds_keeps_flag_and_caps_confidence(make_client):
+def test_debate_holds_keeps_flag(make_client):
     # ADR-0011: verifier flags an escalate, triage defends (no concede), the re-verdict HOLDS →
-    # flag stands, confidence capped, disposition unchanged, and the debate is recorded.
+    # flag stands, disposition unchanged, and the debate is recorded. The escalate keeps its
+    # true coverage confidence (ADR-0007: only a flagged dismiss is capped).
     four = get_card("PT-01").indicators[:4]
     fake = make_client(
         [
@@ -79,7 +80,7 @@ def test_debate_holds_keeps_flag_and_caps_confidence(make_client):
     out = run_triage(_alert(), client=fake)
     assert out.recommendation == "escalate"  # unchanged — flag held, no flip
     assert out.verifier.status == "flagged"
-    assert out.confidence == 0.59  # full coverage capped below the review threshold
+    assert out.confidence == 1.0  # full coverage (4/4), NOT capped — an escalate never auto-clears
     assert out.debate is not None
     assert out.debate.reverdict.outcome == "holds"
     assert out.debate.reverdict.disposition_changed is False

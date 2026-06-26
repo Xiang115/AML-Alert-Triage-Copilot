@@ -16,17 +16,17 @@ const agreed: Verifier = {
 }
 
 describe('VerifierPanel', () => {
-  it('shows the flagged note, the alert label, and the confidence-cap message when flagged', () => {
+  it('shows the flagged note, the alert label, and the manual-review message when flagged', () => {
     render(<VerifierPanel verifier={flagged} />)
     expect(screen.getByText(flagged.note)).toBeTruthy()
     expect(screen.getByText(/distinguishing test alert/i)).toBeTruthy()
-    expect(screen.getByText(/capped below threshold/i)).toBeTruthy()
+    expect(screen.getByText(/manual review required/i)).toBeTruthy()
   })
 
-  it('shows the verified state and no cap message when agreed', () => {
+  it('shows the verified state and no review message when agreed', () => {
     render(<VerifierPanel verifier={agreed} />)
     expect(screen.getByText(agreed.note)).toBeTruthy()
     expect(screen.getByText(/triage call verified/i)).toBeTruthy()
-    expect(screen.queryByText(/capped below threshold/i)).toBeNull()
+    expect(screen.queryByText(/manual review required/i)).toBeNull()
   })
 })
