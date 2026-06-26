@@ -14,9 +14,9 @@ export function MetricsSnapshot({ metrics }: MetricsSnapshotProps) {
       {metrics ? (
         <dl className="space-y-2.5">
           <Row
-            label="Benign alerts auto-cleared"
-            value={`${(metrics.falsePositiveReduction * 100).toFixed(0)}%`}
-            tone="text-ink"
+            label="Catch rate (recall)"
+            value={`${(metrics.recall * 100).toFixed(0)}%`}
+            tone="text-verified"
           />
           <Row
             label="Review time saved"
@@ -25,7 +25,7 @@ export function MetricsSnapshot({ metrics }: MetricsSnapshotProps) {
                 metrics.avgReviewTimeBaselineMin) *
                 100,
             )}%`}
-            tone="text-verified"
+            tone="text-ink"
           />
           <Row label="Alerts evaluated" value={`${metrics.totalAlerts}`} tone="text-ink" />
         </dl>

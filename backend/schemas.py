@@ -273,6 +273,15 @@ class ConfusionMatrix(CamelModel):
     tn: int
 
 
+class TypologyRecall(CamelModel):
+    """Held-out recall within one true typology (Reports only) on SAML-D (ADR-0012):
+    `caught/total`. Keyed by card code (plus a `COVERAGE_GAP` bucket for Reports whose
+    pattern maps to no card). `recall` is None when `total` is 0."""
+    recall: float | None = None
+    caught: int
+    total: int
+
+
 class Metrics(CamelModel):
     total_alerts: int
     accuracy_vs_labels: float
@@ -297,3 +306,7 @@ class Metrics(CamelModel):
     measured_typologies: list[str] | None = None
     roadmap_typologies: list[str] | None = None
     coverage_note: str | None = None
+    # Per-typology held-out recall on SAML-D (ADR-0012), keyed by card code (+ a COVERAGE_GAP
+    # bucket): the headline that FI-01/ST-01 — structurally unmeasurable on SynthAML — are the
+    # strongest detectors on amount-bearing data. Optional: the SynthAML metrics.json predates it.
+    per_typology_recall: dict[str, TypologyRecall] | None = None

@@ -117,6 +117,40 @@ def test_all_correct_gives_perfect_accuracy():
     Metrics.model_validate(m)  # conforms to the wire contract
 
 
+# --- served_metrics_from_samld: the SAML-D raw eval -> served metrics.json transform (ADR-0012) ---
+
+def _raw_samld() -> dict:
+    """A raw saml_d_metrics.json-shaped dict: the metric math + auto-clear + per-typology recall
+    + the eval-only nExcludedErrors that must NOT reach the wire contract."""
+    raw = compute_metrics(["escalate", "dismiss"], ["escalate", "dismiss"])
+    raw.update(auto_clear_metrics(["autoCleared"], ["dismiss"]))
+    raw["perTypologyRecall"] = {"FI-01": {"recall": 0.8421, "caught": 48, "total": 57}}
+    raw["nExcludedErrors"] = 3
+    return raw
+
+
+def test_served_metrics_drops_eval_only_fields_and_adds_coverage():
+    from eval.evaluate_samld import served_metrics_from_samld
+
+    served = served_metrics_from_samld(_raw_samld())
+    assert "nExcludedErrors" not in served  # eval-only field stripped (extra="forbid" would reject it)
+    assert served["perTypologyRecall"]["FI-01"]["recall"] == 0.8421  # per-typology recall preserved
+    assert served["coverageNote"]  # honest disclosure merged in
+    # The served dict validates against the wire contract and round-trips the per-typology recall.
+    m = Metrics.model_validate(served)
+    assert m.per_typology_recall["FI-01"].caught == 48
+
+
+def test_served_metrics_coverage_partitions_every_card():
+    # measured + roadmap must classify all 5 KB cards (disjoint), so the disclosure can't go stale.
+    from agents.knowledge_base import load_cards
+    from eval.evaluate_samld import SAMLD_MEASURED_TYPOLOGIES, SAMLD_ROADMAP_TYPOLOGIES
+
+    all_codes = {card.code for card in load_cards()}
+    assert set(SAMLD_MEASURED_TYPOLOGIES).isdisjoint(SAMLD_ROADMAP_TYPOLOGIES)
+    assert set(SAMLD_MEASURED_TYPOLOGIES) | set(SAMLD_ROADMAP_TYPOLOGIES) == all_codes
+
+
 def test_all_wrong_gives_zero_accuracy():
     m = compute_metrics(["escalate", "dismiss"], ["dismiss", "escalate"])
     assert m["accuracyVsLabels"] == 0.0

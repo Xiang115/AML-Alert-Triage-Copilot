@@ -121,3 +121,24 @@ for unsuspicious evidence. Re-measured (no-debate, n=250): **recall 55.3%→72.0
 PT-01 51%→77%, ST-01 63%→74%**, **precision essentially flat 74.1%→75.0%** (tp 83→108 for only fp 29→36
 — the converted misses were genuinely suspicious), accuracy 61.6%→68.8%. The predicted precision crater
 did not occur because benign alerts still `NO_MATCH`.
+
+**Update (2026-06-26) — the serving layer now actually serves the SAML-D result (closed a code↔decision
+gap).** The decision above ("drive both the demo *and* the measurement off SAML-D") was complete in the
+eval but **not in the serving layer**: `GET /metrics` still served the retired pre-pivot SynthAML
+`metrics.json` (recall 30%, baseline 83%, PT-01/DA-01 only), so the System Performance tab silently
+headlined the one run where the AI added nothing over baseline. The SAML-D numbers lived only in
+`saml_d_metrics.json`, which the `Metrics` contract (`extra="forbid"`) could not even serve — it carries
+`perTypologyRecall`/`nExcludedErrors` and lacks the coverage fields. Fix:
+- **`Metrics` schema** gains `perTypologyRecall: dict[str, TypologyRecall]` (the ADR headline — fan-in /
+  structuring recall, structurally unmeasurable on SynthAML).
+- **`evaluate_samld.served_metrics_from_samld()`** — a pure, **token-free** transform (so the locked 72%
+  numbers are *not* re-run; DeepSeek non-determinism, see the determinism caveat above) — rebuilds the
+  served `data/metrics.json` from `saml_d_metrics.json`: keeps every wire field + `perTypologyRecall`,
+  drops the eval-only `nExcludedErrors`, and merges the **combined-coverage** disclosure (measured =
+  PT-01/FI-01/ST-01/DA-01 across both sets, roadmap = KYC-01) plus the report-enriched-mix caveat.
+  Run with `python -m eval.evaluate_samld --served-only`; a fresh no-debate eval also refreshes it.
+- **Dashboard** (`MetricsDashboard`) now **leads with recall** (ADR-0012's "lead with the mix-independent
+  truth"), renders per-typology recall bars + a confusion matrix, and states the report-enriched caveat
+  on-screen. The honest consequence — accepted deliberately — is that the eye-catching SynthAML figures
+  *drop* (auto-cleared 90%→42%, FPR 87%→60%, baseline 83%→40%) while the figures that matter *rise and
+  become real* (recall 30%→72%, FI-01 84%, beats baseline +29pts).
