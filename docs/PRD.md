@@ -90,7 +90,8 @@ rules-based floor may back the LLM Verifier if reproducibility proves flaky (bui
 
 **Confidence computation (deep, pure module, ADR-0007).** `confidence` is **computed**, not
 self-reported: the fraction of the matched card's indicators that fired, capped below the human-review
-threshold when the Verifier flags. Interface: `compute_confidence(fired_count, total_count, verifier_flagged) -> float`.
+threshold when the Verifier flags a **dismiss** (a flagged escalate keeps its coverage — the disagreement,
+not a depressed score, forces review). Interface: `compute_confidence(fired_count, total_count, recommendation, verifier_flagged) -> float`.
 The human-review threshold (e.g. ~0.6) is a single configurable constant, finalized when `evaluate.py` is built.
 
 **STR drafter (ADR-0006).** When the recommendation is Escalate, produces a **structured `STRDraft`

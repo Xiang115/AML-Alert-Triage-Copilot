@@ -6,7 +6,7 @@ import type { STRDraft, TriageResult } from '../types'
 const triage = (over: Partial<TriageResult> = {}): TriageResult => ({
   alertId: 'X',
   recommendation: 'escalate',
-  confidence: 0.59,
+  confidence: 0.75,
   explanation: 'why',
   matchedTypology: { code: 'FI-01', name: 'Fan-in / Fan-out', source: 'FATF' },
   citedTransactionIds: [],
@@ -41,7 +41,8 @@ describe('buildReasoningEvents', () => {
 
     const conf = ev.find((e) => e.kind === 'stage' && e.id === 'confidence')
     expect(conf && conf.kind === 'stage' && conf.detail).toContain('3/4')
-    expect(conf && conf.kind === 'stage' && conf.detail).toContain('capped')
+    // A flagged ESCALATE is not capped (ADR-0007) — the disagreement, not a low score, forces review.
+    expect(conf && conf.kind === 'stage' && conf.detail).not.toContain('capped')
   })
 
   it('inserts the debate turns (challenge → rebuttal → re-verdict) after the verifier when present', () => {

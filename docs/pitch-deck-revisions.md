@@ -28,7 +28,7 @@ Sources used (verified 2026-06-22):
 | 1 | Title / VerdictAML | ✅ OK | Brand + 2-person team match README. |
 | 2 | Problem | ⚠️ VERIFY | "Flagright, 2026 — ~5-15 min" is a **new citation not in the source list**; confirm it's real or revert to "industry estimate" (repo rule: never fabricate a citation). PwC 90-95% & LexisNexis US$45bn are fine. |
 | 3 | Solution loop | ✅ OK | 6-step loop matches `agents/pipeline.py`. |
-| 4 | Verifier spotlight (HERO-001) | 🔴 CHANGE | Says "**3 of 4 indicators fired**" — results.json now fires **4 of 4**; the 59% comes purely from the **verifier-flag cap (ADR-0007)**, not a missing indicator. See block below. |
+| 4 | Verifier spotlight (HERO-001) | 🔴 CHANGE | Says "**3 of 4 indicators fired**" — results.json now fires **4 of 4 → 100% confidence**; the verifier still **flags** it and the disagreement (not a cap) forces human review (ADR-0007). See block below. |
 | 5 | goAML filing | ✅ OK | Backed by `backend/goaml.py` + `backend/data/goaml_str.xsd` + `MYFIU-…` ref. All four claims true. |
 | 6 | Product | ✅ OK | Confidence-from-indicators, verifier, STR, goAML, append-only audit all exist (`store.py`, `confidence.py`). |
 | 7 | Cockpit **screenshots** (image2/image3) | 🔴 CHANGE (image) | Hand-built mockups; queue shows **invented names** (Daniel Foong, Kopitiam Aroma, Suriana Mart) that aren't in the served data, and "3 of 4 fired". See IMAGE CHANGES. |
@@ -92,22 +92,25 @@ screenshots already show £/€ amounts and counterparties. Make the dataset sli
 
 ### 🔴 SLIDE 4 — VERIFIER SPOTLIGHT (HERO-001)  *(fix the indicator count + confidence mechanism)*
 
-HERO-001 in `results.json` **today**: `escalate · confidence 0.59 · FI-01 · verifier flagged`, and
-**4 of 4 indicators fired** (not 3 of 4). So the slide's "3 of 4 indicators fired" is wrong, and the
-*reason* for 59% is no longer "an indicator didn't fire" — it's the **verifier-flag cap (ADR-0007)**.
+HERO-001 in `results.json` **today**: `escalate · confidence 1.0 (100%) · FI-01 · verifier flagged`, and
+**4 of 4 indicators fired** (not 3 of 4). Triage is *fully* confident on the pattern — all four red flags
+present — and the **independent verifier still flags it** (benign merchant look-alike), routing it to
+human review. Confidence is **not** capped (ADR-0007: a flagged *escalate* keeps its coverage; the
+disagreement, not a depressed number, is what forces review).
 
 - Replace "3 of 4 indicators fired; coverage shown as a checklist" with:
-  **"4 of 4 indicators fired — but the verifier's flag caps confidence to 59%, below the auto-escalate
-  threshold, forcing human review."** (This is a *stronger* story: it shows the confidence mechanism.)
+  **"4 of 4 indicators fired → 100% pattern confidence — yet the independent verifier disagrees (benign
+  merchant) and routes it to human review."** (The stronger story: triage was fully confident and the
+  second agent *still* caught the benign look-alike — that is the value of the second line.)
 - Verifier note is current — paraphrase of: *"retention of funds, partial forwarding to a business
   counterparty, consistent inbound amounts → legitimate merchant, not mule consolidation."* ✅
 - **Fragility warning (memory `results-json-regen-breaks-hero`, ADR-0012):** a fresh precompute flips
   HERO-001 to dismiss/agreed and breaks this beat. The **committed** results.json holds the engineered
-  version — **verify HERO-001 is still `escalate/flagged/59%` (`pytest tests/test_hero_cases.py`) before
+  version — **verify HERO-001 is still `escalate/flagged/100%` (`pytest tests/test_hero_cases.py`) before
   recording, and `git checkout` the artifact if a regen clobbered it.**
-- **Optional strengthener:** the verifier also flags **real** SAML-D cases (SD-00005/07/09/10/12, FI-01,
-  conf 0.5–0.59) — proof the catch isn't a hand-rigged one-off. Could add a one-line "and it fires on real
-  data too" footnote.
+- **Optional strengthener:** the verifier also flags **real** SAML-D cases (SD-00005/07/12 at conf 0.75,
+  SD-00009/10 at 0.50; all FI-01) — proof the catch isn't a hand-rigged one-off. Could add a one-line "and
+  it fires on real data too" footnote.
 
 ---
 
@@ -266,7 +269,7 @@ The rubric names "clear technical architecture **diagram**" as a full-mark item,
 A 4-step flow across the slide:
 
 1. **Trigger** — 5 inbound transfers from unrelated senders in 12 days, then forwarded onward. *Fan-in velocity rule fires.*
-2. **Triage Agent** *(DeepSeek-v4-pro)* → **ESCALATE · 59% confidence** · matched **FI-01 Fan-in / Fan-out** *(FATF R.20; BNM)*. **3 of 4 indicators fired** — coverage shown as a checklist.
+2. **Triage Agent** *(DeepSeek-v4-pro)* → **ESCALATE · 100% confidence** · matched **FI-01 Fan-in / Fan-out** *(FATF R.20; BNM)*. **4 of 4 indicators fired** — full pattern match; the independent verifier *still* disagrees (benign merchant) and routes it to human review (coverage shown as a checklist).
 3. **Verifier Agent** *(DeepSeek-v4-flash)* → **🚩 FLAGGED — disagrees:**
    > "Outbound is partial (**RM2,000 of RM7,450**) to a company (*Ilmu Educational Supplies Sdn Bhd*) — not rapid full forwarding; consistent inbound amounts suggest a **legitimate merchant** receiving customer payments for supplies."
 4. **Result** → routed to **human review**, *not* auto-escalated. A false positive caught; the analyst's time protected; accountability intact.

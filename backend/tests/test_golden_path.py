@@ -59,11 +59,12 @@ def test_beat2_live_triage_is_resilient_on_camera(raising_client):
 
 
 def test_beat3_verifier_catches_the_wrong_call():
-    """Beat 3 — the wow: the verifier flags HERO-001, capping confidence below the
-    review threshold and opening an adversarial debate (ADR-0007/0011)."""
+    """Beat 3 — the wow: the verifier flags HERO-001 — the disagreement forces human
+    review and opens an adversarial debate (ADR-0007/0011). The escalate keeps its true
+    coverage confidence; it is the flag, not a depressed number, that routes it to a human."""
     t = client.get(f"/alerts/{_HERO_FLAGGED}").json()["triage"]
     assert t["verifier"]["status"] == "flagged"
-    assert t["confidence"] < 0.6  # REVIEW_THRESHOLD — flag forces human review
+    assert t["confidence"] >= 0.6  # not capped — the flag itself forces human review
     assert t["debate"] is not None  # challenge -> rebuttal -> re-verdict is recorded
 
 

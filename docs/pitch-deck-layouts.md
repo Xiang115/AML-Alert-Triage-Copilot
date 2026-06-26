@@ -130,26 +130,27 @@ confidence-cap micro-bar that *visualises* ADR-0007 (the wow mechanic).
 
 ```
   Triage Agent (4.62,3.00)                Verifier Agent (8.62,3.00)
-  ESCALATE · 59% confidence               🚩 FLAGGED — disagrees
+  ESCALATE · 100% confidence              🚩 FLAGGED — disagrees
   Matched FI-01 Fan-in / Fan-out          Retention of funds, partial forwarding
   ▸ 4 of 4 indicators fired               to a business counterparty, consistent
-  ▸ verifier flag CAPS confidence to      inbound amounts → legitimate merchant,
-    59% — below the auto-escalate line    not mule consolidation.
+  ▸ full pattern match — yet the          inbound amounts → legitimate merchant,
+    independent verifier disagrees        not mule consolidation.
     → human review                        (grounded on FI-01's distinguishing test)
-  ┌ optional cap bar (4.62,4.78) 2.81×0.18 ┐
-  │ coverage 4/4 ████████████|·· ⟂ flag cap│   ⟂ dashed = review threshold; fill stops at 59%
-  └────────────────────────────────────────┘
+  ┌ coverage bar (4.62,4.78) 2.81×0.18 ───┐
+  │ coverage 4/4 ████████████████████ 100%│   full teal fill — the verifier's flag, not a
+  └────────────────────────────────────────┘   low score, is what routes it to review
 ```
 
 | Shape | Action | New content |
 |---|---|---|
-| Triage body (sp `Matched FI-01 … 3 of 4 indicators…`) | **edit** | `Matched FI-01 Fan-in / Fan-out.` newline `4 of 4 indicators fired — the verifier's flag caps confidence to 59%, below the auto-escalate line → human review.` |
-| `ESCALATE · 59% confidence` | keep | unchanged (number still correct). |
+| Triage body (sp `Matched FI-01 … 3 of 4 indicators…`) | **edit** | `Matched FI-01 Fan-in / Fan-out.` newline `4 of 4 indicators fired → 100% pattern confidence — yet the independent verifier disagrees (benign merchant) → human review.` |
+| `ESCALATE · 59% confidence` | **edit** | `ESCALATE · 100% confidence` (4/4 indicators; no longer capped — ADR-0007 caps only a flagged dismiss). |
 | Verifier body | keep / light edit | already accurate; can tighten to the merchant paraphrase above. |
-| **NEW** cap micro-bar | add (optional) | `(4.62,4.78)` 2.81 × 0.18. Teal fill to 59% of width, light-grey remainder, orange dashed vertical "review threshold" marker just left of the fill end. Visualises "4/4 coverage, but flag pulls it under the line." |
+| **NEW** coverage micro-bar | add (optional) | `(4.62,4.78)` 2.81 × 0.18. Full teal fill (4/4 = 100%), light-grey remainder = none. Caption: "full pattern match — the verifier's disagreement, not a low score, forces human review." |
 
-> Why this is *better*, not just corrected: the old "3 of 4" implied a missing indicator explains the 59%.
-> The truth is stronger — **all four fired, and the adversarial flag alone forces human review** (ADR-0007).
+> Why this is *better*, not just corrected: the old "3 of 4 / 59%" implied the AI was unsure. The truth is
+> stronger — **triage was 100% confident on the pattern, and the independent verifier still caught the
+> benign look-alike**; the disagreement alone forces human review (ADR-0007).
 
 ---
 
@@ -171,7 +172,7 @@ real screenshot of the running frontend**, exported at **2560 × 1440 (16:9)** t
 1. **Left queue** — real holders only: `SD-000x` ("SAML-D account …") + `HERO-001 Aisyah binti Kamal`
    tagged FLAGGED. No invented names (no "Daniel Foong / Suriana Mart").
 2. **Indicator coverage = 4 of 4 fired** (matches results.json — not the old "3 of 4").
-3. **ESCALATE · 59%** with the verifier **🚩 flagged / human-review** panel.
+3. **ESCALATE · 100%** with the verifier **🚩 flagged / human-review** panel.
 4. **STR draft** panel on the right (shows the goAML-ready output).
 
 > Decide hero vs real-data framing: HERO-001 (RM, named subject) reads cleanest for the wow; a SAML-D case
@@ -216,7 +217,7 @@ pipeline branches on a flag and runs a debate. Redraw as:
   Verifier* labelled "only on a flag." This is the wow and it's currently invisible.
 - Split "5 Verifier + STR Draft" into **separate Verifier and STR Drafter** boxes (they're separate agents).
 - Add the **Citation Grounding** box between Triage and Verifier.
-- Edit Confidence caption → "…capped below review threshold when the verifier flags."
+- Edit Confidence caption → "…computed from indicator coverage; the verifier's disagreement forces human review (a flagged dismiss is also capped below the threshold)."
 
 ### FASTAPI BACKEND column
 

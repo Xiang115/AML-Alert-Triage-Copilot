@@ -4,9 +4,10 @@ Pins the outcomes in the *committed* results.json, which is what the demo serves
 A prompt/precompute change that flips a hero outcome fails here before it reaches
 the screen. (This guards the committed artifact; it does not re-run the live model.)
 
-The intended narrative: exactly HERO-001's verifier FLAGS the call (forcing human
-review, confidence capped below the threshold per ADR-0007); HERO-002 and HERO-003
-are clean agreed escalates that must not steal that moment.
+The intended narrative: exactly HERO-001's verifier FLAGS the call (the flag forces
+human review per ADR-0007 — the escalate keeps its true coverage confidence, it is the
+disagreement that routes it to a human); HERO-002 and HERO-003 are clean agreed
+escalates that must not steal that moment.
 """
 
 import json
@@ -34,8 +35,10 @@ def test_all_three_hero_cases_present_and_valid():
 
 def test_hero_001_verifier_flags_and_forces_review():
     h = _heroes()["HERO-001"]["triage"]
-    assert h["verifier"]["status"] == "flagged"
-    assert h["confidence"] < REVIEW_THRESHOLD  # flag caps it below review (ADR-0007)
+    assert h["verifier"]["status"] == "flagged"  # the flag forces human review (ADR-0007)
+    # The escalate is NOT capped — it keeps its full coverage confidence; the verifier's
+    # disagreement, not a depressed number, is what routes it to a human.
+    assert h["confidence"] >= REVIEW_THRESHOLD
 
 
 def test_hero_002_and_003_are_clean_agreed_escalates():

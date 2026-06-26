@@ -184,7 +184,8 @@ def run_triage_events(
         "type": "stage", "id": "confidence",
         "label": "Computing confidence from indicator coverage",
         "detail": f"{len(tri.fired_indicators)}/{total} indicators fired → {round(confidence * 100)}%"
-                  + (" (capped below review threshold)" if final_ver.status == "flagged" else ""),
+                  + (" (capped below review threshold)"
+                     if final_ver.status == "flagged" and recommendation == "dismiss" else ""),
     }
 
     str_draft = draft_str(alert, eff_tri, card, verifier_status=final_ver.status, client=client)

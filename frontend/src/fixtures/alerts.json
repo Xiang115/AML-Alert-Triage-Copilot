@@ -1291,7 +1291,7 @@
     "triage": {
       "alertId": "SD-00005",
       "recommendation": "escalate",
-      "confidence": 0.59,
+      "confidence": 0.75,
       "explanation": "The account received 10 inbound transfers from 9 different accounts within 10 days, aggregating approximately 99k in funds, followed by a substantial outbound transfer, consistent with a fan-in consolidation pattern. The senders appear unrelated, and the activity is suspicious.",
       "matchedTypology": {
         "code": "FI-01",
@@ -2027,7 +2027,7 @@
     "triage": {
       "alertId": "SD-00007",
       "recommendation": "escalate",
-      "confidence": 0.59,
+      "confidence": 0.75,
       "explanation": "The account received 7 inbound payments from distinct counterparties within a short period, then executed multiple large outbound transfers, consistent with fan-in/fan-out consolidation. The senders likely have no relationship to the account holder, and the activity pattern matches the consolidation typology.",
       "matchedTypology": {
         "code": "FI-01",
@@ -3694,7 +3694,7 @@
     "triage": {
       "alertId": "SD-00012",
       "recommendation": "escalate",
-      "confidence": 0.59,
+      "confidence": 0.75,
       "explanation": "The account shows a fan-in/fan-out pattern: six inbound credits from six different counterparties over eight days, with funds aggregated and then sent out in large outbound transfers (e.g., two consecutive large outbounds to the same account on Jan 17, and a final large outbound after three smaller inbounds). Senders appear unrelated to the account holder, consistent with a mule account consolidating and forwarding funds.",
       "matchedTypology": {
         "code": "FI-01",
@@ -6446,7 +6446,7 @@
     "triage": {
       "alertId": "HERO-001",
       "recommendation": "escalate",
-      "confidence": 0.59,
+      "confidence": 1.0,
       "explanation": "The account received multiple inbound credits from unrelated individuals within a short timeframe, consolidating funds before a single large outbound transfer. This pattern matches the fan-in typology, indicating potential money mule or layering activity. Escalation recommended for further investigation.",
       "matchedTypology": {
         "code": "FI-01",
