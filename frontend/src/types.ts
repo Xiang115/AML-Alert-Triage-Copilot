@@ -147,6 +147,14 @@ export interface ConfusionMatrix {
   tn: number
 }
 
+// Held-out recall within one true typology on SAML-D (ADR-0012), keyed by card code (+ a
+// COVERAGE_GAP bucket). `recall` is null when total is 0.
+export interface TypologyRecall {
+  recall: number | null
+  caught: number
+  total: number
+}
+
 export interface Metrics {
   totalAlerts: number
   accuracyVsLabels: number
@@ -162,6 +170,13 @@ export interface Metrics {
   // metrics.json predates them.
   autoClearedShare?: number | null
   autoClearPrecision?: number | null
+  // Honest typology coverage of the held-out metric (ADR-0004/0012). Optional: pre-coverage
+  // metrics.json predates them.
+  measuredTypologies?: string[] | null
+  roadmapTypologies?: string[] | null
+  coverageNote?: string | null
+  // Per-typology held-out recall on SAML-D (ADR-0012), keyed by card code (+ COVERAGE_GAP).
+  perTypologyRecall?: Record<string, TypologyRecall> | null
 }
 
 export interface SubmissionAck {
