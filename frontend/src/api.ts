@@ -45,7 +45,11 @@ function mockSubmissionRef(alertId: string): string {
 }
 
 const MOCK = import.meta.env.VITE_MOCK !== 'false'
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+// Render's `fromService` injects a bare host (e.g. "verdictaml-api.onrender.com"); `new URL(path,
+// BASE)` needs an absolute base, so add https:// when no scheme is present. A locally-set
+// VITE_API_BASE (with scheme) and the localhost default pass through unchanged.
+const RAW_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000'
+const BASE = /^https?:\/\//i.test(RAW_BASE) ? RAW_BASE : `https://${RAW_BASE}`
 
 export async function getAlerts(status?: AlertStatus): Promise<Alert[]> {
   if (MOCK) {

@@ -8,6 +8,7 @@ VerdictAML is a multi-agent system designed to assist banking anti-money launder
 > - 📺 **7-min demo video:** _placeholder — add YouTube URL before the 26 Jun submission_
 > - 📊 **Pitch deck:** _placeholder — attach `docs/pitch-deck.pdf` (or link the slides used in the video)_
 > - 💻 **GitHub repository:** https://github.com/Xiang115/AML-Alert-Triage-Copilot
+> - 🌐 **Live console (Render):** _placeholder — add the Render URL once the Blueprint is applied (see [CI/CD](#continuous-integration--delivery))_
 
 ---
 
@@ -275,3 +276,32 @@ Execute the unit tests verifying model logic, API routes, and schema formats:
 cd backend
 pytest
 ```
+
+## Continuous Integration & Delivery
+
+**CI — `.github/workflows/ci.yml` (GitHub Actions).** Every pull request and every push to
+`main` runs two parallel jobs:
+
+| Job | Steps | Gate |
+| --- | --- | --- |
+| **backend** | `pip install -r requirements.txt` → `pytest -q` (Python 3.14, pip cache) | the full backend suite |
+| **frontend** | `npm ci` → `npm run lint` → `npm run build` → `npm test` (Node 20, npm cache) | lint + production build + the Vitest suite |
+
+**CD — `render.yaml` (Render Blueprint).** A full-stack deploy of two services to live public URLs:
+`verdictaml-api` (the FastAPI backend) and `verdictaml-console` (the React console, served in
+**live mode** against that API). So the hosted console is genuinely end-to-end — the real goAML
+**XSD-validated** STR export, DB persistence, and audit trail all work on the live URL. The API is
+deployed **without** a DeepSeek key on purpose: the live `/triage` run then falls back to the
+precomputed result (`main.py`), so the public instance **burns no tokens and exposes no secret** —
+set `DEEPSEEK_API_KEY` in the Render dashboard to make `/triage` call DeepSeek for real. Delivery is
+**gated on CI**: Render's `autoDeployTrigger: checksPass` redeploys on a push to `main` **only after
+the CI checks pass**, so a red pipeline never ships.
+
+One-time setup (Render dashboard): **New → Blueprint → connect this repo → Apply**. Render reads
+`render.yaml` and provisions both services; the console's `VITE_API_BASE` is wired to the API's host
+automatically via `fromService` (if your Render plan resolves it at build time; otherwise paste the
+API URL into the console service's env and redeploy). Free-tier services cold-start (~50s) after
+idle, so the **filmed 7-min video is still recorded off precomputed data locally** (ADR-0003) — this
+deploy is the clickable "it's genuinely live" artifact, not the filmed critical path. On the free
+tier the API's SQLite disk is ephemeral and re-seeds from `results.json` on each boot; point
+`DATABASE_URL` at Postgres for durable decisions.
