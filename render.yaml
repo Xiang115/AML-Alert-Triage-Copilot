@@ -25,9 +25,14 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.14"
-      # DATABASE_URL is unset → defaults to SQLite (backend/data/app.db). On Render's free tier
-      # the disk is ephemeral and re-seeds from results.json on each boot (store.init), so the
-      # demo self-heals; session decisions reset on restart. Point at Postgres for durability.
+      # Durable persistence: Render's free tier has NO durable storage (the disk is ephemeral
+      # and free Postgres isn't a lasting offering), so set DATABASE_URL in the dashboard to a
+      # free external Postgres (e.g. Neon) and the audit trail + decisions survive every redeploy.
+      # Paste the URL exactly as Neon gives it (postgres://… / postgresql://…) — config.py binds
+      # it to psycopg3. Leave it unset to fall back to ephemeral SQLite (demo self-heals from
+      # results.json on each boot, but live decisions reset on restart).
+      - key: DATABASE_URL
+        sync: false  # set in the Render dashboard (it's a secret); Blueprint won't overwrite it
       # DEEPSEEK_API_KEY is intentionally unset → live /triage serves the precomputed fallback.
 
   # --- React/Vite analyst console, served live against the API above ---
