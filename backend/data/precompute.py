@@ -12,7 +12,6 @@ transactions (no triage); the pipeline fills in the triage/verifier/STR.
 from __future__ import annotations
 
 import json
-from datetime import datetime
 from pathlib import Path
 
 import config
@@ -26,6 +25,7 @@ from agents.queue_agent import (
 )
 from agents.str_drafter import recommended_action
 from schemas import Alert, AlertInput, TriageResult
+from timeutil import now_local
 
 _DATA = Path(__file__).resolve().parent
 # Real-data demo (ADR-0012): the served queue is now built from REAL SAML-D alerts
@@ -129,7 +129,7 @@ def _write_artifacts(results: list[dict], *, narrate: bool = False, client=None)
     the shift briefing. Routing + recommendedAction derive purely from each alert's stored
     triage (no LLM). When `narrate=True` the briefing summary is LLM-written (#8), falling
     back to the deterministic template if that call fails (drop-first, ADR-0010)."""
-    at = datetime.now()
+    at = now_local()
     routed = stamp_routing(results, config.AUTO_CLEAR_THRESHOLD)
     # Re-derive the deterministic STR recommended action (#9) so a restamp of a pre-#9
     # results.json picks up the case-specific text (idempotent for a fresh precompute).
