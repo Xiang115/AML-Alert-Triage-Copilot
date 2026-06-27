@@ -11,10 +11,26 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Persistence for Decisions + the audit trail (store.py), behind one DATABASE_URL seam.
-# Defaults to a SQLite file (zero-ops demo); production points it at Postgres/MySQL with
-# no code change — e.g. postgresql+psycopg://user:pw@host:5432/db. Tests use 'sqlite://'.
+# Defaults to a SQLite file (zero-ops demo); production points it at a durable Postgres so the
+# audit trail survives a redeploy — e.g. a free Neon/Supabase database — with no code change.
 _DATA_DIR = Path(__file__).resolve().parent / "data"
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{(_DATA_DIR / 'app.db').as_posix()}")
+
+
+def normalize_db_url(url: str) -> str:
+    """Bind a hosted-Postgres URL to the installed psycopg3 driver so DATABASE_URL can be
+    pasted exactly as Neon / Supabase / Render hand it to you. They give a bare
+    `postgres://` or `postgresql://` URL, but SQLAlchemy defaults that to psycopg2 (which we
+    don't install) — so map both to the explicit `postgresql+psycopg://` dialect. Any other
+    scheme (sqlite, an already-qualified +psycopg URL) is left untouched."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+DATABASE_URL = normalize_db_url(
+    os.getenv("DATABASE_URL", f"sqlite:///{(_DATA_DIR / 'app.db').as_posix()}")
+)
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
