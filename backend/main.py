@@ -27,6 +27,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 import config
 import store
 from agents.pipeline import run_triage, run_triage_events
+from timeutil import now_local
 from decision import resolve_str_draft
 from goaml import GoamlConfig, submission_reference, to_goaml_str_xml
 from schemas import (
@@ -227,7 +228,7 @@ def decide(alert_id: str, body: DecisionRequest):
         final_disposition=body.final_disposition,
         edited_str_draft=body.edited_str_draft,
         note=body.note,
-        decided_at=datetime.now(),
+        decided_at=now_local(),
     )
 
     new_status = "approved" if decision.action == "approve" else "overridden"
@@ -303,7 +304,7 @@ def submit_goaml_str(alert_id: str):
         alert_id=alert_id,
         submission_ref=submission_reference(alert_id),
         status="accepted",
-        submitted_at=datetime.now(),
+        submitted_at=now_local(),
     )
     store.append_audit(AuditEntry(
         alert_id=alert_id, event="submission", at=ack.submitted_at, submission_ref=ack.submission_ref,

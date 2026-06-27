@@ -2,7 +2,7 @@
   {
     "alertId": "SD-00002",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -14,7 +14,7 @@
   {
     "alertId": "SD-00017",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -26,7 +26,7 @@
   {
     "alertId": "SD-00018",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -38,7 +38,7 @@
   {
     "alertId": "SD-00019",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -50,7 +50,7 @@
   {
     "alertId": "SD-00020",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -62,7 +62,7 @@
   {
     "alertId": "SD-00021",
     "event": "autoClear",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -74,7 +74,7 @@
   {
     "alertId": "SD-00005",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,
@@ -86,7 +86,7 @@
   {
     "alertId": "SD-00007",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,
@@ -98,7 +98,7 @@
   {
     "alertId": "SD-00009",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,
@@ -110,7 +110,7 @@
   {
     "alertId": "SD-00010",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,
@@ -122,7 +122,7 @@
   {
     "alertId": "SD-00012",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,
@@ -134,7 +134,7 @@
   {
     "alertId": "SD-00015",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "dismiss",
     "finalDisposition": null,
@@ -146,7 +146,7 @@
   {
     "alertId": "HERO-001",
     "event": "debateResolved",
-    "at": "2026-06-25T22:50:39.586977",
+    "at": "2026-06-25T22:50:39.586977+08:00",
     "action": null,
     "aiRecommendation": "escalate",
     "finalDisposition": null,

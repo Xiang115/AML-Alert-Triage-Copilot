@@ -170,6 +170,51 @@ def all_audit() -> list[dict]:
     return [json.loads(r[0]) for r in rows]
 
 
+# Timestamp fields stamped into stored payloads — the audit trail's `at`, and the decision
+# record's `decidedAt` / `submittedAt`. Migrated to GMT+8 by migrate_timestamps_to_local().
+_TS_FIELDS = ("at", "decidedAt", "submittedAt")
+
+
+def migrate_timestamps_to_local() -> int:
+    """Relabel every stored timestamp in the GMT+8 local zone (see timeutil.to_local), so the
+    accountability trail reads in Malaysia time instead of the UTC the deploy host stamped.
+    Idempotent — a value that already carries a UTC offset is left untouched, so re-running
+    (or running against an already-migrated DB) is a no-op. Returns the number of rows
+    rewritten. Reusable for a persistent Postgres deploy; the demo's ephemeral SQLite reseeds
+    from the GMT+8 artifacts instead."""
+    from datetime import datetime
+
+    from timeutil import to_local
+
+    def _convert(payload: str) -> str | None:
+        d = json.loads(payload)
+        changed = False
+        for field in _TS_FIELDS:
+            val = d.get(field)
+            if not isinstance(val, str):
+                continue
+            try:
+                parsed = datetime.fromisoformat(val)
+            except ValueError:
+                continue
+            local = to_local(parsed).isoformat()
+            if local != val:
+                d[field] = local
+                changed = True
+        return json.dumps(d) if changed else None
+
+    eng = _require()
+    rewritten = 0
+    with eng.begin() as conn:
+        for tbl, key in ((audit, audit.c.seq), (decisions, decisions.c.alert_id)):
+            for row in conn.execute(select(key, tbl.c.payload)).all():
+                new = _convert(row[1])
+                if new is not None:
+                    conn.execute(update(tbl).where(key == row[0]).values(payload=new))
+                    rewritten += 1
+    return rewritten
+
+
 # --- alert catalog: input data (alerts + their transactions) ----------------------
 
 def seed_alerts(alert_dicts: list[dict]) -> None:
