@@ -5,10 +5,21 @@ NexHack 2026 — Track 2: Fintech Risk & Fraud Intelligence
 VerdictAML is a multi-agent system designed to assist banking anti-money laundering (AML) compliance analysts in triaging suspicious transaction alerts. Leveraging DeepSeek-v4 language models, the copilot analyzes transaction typologies, runs an adversarial verifier to challenge false-positive escalations, drafts structured Suspicious Activity Reports (STR), and reports workload-reduction metrics on a held-out synthetic transaction dataset. It also works the queue **autonomously**: before the analyst arrives, the **Queue Agent** runs every alert through this pipeline and auto-clears the high-confidence, verifier-agreed benign noise — surfacing only the alerts that need a human and never auto-filing a report (the *Autonomous AI Workforce* theme, with a human gate; ADR-0010). Once an analyst signs off on an escalation, the approved STR exports as a **schema-valid goAML XML** — the wire format Bank Negara Malaysia's Financial Intelligence Unit ingests — so the copilot is a drop-in component of the bank's existing STR submission flow, not a standalone tool.
 
 > **📦 Prelim submission links**
-> - 📺 **7-min demo video:** _placeholder — add YouTube URL before the 26 Jun submission_
-> - 📊 **Pitch deck:** _placeholder — attach `docs/pitch-deck.pdf` (or link the slides used in the video)_
-> - 💻 **GitHub repository:** https://github.com/Xiang115/AML-Alert-Triage-Copilot
-> - 🌐 **Live console (Render):** https://aml-alert-triage-copilot-1.onrender.com — backend API: https://aml-alert-triage-copilot.onrender.com (free tier; first load may take ~50s if the API is cold)
+> - 📺 **7-min demo video (YouTube):** https://youtu.be/5_GYoHZ4b9E
+> - 📊 **Pitch deck (Google Slides):** https://docs.google.com/presentation/d/1Oo8ttmGPhU5pcUtKKO_EHwChylzOs0nc/edit?usp=sharing&ouid=111272448091501598018&rtpof=true&sd=true
+> - 🌐 **Live console (Render):** https://aml-alert-triage-copilot-1.onrender.com
+
+---
+
+## Tech Stack
+
+| Layer | Choices |
+| :--- | :--- |
+| **Backend** | Python · FastAPI |
+| **Database** | PostgreSQL (Neon) · SQLite (local) |
+| **Frontend** | React · TypeScript · Vite · Tailwind CSS |
+| **LLM** | DeepSeek V4 — **V4 Pro** (triage + STR drafting), **V4 Flash** (adversarial verifier) |
+| **Data** | SAML-D synthetic AML dataset |
 
 ---
 
@@ -16,7 +27,7 @@ VerdictAML is a multi-agent system designed to assist banking anti-money launder
 
 The system is split into a React-based analyst console and a Python FastAPI backend orchestrating the multi-agent pipeline. 
 
-![System Architecture](docs/architecture.png)
+![System Architecture](docs/architecture-diagram.png)
 
 
 ### Multi-Agent Pipeline Mechanics
@@ -33,7 +44,7 @@ The copilot is built to sit *inside* a bank's compliance estate, not beside it. 
 
 - **Regulator-real** — a transaction-based goAML STR report. Each cited transaction becomes a `<transaction>` with the subject account on the institution's `*_my_client` side, so the same running-balance "mule tell" the analyst saw is carried onto the regulator's wire. The matched FATF/BNM typology is emitted as a goAML `<report_indicators>` code.
 - **Gated behind human sign-off** — the export unlocks only after an *escalate* disposition is recorded, recomputed live from the current decision. No STR can be filed without analyst approval, and a change-of-mind to dismiss instantly revokes it.
-- **Validated before it leaves** — every document is checked against a checked-in, tightly-scoped goAML XSD before return, so a malformed report cannot be emitted. Institution-level registration (reporting-entity ID, indicator code lists) is a one-file config swap (`backend/data/goaml_config.json`), so the faithful demo schema graduates to a specific FIU's live schema without code changes.
+- **Validated before it leaves** — every document is checked against a checked-in, tightly-scoped goAML XSD before return, so a malformed report cannot be emitted. Institution-level registration (reporting-entity ID, indicator code lists) is a one-file config swap (`backend/data/goaml_config.json`), so the faithful generic schema graduates to a specific FIU's live schema without code changes.
 
 Most AML demos stop at a drafted report; this one emits the regulator's actual filing artifact — schema-validated and human-gated. The reusable, deterministic serializer (`backend/goaml.py`) carries no LLM latency, so it is safe on the live demo path.
 
@@ -42,7 +53,7 @@ Most AML demos stop at a drafted report; this one emits the regulator's actual f
 The bank stays the reporting institution of record, so every action is logged and every filing is acknowledged:
 
 - **Append-only audit trail** (`GET /audit`) — each analyst decision records the **AI's recommendation, confidence, and verifier status alongside the human disposition**, so an override is accountable after the fact. Overriding the AI **requires a reason**, captured as the reason-of-record; a change-of-mind appends a new entry rather than erasing the first. Surfaced in the console's **Audit Trail** tab — the record a regulator can replay.
-- **Filing acknowledgement** — filing an approved STR (`POST /alerts/{alertId}/str/submit`) validates the goAML report, records the filing in the trail, and returns a **FIU submission reference** (`MYFIU-2026-NNNNNN`, deterministic per alert for demo stability). The console closes the loop with a *Filed to goAML · accepted · ref …* confirmation. Decisions and filings are events in the one append-only trail.
+- **Filing acknowledgement** — filing an approved STR (`POST /alerts/{alertId}/str/submit`) validates the goAML report, records the filing in the trail, and returns a **FIU submission reference** (`MYFIU-2026-NNNNNN`, a deterministic stub until wired to the FIU's real acknowledgement). The console closes the loop with a *Filed to goAML · accepted · ref …* confirmation. Decisions and filings are events in the one append-only trail.
 
 ---
 
@@ -54,7 +65,7 @@ The bank stays the reporting institution of record, so every action is logged an
 * **Regulator-Ready goAML Export**: After analyst sign-off, the approved STR exports as schema-valid goAML XML — Bank Negara Malaysia's STR e-filing format — gated behind human approval and validated against the goAML schema before it leaves the system (see *Integration Seam* above).
 * **Append-Only Audit Trail & Filing Receipt**: Every decision and goAML filing lands in an append-only trail (`GET /audit` + an **Audit Trail** tab) that pairs the AI's recommendation with the human disposition; overriding the AI requires a recorded reason. Filing an STR returns a FIU acknowledgement reference, closing the loop.
 * **Slate & Mint (Cyber-Defense) Console**: A modern, clean, dark-themed interface built specifically for security and financial audit contexts. Includes left-border highlighting of cited transactions and adversarial warning banners.
-* **Demo-First Resilience**: Backend pre-loads 16 optimized demo/hero cases from `results.json` and serves them from memory. The live `/triage` route runs the real pipeline (Q&A only) and falls back to the precomputed result if the provider errors, so the filmed demo never breaks on camera (ADR-0003); it never mutates the precomputed source.
+* **Resilient Precompute-and-Serve**: The backend precomputes the full agent pipeline offline over the bundled alert set and serves the results from memory, so triage is instant and deterministic. The live `/triage` route runs the real pipeline on demand and **falls back to the precomputed result if the provider errors** (ADR-0003) — a transient LLM outage degrades gracefully instead of failing the request, and the precomputed source is never mutated.
 * **Offline Evaluation Suite**: Runs the live triage agent over a **held-out** sample of real SAML-D alerts (Oztas et al., 2023; frozen before any tuning) and reports the full picture — accuracy, recall, precision, per-typology recall, and a confusion matrix (ADR-0004). Measured: **recall 0.72**, **precision 0.75**, **accuracy 0.69** against a 0.40 baseline, all served live on `/metrics`.
 
 ---
@@ -134,7 +145,7 @@ This is also the principled answer to AML's hardest metric reality: account-leve
 
 **Differentiation / moat:**
 - **Explainable and auditable by construction** — every recommendation is grounded in a named FATF/BNM typology card with cited transactions, and confidence is *computed* from indicator coverage (ADR-0007), not self-reported by the model. Every decision and filing lands in an append-only audit trail (AI call vs human disposition, with a mandatory reason on override and a FIU filing reference), so the institution can replay exactly who decided what and why. This is what makes it defensible to a regulator, unlike a black-box risk score.
-- **The adversarial verifier** — an independent second agent that challenges the first call against each typology's distinguishing test is the differentiator that catches false escalations; it is the demo's "wow" and hard to replicate as a bolt-on.
+- **The adversarial verifier** — an independent second agent that challenges the first call against each typology's distinguishing test is the differentiator that catches false escalations, and hard to replicate as a bolt-on.
 - **Emits the regulator's real wire format** — on analyst sign-off, the STR exports as schema-valid goAML XML (the format BNM's FIU ingests), human-gated and XSD-validated before release, with the reporting-entity registration as a per-FIU config swap. Most AML tools stop at a drafted report; emitting the actual, schema-conformant filing artifact is what turns "explainable triage" into a drop-in component of the bank's existing STR submission flow.
 - **Autonomous where it's safe, human where it matters** — the Queue Agent clears the high-confidence benign noise unattended (the *Autonomous AI Workforce* theme realised, not just claimed), but is **dismiss-only** and never files; the human keeps the entire escalate side. The auto-clear criteria are an explicit, audited policy rather than a black-box "the AI closed it" — autonomy a compliance officer can actually sign off on.
 - **Human-in-the-loop by design** — the analyst always approves or overrides, keeping the institution's regulatory accountability intact and easing adoption past compliance/legal sign-off.
@@ -153,50 +164,7 @@ A two-person team for NexHack 2026 — Track 2, spanning AI, backend, and fronte
 | Member | Role |
 | :--- | :--- |
 | **[Goh Kian Xiang (Xiang115)](https://github.com/Xiang115)** | AI & Backend Engineer |
-| **Lee Zi Hao** | Frontend Engineer |
-
----
-
-## Directory Structure
-
-```text
-/
-├── backend/
-│   ├── agents/          # Triage, Verifier, STR Drafter, and Confidence logic
-│   ├── data/            # results.json precomputes, CSV loaders, and metrics
-│   │   ├── fixtures/    # Pytest seed datasets
-│   │   ├── typologies/  # Curated FATF/BNM typology context cards
-│   │   ├── goaml_config.json  # Per-FIU goAML registration (the (B)->(A) config swap)
-│   │   └── goaml_str.xsd       # Tightly-scoped goAML STR schema (export is validated against it)
-│   ├── eval/            # evaluate.py offline validation script
-│   ├── tests/           # 162 passing backend unit and integration tests
-│   ├── main.py          # FastAPI application entrypoint
-│   ├── goaml.py         # goAML STR export serializer (the integration seam)
-│   ├── store.py         # decisions + audit persistence (SQLAlchemy, DATABASE_URL seam)
-│   └── config.py        # Environment variables and runtime thresholds
-├── frontend/
-│   ├── src/             # React console source code
-│   └── package.json     # Vite and UI dependencies
-└── docs/                # Product Requirement Documents and ADRs
-```
-
----
-
-## API Contract
-
-All endpoints exchange camelCase JSON payloads. Internal Python models map to snake_case.
-
-* **`GET /alerts`**: Retrieves the queue list. Transactions are omitted to optimize payload size. Optional `?status=` and `?routing=` filters — the latter selects the Queue Agent's lanes (`autoCleared` | `needsReview`, ADR-0010).
-* **`GET /alerts/{alertId}`**: Retrieves the detailed alert object, embedding transactions and precomputed triage; each alert carries its `routing` lane.
-* **`GET /queue/briefing`**: The Queue Agent's precomputed **Shift Briefing** (ADR-0010) — the overnight-run summary (processed / auto-cleared / needs-review counts + narrative) shown when the analyst opens the queue. 404 `BRIEFING_NOT_READY` until precompute has written it.
-* **`POST /alerts/{alertId}/triage`**: Triggers a live multi-agent pipeline execution (Q&A only). Returns a fresh result without mutating the demo source; falls back to the precomputed triage on provider failure.
-* **`POST /alerts/{alertId}/decision`**: Persists the analyst's disposition (`approve` or `override`), an optional `note` (the reason-of-record, required by the UI on override), and STR edits to the database (the `decisions` table, behind the `DATABASE_URL` seam); appends a decision event to the audit trail. The decision survives a restart and the alert's status/STR are rehydrated on startup.
-* **`GET /alerts/{alertId}/str.xml`**: Exports the approved STR as a schema-valid goAML XML report (the integration seam). Gated on a recorded *escalate* sign-off, recomputed live — returns `409 STR_NOT_ADJUDICATED` before sign-off and `409 STR_DISMISSED` if the alert was dismissed.
-* **`POST /alerts/{alertId}/str/submit`**: Files the approved STR to goAML and returns a `SubmissionAck` (FIU reference + `accepted`). Same gate as the export; records a submission event in the audit trail.
-* **`GET /audit`**: Returns the append-only accountability trail, newest first. Opens **seeded** with the Queue Agent's `autoClear` events (the autonomous overnight run, ADR-0010), then accrues `decision` and `submission` events as the analyst acts — so the trail is never empty on a cold open.
-* **`GET /metrics`**: Serves measured system accuracy and workload-reduction statistics, including the Queue Agent's `autoClearedShare` + `autoClearPrecision` (404 `METRICS_NOT_READY` until the eval suite has run).
-* **`POST /reset`**: Reloads the alert catalog and resets the persisted store (clears session decisions + audit events); restores the audit trail to the Queue Agent's autoClear seed.
-* **`GET /health`**: Liveness + readiness probe — reports `status`, alerts loaded, the configured model, and `llmKeyPresent`, so the live `/triage` path can be confirmed wired *before* a Q&A (a missing key otherwise only surfaces mid-run, then falls back to precomputed per ADR-0003).
+| **[Lee Zi Hao (CoCoBor)](https://github.com/CoCoBor)** | Frontend Engineer |
 
 ---
 
@@ -276,32 +244,3 @@ Execute the unit tests verifying model logic, API routes, and schema formats:
 cd backend
 pytest
 ```
-
-## Continuous Integration & Delivery
-
-**CI — `.github/workflows/ci.yml` (GitHub Actions).** Every pull request and every push to
-`main` runs two parallel jobs:
-
-| Job | Steps | Gate |
-| --- | --- | --- |
-| **backend** | `pip install -r requirements.txt` → `pytest -q` (Python 3.14, pip cache) | the full backend suite |
-| **frontend** | `npm ci` → `npm run lint` → `npm run build` → `npm test` (Node 20, npm cache) | lint + production build + the Vitest suite |
-
-**CD — `render.yaml` (Render Blueprint).** A full-stack deploy of two services to live public URLs:
-`verdictaml-api` (the FastAPI backend) and `verdictaml-console` (the React console, served in
-**live mode** against that API). So the hosted console is genuinely end-to-end — the real goAML
-**XSD-validated** STR export, DB persistence, and audit trail all work on the live URL. The API is
-deployed **without** a DeepSeek key on purpose: the live `/triage` run then falls back to the
-precomputed result (`main.py`), so the public instance **burns no tokens and exposes no secret** —
-set `DEEPSEEK_API_KEY` in the Render dashboard to make `/triage` call DeepSeek for real. Delivery is
-**gated on CI**: Render's `autoDeployTrigger: checksPass` redeploys on a push to `main` **only after
-the CI checks pass**, so a red pipeline never ships.
-
-One-time setup (Render dashboard): **New → Blueprint → connect this repo → Apply**. Render reads
-`render.yaml` and provisions both services; the console's `VITE_API_BASE` is wired to the API's host
-automatically via `fromService` (if your Render plan resolves it at build time; otherwise paste the
-API URL into the console service's env and redeploy). Free-tier services cold-start (~50s) after
-idle, so the **filmed 7-min video is still recorded off precomputed data locally** (ADR-0003) — this
-deploy is the clickable "it's genuinely live" artifact, not the filmed critical path. On the free
-tier the API's SQLite disk is ephemeral and re-seeds from `results.json` on each boot; point
-`DATABASE_URL` at Postgres for durable decisions.
