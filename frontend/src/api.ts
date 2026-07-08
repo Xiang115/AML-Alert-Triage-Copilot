@@ -798,6 +798,10 @@ const MOCK_PRODUCTION_TRUST_PLAN: ProductionTrustPlan = {
 }
 const MOCK_PILOT_ADOPTION_PLAN: PilotAdoptionPlan = {
   mode: 'bankPilot',
+  targetSegments: [
+    'Malaysia/APAC mid-sized banks with high alert queues.',
+    'Digital banks and payment providers.',
+  ],
   buyerStakeholders: [
     'Head of AML operations',
     'Compliance / MLRO owner',
@@ -815,6 +819,43 @@ const MOCK_PILOT_ADOPTION_PLAN: PilotAdoptionPlan = {
     valueHypothesis: 'At 5,000 alerts/month, a conservative 5-minute handling reduction on reviewed alerts plus bounded auto-clear can recover hundreds of analyst hours while preserving QA.',
     caveat: 'Pilot economics are a validation target, not a production claim; the bank must replace these assumptions with its own alert volume, salary bands, QA policy, and leakage tolerance.',
   },
+  sensitivityCases: [
+    { monthlyAlerts: 1000, minutesSavedPerAlert: 3, estimatedMonthlyHoursReturned: 50, caveat: 'Low-volume pilot case.' },
+    { monthlyAlerts: 5000, minutesSavedPerAlert: 5, estimatedMonthlyHoursReturned: 417, caveat: 'Mid-market operating case.' },
+    { monthlyAlerts: 20000, minutesSavedPerAlert: 8, estimatedMonthlyHoursReturned: 2667, caveat: 'Scale case.' },
+  ],
+  commercialModel: [
+    {
+      name: 'Paid shadow pilot',
+      customerStage: 'Historical replay and shadow validation',
+      pricingModel: 'Fixed pilot fee.',
+      includes: ['Validation dossier.'],
+      conversionGate: 'Compliance and model-risk owners accept success criteria.',
+    },
+    {
+      name: 'Production assist',
+      customerStage: 'Live triage with human-owned decisions',
+      pricingModel: 'Annual platform fee plus alert-volume tier.',
+      includes: ['Queue triage.'],
+      conversionGate: 'Security, legal, and operations sign off.',
+    },
+    {
+      name: 'Governed automation',
+      customerStage: 'Limited auto-clear after bank validation',
+      pricingModel: 'Enterprise/private deployment tier.',
+      includes: ['Approved auto-clear thresholds.'],
+      conversionGate: 'Shadow pilot shows acceptable leakage.',
+    },
+  ],
+  competitivePositioning: [
+    'VerdictAML is an overlay after existing transaction monitoring, not a replacement for the bank rule engine.',
+  ],
+  pilotTimeline: [
+    { week: 'Weeks 1-2', objective: 'Map fields.', owner: 'IT / security', evidence: '/integration/contract' },
+    { week: 'Weeks 3-5', objective: 'Run historical replay.', owner: 'Model risk', evidence: '/governance/validation-dossier' },
+    { week: 'Weeks 6-7', objective: 'Run shadow pilot.', owner: 'AML operations', evidence: 'Weekly readiness summaries.' },
+    { week: 'Week 8', objective: 'Decide rollout.', owner: 'Compliance / procurement', evidence: 'Business case.' },
+  ],
   phases: [
     {
       name: 'Read-only historical replay',
