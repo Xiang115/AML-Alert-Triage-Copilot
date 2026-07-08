@@ -1,10 +1,24 @@
 work/
 backend/data/knowledge_base/processed/
 backend/data/knowledge_base/chroma_db/
+backend/data/knowledge_base/*.npy
+backend/data/knowledge_base/*.pkl
+backend/data/knowledge_base/*.faiss
+backend/data/knowledge_base/*.json
+backend/data/knowledge_base/raw_pdfs/
+backend/data/evaluation.json
+backend/data/demo_cluster_alerts.json
+backend/data/ibm_seed_alerts.json
+backend/data/networks.json
+backend/data/suppression_metrics.json
+backend/data/cleared_patterns_seed.json
+backend/data/watchlist/
+backend/data/my_holidays.json
 .env
 D:\Dev\nexhack-track2-architecture\.env
 .claude/
 .codegraph/
+.superpowers/
 
 # SynthAML dataset — large CSVs (~935 MB), download from Figshare, never commit
 backend/data/synthaml/
@@ -15,6 +29,11 @@ backend/data/datasets/
 # SAML-D held-out eval slice — large generated artifact (~1.6 MB); regenerate via
 # `python -m data.saml_d_loader`. The small served demo queue + metrics ARE committed.
 backend/data/saml_d_holdout.json
+
+# IBM AMLworld HI-Medium raw data (Trans 3 GB / accounts 145 MB / Patterns 14 MB) — never commit
+backend/data/HI-Medium_Trans.csv
+backend/data/HI-Medium_accounts.csv
+backend/data/HI-Medium_Patterns.txt
 
 # Python
 backend/.venv/

@@ -14,8 +14,8 @@ def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_c
     # and dismiss the crafted benign look-alikes, flip-flopping the hero cases.
     card = get_card("PT-01")
     fake = make_client([json.dumps({
-        "matchedTypologyCode": "PT-01", "firedIndicators": [], "citedTransactionIds": [],
-        "recommendation": "dismiss", "explanation": "x",
+        "matchedTypologyCode": "PT-01", "firedIndicators": [],
+        "recommendation": "dismiss", "claims": [],
     })])
     triage("evidence block", [card], client=fake)
 
@@ -30,9 +30,9 @@ def test_triage_prompt_withholds_benign_lookalike_and_distinguishing_test(make_c
 def test_triage_retries_on_unknown_typology_code(make_client):
     # A hallucinated code must fail validation and retry, not KeyError downstream.
     bad = json.dumps({"matchedTypologyCode": "ZZ-99", "firedIndicators": [],
-                      "citedTransactionIds": [], "recommendation": "escalate", "explanation": "x"})
+                      "recommendation": "escalate", "claims": []})
     good = json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [],
-                       "citedTransactionIds": [], "recommendation": "escalate", "explanation": "x"})
+                       "recommendation": "escalate", "claims": []})
     fake = make_client([bad, good])
     out = triage("evidence block", [get_card("PT-01")], client=fake)
 
@@ -43,8 +43,8 @@ def test_triage_retries_on_unknown_typology_code(make_client):
 def test_triage_no_match_sentinel_is_one_call_dismiss(make_client):
     # "NONE" means no typology fit — a reasoned dismiss in ONE call (no retry).
     fake = make_client([json.dumps({
-        "matchedTypologyCode": "NONE", "firedIndicators": [], "citedTransactionIds": [],
-        "recommendation": "dismiss", "explanation": "nothing matched",
+        "matchedTypologyCode": "NONE", "firedIndicators": [],
+        "recommendation": "dismiss", "claims": [],
     })])
     out = triage("evidence block", [get_card("PT-01")], client=fake)
 
@@ -58,8 +58,8 @@ def test_triage_empty_code_normalises_to_no_match_without_retry(make_client):
     # An empty/missing code is the model saying "nothing matched" — not a failure
     # to retry. (A *hallucinated* code still retries — see the test above.)
     fake = make_client([json.dumps({
-        "matchedTypologyCode": "", "citedTransactionIds": [],
-        "recommendation": "escalate", "explanation": "x",
+        "matchedTypologyCode": "",
+        "recommendation": "escalate", "claims": [],
     })])
     out = triage("evidence block", [get_card("PT-01")], client=fake)
 
@@ -71,22 +71,22 @@ def test_triage_empty_code_normalises_to_no_match_without_retry(make_client):
 def test_triage_resolves_card_and_clamps_indicators(make_client):
     card = get_card("PT-01")
     real_indicator = card.indicators[0]
-    model_out = json.dumps(
-        {
-            "matchedTypologyCode": "PT-01",
-            "firedIndicators": [real_indicator, "a hallucinated indicator"],
-            "citedTransactionIds": ["T-1001"],
-            "recommendation": "escalate",
-            "explanation": "Funds in then out within hours.",
-        }
-    )
+    model_out = json.dumps({
+        "matchedTypologyCode": "PT-01",
+        "firedIndicators": [real_indicator, "a hallucinated indicator"],
+        "recommendation": "escalate",
+        "claims": [
+            {"claim": "Funds in then out within hours.",
+             "citedTransactionIds": ["T-1001"], "firedIndicators": [real_indicator]},
+        ],
+    })
     out = triage("evidence block", [card], client=make_client([model_out]))
 
     assert out.recommendation == "escalate"
     assert out.matched_typology.model_dump() == {"code": "PT-01", "name": card.name, "source": card.source}
-    assert out.fired_indicators == [real_indicator]  # hallucinated one dropped
-    assert out.cited_transaction_ids == ["T-1001"]
-    assert out.explanation
+    assert out.fired_indicators == [real_indicator]           # hallucinated one dropped
+    assert out.cited_transaction_ids == ["T-1001"]            # derived from the claim citation
+    assert out.claims and out.claims[0].text.startswith("Funds in then out")
 
 
 # --- adversarial debate rebuttal (ADR-0011) ---------------------------------------
@@ -136,7 +136,7 @@ def test_cost_sensitive_flips_timid_dismiss_to_escalate(make_client):
     real_indicator = card.indicators[0]
     out = triage("evidence block", [card], cost_sensitive=True, client=make_client([json.dumps({
         "matchedTypologyCode": "PT-01", "firedIndicators": [real_indicator],
-        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+        "recommendation": "dismiss", "claims": [],
     })]))
     assert out.recommendation == "escalate"
     assert out.fired_indicators == [real_indicator]
@@ -146,7 +146,7 @@ def test_cost_sensitive_does_not_escalate_when_nothing_fired(make_client):
     card = get_card("PT-01")
     out = triage("evidence block", [card], cost_sensitive=True, client=make_client([json.dumps({
         "matchedTypologyCode": "PT-01", "firedIndicators": [],
-        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+        "recommendation": "dismiss", "claims": [],
     })]))
     assert out.recommendation == "dismiss"  # no fired indicators → not forced
 
@@ -156,7 +156,7 @@ def test_cost_sensitive_never_escalates_no_match(make_client):
     out = triage("evidence block", [get_card("PT-01")], cost_sensitive=True,
                  client=make_client([json.dumps({
                      "matchedTypologyCode": "NONE", "firedIndicators": [],
-                     "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+                     "recommendation": "dismiss", "claims": [],
                  })]))
     assert out.recommendation == "dismiss"
     assert out.matched_typology.code == "NONE"
@@ -167,7 +167,7 @@ def test_default_is_not_cost_sensitive(make_client):
     card = get_card("PT-01")
     out = triage("evidence block", [card], client=make_client([json.dumps({
         "matchedTypologyCode": "PT-01", "firedIndicators": [card.indicators[0]],
-        "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x",
+        "recommendation": "dismiss", "claims": [],
     })]))
     assert out.recommendation == "dismiss"
 
@@ -175,7 +175,7 @@ def test_default_is_not_cost_sensitive(make_client):
 def test_cost_sensitive_note_only_in_prompt_when_enabled(make_client):
     card = get_card("PT-01")
     resp = json.dumps({"matchedTypologyCode": "PT-01", "firedIndicators": [],
-                       "citedTransactionIds": [], "recommendation": "dismiss", "explanation": "x"})
+                       "recommendation": "dismiss", "claims": []})
     on = make_client([resp]); triage("ev", [card], cost_sensitive=True, client=on)
     off = make_client([resp]); triage("ev", [card], client=off)
     assert "COST-SENSITIVE MODE" in on.calls[0]["messages"][0]["content"]

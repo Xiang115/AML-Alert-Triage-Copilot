@@ -1,17 +1,26 @@
+import { useEffect, useRef } from 'react'
 import type { Transaction } from '../types'
 
 interface TransactionTableProps {
   transactions: Transaction[] | null
   citedTransactionIds: string[]
+  // Set by the Evidence Register (ADR-0013): the transaction to scroll to and highlight.
+  focusedTransactionId?: string | null
 }
 
 function amount(value: number, currency: string) {
   return `${value.toLocaleString(undefined, { minimumFractionDigits: 2 })} ${currency}`
 }
 
-export function TransactionTable({ transactions, citedTransactionIds }: TransactionTableProps) {
+export function TransactionTable({ transactions, citedTransactionIds, focusedTransactionId }: TransactionTableProps) {
   // Scale the balance bars to the largest balance so the drain-to-zero is legible.
   const maxBalance = Math.max(1, ...(transactions ?? []).map((t) => t.runningBalance))
+  const focusedRef = useRef<HTMLTableRowElement | null>(null)
+  useEffect(() => {
+    if (focusedTransactionId && focusedRef.current) {
+      focusedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [focusedTransactionId])
 
   return (
     <section className="rounded-lg border border-line bg-surface p-5">
@@ -39,14 +48,16 @@ export function TransactionTable({ transactions, citedTransactionIds }: Transact
         <tbody>
           {transactions?.map((t) => {
             const isCited = citedTransactionIds.includes(t.transactionId)
+            const isFocused = t.transactionId === focusedTransactionId
             const isDraining = t.flags.includes('balance-drain') || t.runningBalance < 1000
             const barWidth = `${Math.max(2, (t.runningBalance / maxBalance) * 100)}%`
 
             return (
               <tr
                 key={t.transactionId}
-                className={`border-b border-line border-l-2 align-top ${
-                  isCited ? 'border-l-ink bg-paper' : 'border-l-transparent'
+                ref={isFocused ? focusedRef : undefined}
+                className={`border-b border-line border-l-2 align-top transition-colors ${
+                  isFocused ? 'border-l-flag bg-flag-soft' : isCited ? 'border-l-ink bg-paper' : 'border-l-transparent'
                 }`}
               >
                 <td className="py-2.5 pr-3 pl-3 font-mono">

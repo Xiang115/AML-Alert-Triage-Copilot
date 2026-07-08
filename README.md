@@ -244,3 +244,26 @@ Execute the unit tests verifying model logic, API routes, and schema formats:
 cd backend
 pytest
 ```
+
+Use `python verify.py` when you want the Windows-safe path: it keeps pytest temp/cache files under
+ignored `backend/work/pytest-runs/` so the suite works on locked-down machines without access to the
+user temp directory.
+
+### Finals Verification Checklist
+Run these before rehearsals and the final demo:
+```bash
+python verify.py
+```
+
+This runs the backend test suite, backend readiness checks, and frontend lint/typecheck/Vitest suite.
+Manual equivalent:
+```bash
+cd backend
+python -m pytest -q
+python -m readiness
+
+cd ../frontend
+npm run verify
+```
+
+`npm run verify` runs lint, TypeScript, and the full Vitest suite.

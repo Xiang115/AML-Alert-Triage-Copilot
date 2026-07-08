@@ -1,6 +1,7 @@
-import type { TriageResult } from '../types'
+import type { GovernanceThresholds, TriageResult } from '../types'
 import type { ReasoningEvent } from '../hooks/useReasoningPlayback'
 import { ReasoningTimeline } from './ReasoningTimeline'
+import { TracedClaimList } from './TracedClaimList'
 
 interface TriageCardProps {
   triage: TriageResult
@@ -9,9 +10,13 @@ interface TriageCardProps {
   onRunLive: () => void
   onReplayReasoning: () => void
   busy: boolean
+  // Operating point (ADR-0020): the serve-time borderline-dismiss flag + the thresholds to mark on
+  // the confidence bar, so where the score sits relative to the decision boundary is visible.
+  borderline?: boolean
+  thresholds?: GovernanceThresholds | null
 }
 
-export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, busy }: TriageCardProps) {
+export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, busy, borderline = false, thresholds = null }: TriageCardProps) {
   const escalate = triage.recommendation === 'escalate'
   const flagged = triage.verifier.status === 'flagged'
   // Only a flagged DISMISS is capped below the review line (so it can't auto-clear). A
@@ -61,14 +66,41 @@ export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, bus
                 <span className="label">Confidence{capped ? ' · capped' : ''}</span>
                 <span className={`font-mono text-[13px] font-medium tabular-nums ${capped ? 'text-flag' : 'text-ink'}`}>{pct}%</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+              <div className="relative h-1.5 w-full rounded-full bg-line">
                 <div className={`h-full rounded-full ${capped ? 'bg-flag' : 'bg-ink'}`} style={{ width: `${pct}%` }}></div>
+                {/* Operating-point markers (ADR-0020): where the review / auto-clear lines fall. */}
+                {thresholds && (
+                  <>
+                    <span
+                      title={`Review threshold ${Math.round(thresholds.review * 100)}% — below this, forced human review`}
+                      className="absolute top-[-2px] h-[calc(100%+4px)] w-px bg-ink-faint"
+                      style={{ left: `${thresholds.review * 100}%` }}
+                    />
+                    <span
+                      title={`Auto-clear threshold ${Math.round(thresholds.autoClear * 100)}% — dismiss auto-cleared only at/above`}
+                      className="absolute top-[-2px] h-[calc(100%+4px)] w-px bg-verified"
+                      style={{ left: `${thresholds.autoClear * 100}%` }}
+                    />
+                  </>
+                )}
               </div>
+              {thresholds && (
+                <div className="mt-1 flex justify-between font-mono text-[10px] tabular-nums text-ink-faint">
+                  <span>review ≥{Math.round(thresholds.review * 100)}%</span>
+                  <span>auto-clear ≥{Math.round(thresholds.autoClear * 100)}%</span>
+                </div>
+              )}
               {flagged && (
                 <p className="mt-1.5 text-[12px] leading-snug text-flag">
                   {escalate
                     ? 'All typology indicators present — the independent verifier disagrees and routes this to human review.'
                     : 'Capped below the review line by the verifier’s flag, so it can’t auto-clear — human review.'}
+                </p>
+              )}
+              {borderline && !flagged && (
+                <p className="mt-1.5 text-[12px] leading-snug text-flag">
+                  Borderline dismiss — near the review threshold or contested; among the dismisses most at
+                  risk of a wrong clear, worth a closer look.
                 </p>
               )}
             </div>
@@ -117,10 +149,20 @@ export function TriageCard({ triage, timeline, onRunLive, onReplayReasoning, bus
             </div>
           </div>
 
-          {/* Explanation */}
+          {/* Evidence-anchored reasoning (ADR-0022): the "why" as atomic claims, each traced to
+              evidence or flagged model judgment; the integrity chip summarises provenance. */}
           <div className="mt-4">
-            <div className="label">Evidence</div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{triage.explanation}</p>
+            <div className="flex items-baseline justify-between">
+              <span className="label">Grounds for the call</span>
+              {triage.evidenceIntegrity && triage.evidenceIntegrity.totalCount > 0 && (
+                <span className="font-mono text-[11px] tabular-nums text-ink-soft">
+                  {triage.evidenceIntegrity.anchoredCount} anchored
+                  {triage.evidenceIntegrity.unanchoredCount > 0 &&
+                    ` · ${triage.evidenceIntegrity.unanchoredCount} unverified`}
+                </span>
+              )}
+            </div>
+            <TracedClaimList claims={triage.claims ?? []} />
           </div>
         </>
       )}

@@ -1,9 +1,46 @@
 {
-  "generatedAt": "2026-06-25T22:50:39.586977+08:00",
+  "generatedAt": "2026-07-07T16:48:19.004562+08:00",
   "processed": 25,
-  "autoCleared": 6,
-  "needsReview": 19,
-  "escalations": 18,
-  "flagged": 6,
-  "summary": "Processed 25 alerts overnight. Auto-cleared 6 high-confidence benign dismissals; 19 need your review (18 escalations to sign, 6 flagged for judgment)."
+  "autoCleared": 3,
+  "needsReview": 22,
+  "escalations": 19,
+  "flagged": 2,
+  "blockedReasons": [
+    {
+      "code": "escalation",
+      "label": "Escalations to sign",
+      "count": 19,
+      "explanation": "Escalation is consequential and can never be auto-cleared or auto-filed."
+    },
+    {
+      "code": "adversarialDebate",
+      "label": "Adversarial debate",
+      "count": 3,
+      "explanation": "The agents contested the call; contested alerts are firewalled from auto-clear."
+    }
+  ],
+  "nextActions": [
+    {
+      "priority": 1,
+      "label": "Sign escalation-ready cases",
+      "lane": "needsReview",
+      "count": 19,
+      "rationale": "Consequential cases stay human-gated; clear these first for filing SLA and compliance review."
+    },
+    {
+      "priority": 2,
+      "label": "Resolve challenged decisions",
+      "lane": "needsReview",
+      "count": 3,
+      "rationale": "Verifier, screening, debate, or network-revocation controls challenged the automation path."
+    },
+    {
+      "priority": 3,
+      "label": "Spot-check cleared lane",
+      "lane": "qaSample",
+      "count": 3,
+      "rationale": "The agent removed benign noise, but sampled clears remain inspectable for leakage control."
+    }
+  ],
+  "summary": "We processed 25 alerts overnight. 3 were auto-cleared as high-confidence, verifier-agreed benign dismissals. The remaining 22 were routed to human review, including 19 escalations to sign and 2 flagged for judgment."
 }

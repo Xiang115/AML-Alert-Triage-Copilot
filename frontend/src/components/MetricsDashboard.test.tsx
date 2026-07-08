@@ -33,6 +33,13 @@ describe('MetricsDashboard — SAML-D held-out evaluation', () => {
     expect(screen.getAllByText(`${(M.recall * 100).toFixed(0)}%`).length).toBeGreaterThan(0)
   })
 
+  it('explains the always-dismiss baseline without implying it is production-base-rate derived', () => {
+    render(<MetricsDashboard metrics={M} />)
+    expect(screen.getByText(/always dismissing this held-out slice/i)).toBeTruthy()
+    expect(screen.getByText(/baseline is simply the benign share/i)).toBeTruthy()
+    expect(screen.getAllByText(/catches zero reportable cases/i).length).toBeGreaterThan(0)
+  })
+
   it('renders per-typology recall bars with the fan-in detector', () => {
     render(<MetricsDashboard metrics={M} />)
     expect(screen.getByText(/Per-typology catch rate/i)).toBeTruthy()

@@ -46,6 +46,15 @@ def get_card(code: str) -> TypologyCard:
     raise KeyError(code)
 
 
+def card_citation(code: str) -> str | None:
+    """The section-level regulatory basis for a card (Slice B), or None if the card has none
+    or the code is unknown — a missing citation must degrade to 'no policy line', never raise."""
+    try:
+        return get_card(code).citation
+    except KeyError:
+        return None
+
+
 def select_cards(alert=None) -> list[TypologyCard]:
     """Candidate cards for an alert. The set is small, so return all and let the
     triage model pick the match. `alert` is a hook for future narrowing.

@@ -30,7 +30,7 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
     kind: 'stage',
     id: 'triage',
     label: 'Triage agent — assessing the call',
-    detail: `${t.recommendation === 'escalate' ? 'Escalate' : 'Dismiss'} — ${t.explanation}`,
+    detail: `${t.recommendation === 'escalate' ? 'Escalate' : 'Dismiss'} — matched ${t.matchedTypology.code} ${t.matchedTypology.name}. ${t.evidenceIntegrity?.anchoredCount ?? 0}/${t.evidenceIntegrity?.totalCount ?? 0} grounds evidence-anchored.`,
     tone: t.recommendation === 'escalate' ? 'escalate' : 'verified',
   })
 
@@ -57,7 +57,7 @@ export function buildReasoningEvents(t: TriageResult): ReasoningEvent[] {
     kind: 'stage',
     id: 'verifier',
     label: 'Adversarial verifier — challenging the call',
-    detail: `${t.verifier.status === 'flagged' ? 'FLAGGED for human review' : 'Agreed'} — ${t.verifier.note}`,
+    detail: `${t.verifier.status === 'flagged' ? 'FLAGGED for human review' : 'Agreed'} — ${t.verifier.claims?.length ?? 0} ground(s) assessed`,
     tone: t.verifier.status === 'flagged' ? 'flag' : 'verified',
   })
 

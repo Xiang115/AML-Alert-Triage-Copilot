@@ -17,8 +17,9 @@ describe('App (smoke)', () => {
 
     // The Queue Agent's Shift Briefing renders (ADR-0010)...
     expect(await screen.findByText(/overnight run/i)).toBeTruthy()
-    // ...and the default needsReview lane hides an auto-cleared alert (SD-00002) until you switch lanes.
-    expect(screen.queryByText('SAML-D account 188929394')).toBeNull()
+    // ...and the default all lane keeps the full population available.
+    expect(screen.getByText(/31 shown/i)).toBeTruthy()
+    expect(await screen.findByText('SAML-D account 7881299162')).toBeTruthy()
 
     // Nothing selected yet -> the empty-state prompt is shown.
     expect(screen.getByText(/choose an alert from the queue/i)).toBeTruthy()

@@ -7,11 +7,14 @@ const triage = (over: Partial<TriageResult> = {}): TriageResult => ({
   alertId: 'X',
   recommendation: 'escalate',
   confidence: 0.75,
-  explanation: 'why',
   matchedTypology: { code: 'FI-01', name: 'Fan-in / Fan-out', source: 'FATF' },
   citedTransactionIds: [],
   indicatorCoverage: { indicators: ['a', 'b', 'c', 'd'], fired: ['a', 'b', 'c'] },
-  verifier: { status: 'flagged', agreesWithRecommendation: false, note: 'looks like a merchant' },
+  verifier: {
+    status: 'flagged',
+    agreesWithRecommendation: false,
+    claims: [{ text: 'looks like a merchant', evidence: { transactionIds: [], firedIndicators: [] }, anchored: false }],
+  },
   strDraft: {} as unknown as STRDraft,
   model: 'm',
   generatedAt: '2026-01-01T00:00:00Z',
@@ -37,7 +40,7 @@ describe('buildReasoningEvents', () => {
 
     const verifier = ev.find((e) => e.kind === 'stage' && e.id === 'verifier')
     expect(verifier && verifier.kind === 'stage' && verifier.detail).toContain('FLAGGED')
-    expect(verifier && verifier.kind === 'stage' && verifier.detail).toContain('looks like a merchant')
+    expect(verifier && verifier.kind === 'stage' && verifier.detail).toContain('1 ground(s) assessed')
 
     const conf = ev.find((e) => e.kind === 'stage' && e.id === 'confidence')
     expect(conf && conf.kind === 'stage' && conf.detail).toContain('3/4')
@@ -94,7 +97,7 @@ describe('buildReasoningEvents', () => {
         recommendation: 'dismiss',
         matchedTypology: { code: 'NONE', name: 'No typology matched', source: '—' },
         indicatorCoverage: { indicators: [], fired: [] },
-        verifier: { status: 'agreed', agreesWithRecommendation: true, note: 'no pattern' },
+        verifier: { status: 'agreed', agreesWithRecommendation: true },
         strDraft: null,
       }),
     )

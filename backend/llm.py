@@ -4,7 +4,13 @@ temperature 0 (ADR-0003). The client is injectable so tests run without tokens.
 
 from __future__ import annotations
 
+import hashlib
 import logging
+import re
+import time
+import uuid
+from contextvars import ContextVar
+from datetime import datetime
 from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -16,6 +22,7 @@ logger = logging.getLogger("llm")
 T = TypeVar("T", bound=BaseModel)
 
 _client = None
+_capture: ContextVar[dict | None] = ContextVar("copilot_run_capture", default=None)
 
 
 def coerce_text(v):
@@ -43,9 +50,11 @@ def _make_openai(**kwargs):
 
 
 def _build_client(timeout: float):
+    # LLM_BASE_URL / LLM_API_KEY select the active provider (Slice B): cloud DeepSeek by default,
+    # or an on-prem OpenAI-compatible endpoint when OLLAMA_BASE_URL is set — same client, no code change.
     return _make_openai(
-        api_key=config.DEEPSEEK_API_KEY,
-        base_url=config.DEEPSEEK_BASE_URL,
+        api_key=config.LLM_API_KEY,
+        base_url=config.LLM_BASE_URL,
         timeout=timeout,
         max_retries=config.LLM_MAX_RETRIES,
     )
@@ -80,6 +89,101 @@ def _log_cache_usage(resp, model: str) -> None:
         logger.info("prompt cache: hit=%s miss=%s (%s)", hit, miss, model)
 
 
+def _sha256(text: str | None) -> str:
+    return "sha256:" + hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+
+
+def _redact_prompt(text: str | None) -> str:
+    if not text:
+        return ""
+    out = re.sub(r"Account: .+? \(", "Account: [REDACTED] (", text)
+    out = re.sub(r"([A-Za-z0-9._%+-]+)@([A-Za-z0-9.-]+)", "[EMAIL_REDACTED]", out)
+    out = re.sub(r"\b\d{10,18}\b", "[LONG_NUMBER_REDACTED]", out)
+    return out
+
+
+def begin_run_capture(alert_id: str, *, mode: str, semantic: bool = False) -> str:
+    """Start per-request LLM envelope capture for the live copilot run."""
+    run_id = f"run_{uuid.uuid4().hex[:12]}"
+    now = datetime.now().astimezone()
+    _capture.set({
+        "runId": run_id,
+        "alertId": alert_id,
+        "mode": mode,
+        "semantic": semantic,
+        "provider": config.LLM_PROVIDER,
+        "model": config.MODEL_WORKHORSE,
+        "status": "running",
+        "startedAt": now.isoformat(),
+        "completedAt": None,
+        "latencyMs": None,
+        "_startedPerf": time.perf_counter(),
+        "llmCalls": [],
+        "redactions": [
+            "Account holder names are redacted in captured prompts.",
+            "Long account-like numeric strings and email addresses are redacted.",
+            "Raw content hashes are retained so privileged reviewers can reconcile the unredacted audit copy.",
+        ],
+    })
+    return run_id
+
+
+def current_run_capture() -> dict | None:
+    return _capture.get()
+
+
+def finish_run_capture(status: str, *, final_output: dict | None = None, error: str | None = None) -> dict | None:
+    capture = _capture.get()
+    if capture is None:
+        return None
+    now = datetime.now().astimezone()
+    capture["status"] = status
+    capture["completedAt"] = now.isoformat()
+    capture["latencyMs"] = round((time.perf_counter() - capture["_startedPerf"]) * 1000)
+    capture["finalOutput"] = final_output
+    capture["error"] = error
+    capture.pop("_startedPerf", None)
+    _capture.set(None)
+    return capture
+
+
+def _record_llm_call(
+    *,
+    stage: str,
+    template_id: str,
+    model: str,
+    response_model: str,
+    attempt: int,
+    messages: list[dict],
+    content: str | None,
+    schema_valid: bool,
+    validation_error: str | None = None,
+) -> None:
+    capture = _capture.get()
+    if capture is None:
+        return
+    capture["llmCalls"].append({
+        "stage": stage,
+        "templateId": template_id,
+        "model": model,
+        "responseModel": response_model,
+        "attempt": attempt,
+        "messages": [
+            {
+                "role": m["role"],
+                "content": _redact_prompt(m["content"]),
+                "contentHash": _sha256(m["content"]),
+                "redactionLevel": "piiRedacted",
+            }
+            for m in messages
+        ],
+        "rawResponse": content or "",
+        "rawResponseHash": _sha256(content),
+        "schemaValid": schema_valid,
+        "validationError": validation_error,
+    })
+
+
 def complete_model(
     system: str,
     user: str,
@@ -89,6 +193,8 @@ def complete_model(
     client=None,
     max_tokens: int = 8192,
     temperature: float = 0.0,
+    stage: str | None = None,
+    template_id: str | None = None,
 ) -> T:
     """Call the model and parse its reply into `response_model`, a validated instance.
 
@@ -122,9 +228,31 @@ def complete_model(
         content = resp.choices[0].message.content
         _log_cache_usage(resp, model)
         try:
-            return response_model.model_validate_json(content)
+            parsed = response_model.model_validate_json(content)
+            _record_llm_call(
+                stage=stage or response_model.__name__,
+                template_id=template_id or response_model.__name__,
+                model=model,
+                response_model=response_model.__name__,
+                attempt=attempt + 1,
+                messages=messages,
+                content=content,
+                schema_valid=True,
+            )
+            return parsed
         except (ValidationError, ValueError, TypeError) as e:
             last_err = e
+            _record_llm_call(
+                stage=stage or response_model.__name__,
+                template_id=template_id or response_model.__name__,
+                model=model,
+                response_model=response_model.__name__,
+                attempt=attempt + 1,
+                messages=messages,
+                content=content,
+                schema_valid=False,
+                validation_error=str(e),
+            )
             logger.warning(
                 "Model %s reply failed %s validation on attempt %d: %s",
                 model, response_model.__name__, attempt + 1, e,

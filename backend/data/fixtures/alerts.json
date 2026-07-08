@@ -19,7 +19,6 @@
       "alertId": "ALERT-001",
       "recommendation": "escalate",
       "confidence": 0.86,
-      "explanation": "RM48,000 received from Golden Trade Ltd and RM47,800 sent on to QuickCash Exchange within 2.5 hours, draining the balance to near zero. Consistent with pass-through/rapid-movement (PT-01).",
       "matchedTypology": {
         "code": "PT-01",
         "name": "Pass-through / Rapid Movement",
@@ -32,7 +31,27 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "No commercial rationale; balance returns to ~0. Distinguishing test for a benign sweep is not met (irregular timing, unrelated counterparties)."
+        "claims": [
+          {
+            "text": "No commercial rationale; balance returns to ~0. Distinguishing test for a benign sweep is not met (irregular timing, unrelated counterparties).",
+            "evidence": {
+              "transactionIds": [
+                "T-1001",
+                "T-1002"
+              ],
+              "firedIndicators": [
+                "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+                "runningBalance spikes on the inbound then drains back to ~0",
+                "Little to no funds retained; no spending consistent with the stated purpose of the account"
+              ],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
       },
       "strDraft": {
         "reportDate": "2026-06-10T09:00:00",
@@ -92,6 +111,32 @@
           "runningBalance spikes on the inbound then drains back to ~0",
           "Little to no funds retained; no spending consistent with the stated purpose of the account"
         ]
+      },
+      "claims": [
+        {
+          "text": "RM48,000 received from Golden Trade Ltd and RM47,800 sent on to QuickCash Exchange within 2.5 hours, draining the balance to near zero. Consistent with pass-through/rapid-movement (PT-01).",
+          "evidence": {
+            "transactionIds": [
+              "T-1001",
+              "T-1002"
+            ],
+            "firedIndicators": [
+              "Inbound credit followed by outbound debit of a similar amount within a short window (minutes to a few days)",
+              "runningBalance spikes on the inbound then drains back to ~0",
+              "Little to no funds retained; no spending consistent with the stated purpose of the account"
+            ],
+            "matchedTypology": "Pass-through / Rapid Movement",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
       }
     },
     "transactions": [
@@ -148,7 +193,6 @@
       "alertId": "ALERT-002",
       "recommendation": "escalate",
       "confidence": 0.62,
-      "explanation": "Three inbound transfers from unrelated individuals (RM9,500 / RM8,700 / RM9,100) consolidated and forwarded as RM26,800 to BizPay Holdings. Matches fan-in/fan-out consolidation (FI-01).",
       "matchedTypology": {
         "code": "FI-01",
         "name": "Fan-in / Fan-out (Consolidation)",
@@ -163,7 +207,28 @@
       "verifier": {
         "status": "flagged",
         "agreesWithRecommendation": false,
-        "note": "Evidence does not clearly satisfy the FI-01 distinguishing test: senders could be customers of a small home business and the onward payment a supplier settlement. Forcing human review before escalation."
+        "claims": [
+          {
+            "text": "Evidence does not clearly satisfy the FI-01 distinguishing test: senders could be customers of a small home business and the onward payment a supplier settlement. Forcing human review before escalation.",
+            "evidence": {
+              "transactionIds": [
+                "T-2001",
+                "T-2002",
+                "T-2003",
+                "T-2004"
+              ],
+              "firedIndicators": [
+                "Multiple inbound credits from many unrelated individuals over a short period",
+                "Funds aggregated then forwarded onward in one or few large outbound transfers"
+              ],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
       },
       "strDraft": {
         "reportDate": "2026-06-11T09:15:00",
@@ -222,6 +287,33 @@
           "Multiple inbound credits from many unrelated individuals over a short period",
           "Funds aggregated then forwarded onward in one or few large outbound transfers"
         ]
+      },
+      "claims": [
+        {
+          "text": "Three inbound transfers from unrelated individuals (RM9,500 / RM8,700 / RM9,100) consolidated and forwarded as RM26,800 to BizPay Holdings. Matches fan-in/fan-out consolidation (FI-01).",
+          "evidence": {
+            "transactionIds": [
+              "T-2001",
+              "T-2002",
+              "T-2003",
+              "T-2004"
+            ],
+            "firedIndicators": [
+              "Multiple inbound credits from many unrelated individuals over a short period",
+              "Funds aggregated then forwarded onward in one or few large outbound transfers"
+            ],
+            "matchedTypology": "Fan-in / Fan-out (Consolidation)",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
       }
     },
     "transactions": [
@@ -300,7 +392,6 @@
       "alertId": "ALERT-003",
       "recommendation": "dismiss",
       "confidence": 0.78,
-      "explanation": "Repeated cash deposits just under RM25,000 superficially resemble structuring (ST-01), but the account is an established retail business with consistent daily takings and a retained, growing balance. Benign high-turnover business.",
       "matchedTypology": {
         "code": "ST-01",
         "name": "Structuring / Smurfing",
@@ -314,7 +405,26 @@
       "verifier": {
         "status": "agreed",
         "agreesWithRecommendation": true,
-        "note": "Distinguishing test for ST-01 is not met: consistent counterparty pattern, documented retail activity, funds retained rather than forwarded. Dismiss is appropriate."
+        "claims": [
+          {
+            "text": "Distinguishing test for ST-01 is not met: consistent counterparty pattern, documented retail activity, funds retained rather than forwarded. Dismiss is appropriate.",
+            "evidence": {
+              "transactionIds": [
+                "T-3001",
+                "T-3002",
+                "T-3003"
+              ],
+              "firedIndicators": [
+                "Multiple CASH deposits clustered just under the RM25,000 CTR threshold"
+              ],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
       },
       "strDraft": null,
       "model": "deepseek-precomputed",
@@ -329,6 +439,31 @@
         "fired": [
           "Multiple CASH deposits clustered just under the RM25,000 CTR threshold"
         ]
+      },
+      "claims": [
+        {
+          "text": "Repeated cash deposits just under RM25,000 superficially resemble structuring (ST-01), but the account is an established retail business with consistent daily takings and a retained, growing balance. Benign high-turnover business.",
+          "evidence": {
+            "transactionIds": [
+              "T-3001",
+              "T-3002",
+              "T-3003"
+            ],
+            "firedIndicators": [
+              "Multiple CASH deposits clustered just under the RM25,000 CTR threshold"
+            ],
+            "matchedTypology": "Structuring / Smurfing",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
       }
     },
     "transactions": [

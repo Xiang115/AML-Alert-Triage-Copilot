@@ -11,6 +11,10 @@ The built document is validated against the checked-in, tightly-scoped goAML XSD
 Institution-level constants (rentity_id, codes, reporting officer) come from
 `data/goaml_config.json` — the seam that graduates this faithful derivation to
 literal per-FIU conformance without code changes.
+
+The report also carries a `reporting_period` (from/to) from the draft (ADR-0017) — an
+extension beyond the transaction-based core, where real goAML infers the window from the
+transaction dates; declared optional in the XSD so a period-less draft still validates.
 """
 
 from __future__ import annotations
@@ -30,6 +34,9 @@ _DATA = Path(__file__).resolve().parent / "data"
 _XSD_PATH = _DATA / "goaml_str.xsd"
 
 _UNKNOWN = "UNKNOWN"
+_XML_10_INVALID_CONTROLS = dict.fromkeys(
+    list(range(0x00, 0x09)) + [0x0B, 0x0C] + list(range(0x0E, 0x20))
+)
 
 
 _CONFIG = ConfigDict(alias_generator=to_camel, populate_by_name=True)
@@ -70,7 +77,7 @@ def _schema() -> etree.XMLSchema:
 
 def _sub(parent: etree._Element, tag: str, text: str) -> etree._Element:
     el = etree.SubElement(parent, tag)
-    el.text = text
+    el.text = text.translate(_XML_10_INVALID_CONTROLS)
     return el
 
 
@@ -143,6 +150,20 @@ def to_goaml_str_xml(
     `transactions` is the alert's full transaction list, used to recover the
     direction / channel / counterparty account that the cited-transaction summary
     drops. Raises ValueError if the result fails XSD validation."""
+    current_grounds = {g.strip() for g in str_draft.grounds_for_suspicion if g.strip()}
+    unanchored = [
+        c.strip()
+        for c in (str_draft.unanchored_claims or [])
+        if c.strip() and c.strip() in current_grounds
+    ]
+    if unanchored:
+        raise ValueError(
+            f"goAML STR export blocked: {len(unanchored)} unanchored ground"
+            f"{'' if len(unanchored) == 1 else 's'} for suspicion."
+        )
+    if not str_draft.cited_transactions:
+        raise ValueError("goAML STR export requires at least one cited transaction.")
+
     by_id = {t.transaction_id: t for t in transactions}
 
     report = etree.Element("report")
@@ -152,6 +173,13 @@ def to_goaml_str_xml(
     _sub(report, "entity_reference", config.entity_reference)
     _sub(report, "submission_date", submission_date.isoformat())
     _sub(report, "currency_code_local", config.currency_code_local)
+
+    # The activity window under report (ADR-0017): an extension beyond the transaction-based
+    # core, surfacing the draft's explicit period on the filed report (real goAML infers it
+    # from the transaction dates). Ordered before reporting_person to match the XSD sequence.
+    period = etree.SubElement(report, "reporting_period")
+    _sub(period, "from_date", str_draft.period.from_.isoformat())
+    _sub(period, "to_date", str_draft.period.to.isoformat())
 
     rp = etree.SubElement(report, "reporting_person")
     _sub(rp, "first_name", config.reporting_person.first_name)

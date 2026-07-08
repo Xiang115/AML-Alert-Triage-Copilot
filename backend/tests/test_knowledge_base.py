@@ -1,6 +1,6 @@
 import pytest
 
-from agents.knowledge_base import get_card, load_cards, rank_cards
+from agents.knowledge_base import card_citation, get_card, load_cards, rank_cards
 
 
 def test_rank_cards_surfaces_the_matching_typology_first():
@@ -33,3 +33,15 @@ def test_get_card_by_code():
 def test_get_card_unknown_raises():
     with pytest.raises(KeyError):
         get_card("ZZ-99")
+
+
+def test_every_card_carries_a_citation():
+    # Slice B: each curated card has a verified regulatory citation for the STR policy line
+    for card in load_cards():
+        assert card.citation, f"{card.code} is missing a citation"
+        assert "FATF Recommendation" in card.citation
+
+
+def test_card_citation_accessor_degrades_on_unknown_code():
+    assert card_citation("PT-01") == get_card("PT-01").citation
+    assert card_citation("ZZ-99") is None  # unknown code => None, never raises

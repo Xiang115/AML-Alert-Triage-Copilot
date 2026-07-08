@@ -92,17 +92,7 @@ export function AuditView() {
                   )}
                 </td>
                 <td className="py-2.5 text-ink-soft">
-                  {e.event === 'submission' ? (
-                    <span className="font-mono text-[12px]">{e.submissionRef}</span>
-                  ) : e.event === 'autoClear' ? (
-                    <span className="text-[12px]">
-                      Auto-Clear Policy · {Math.round((e.confidence ?? 0) * 100)}% · verifier {e.verifierStatus}
-                    </span>
-                  ) : e.event === 'debateResolved' ? (
-                    <span className="text-[12px]">{e.note}</span>
-                  ) : (
-                    e.note ?? <span className="text-ink-faint">—</span>
-                  )}
+                  <AuditDefense entry={e} />
                 </td>
               </tr>
             ))}
@@ -111,6 +101,69 @@ export function AuditView() {
       )}
     </div>
   )
+}
+
+function AuditDefense({ entry: e }: { entry: AuditEntry }) {
+  const actor = e.actorId && e.actorRole ? (
+    <div className="font-mono text-[11px] text-ink-faint">actor {e.actorId} ({e.actorRole})</div>
+  ) : null
+
+  if (e.event === 'submission') {
+    return (
+      <div className="text-[12px] leading-relaxed">
+        <div className="font-mono text-ink">{e.submissionRef}</div>
+        {actor}
+        <div>goAML submission accepted; filing acknowledgement preserved in the append-only audit trail.</div>
+      </div>
+    )
+  }
+
+  if (e.event === 'autoClear') {
+    return (
+      <div className="text-[12px] leading-relaxed">
+        <div>
+          Auto-Clear Policy · {Math.round((e.confidence ?? 0) * 100)}% · verifier {e.verifierStatus}
+        </div>
+        <div>Defensible because it was dismiss-only, verifier-agreed, threshold-gated, and audit-recorded.</div>
+      </div>
+    )
+  }
+
+  if (e.event === 'debateResolved') {
+    return (
+      <div className="text-[12px] leading-relaxed">
+        <div>{e.note}</div>
+        <div>Defensible because the verifier challenge and resolution are replayable before human action.</div>
+      </div>
+    )
+  }
+
+  if (e.event === 'qaOutcome') {
+    return (
+      <div className="text-[12px] leading-relaxed">
+        <div>{e.note}</div>
+        {actor}
+        <div>QA review is preserved as feedback into threshold governance, not silent model retraining.</div>
+      </div>
+    )
+  }
+
+  if (e.event === 'decision') {
+    const overridden = e.aiRecommendation !== e.finalDisposition
+    return (
+      <div className="text-[12px] leading-relaxed">
+        <div>{e.note ?? <span className="text-ink-faint">No analyst note recorded.</span>}</div>
+        {actor}
+        <div>
+          {overridden
+            ? 'Override is accountable: AI call, human disposition, confidence, verifier status, and reason are kept together.'
+            : 'Approval is accountable: the human accepted the AI call and the decision is preserved with model context.'}
+        </div>
+      </div>
+    )
+  }
+
+  return <span className="text-ink-faint">—</span>
 }
 
 function SummaryStat({ label, value }: { label: string; value: number }) {

@@ -170,6 +170,10 @@ def main(n: int = 250, workers: int = 24, debate: bool = False) -> None:
     metrics.update(auto_clear_metrics(kept_routings, a))
     metrics["perTypologyRecall"] = per_typology_recall(meta, preds)
     metrics["nExcludedErrors"] = n_excl
+    # Governance validation stamp (ADR-0020): a real "last validated" date + the model it ran on.
+    from timeutil import now_local
+    metrics["validatedAt"] = now_local().isoformat()
+    metrics["model"] = config.MODEL_WORKHORSE
     # Keep the canonical no-debate metric separate from the production-path (with-debate) number.
     out = _DATA / ("saml_d_metrics_debate.json" if debate else "saml_d_metrics.json")
     out.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

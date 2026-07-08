@@ -142,3 +142,33 @@ def test_clear_alerts_empties_the_catalog(temp_store):
     store.clear_alerts()
     assert store.count_alerts() == 0
     assert store.count_transactions() == 0
+
+
+def test_seed_cleared_patterns_only_takes_when_empty(temp_store):
+    # Slice A demo seed: populates an empty table, but never overwrites session-learned patterns.
+    seed = [{"signature": "sig:seed", "typology": "PT-01", "sourceDecisionId": "D1",
+             "sourceAlertId": "A1", "clearedCount": 2, "clearedAt": "2026-07-01T09:00:00+08:00"}]
+    store.seed_cleared_patterns(seed)
+    assert store.find_cleared_pattern("sig:seed")["clearedCount"] == 2
+
+    store.record_clearance("sig:live", "FI-01", "D2", "A2", "2026-07-01T10:00:00+08:00")
+    store.seed_cleared_patterns(seed)  # table non-empty now => seed is a no-op
+    assert store.find_cleared_pattern("sig:live") is not None  # session pattern survives
+
+
+def test_record_clearance_increments_in_place_and_survives_restart(temp_store):
+    # Slice A: re-dismissing the same signature bumps clearedCount (idempotent), not duplicate rows,
+    # and the learned pattern survives a restart (reconnect to the same db file).
+    store.record_clearance("sig:acme", "FI-01", "A-1", "A-1", "2026-07-02T09:14:00+08:00")
+    store.record_clearance("sig:acme", "FI-01", "A-2", "A-2", "2026-07-02T10:14:00+08:00")
+
+    store.init(temp_store)  # reconnect = restart
+
+    assert store.find_cleared_pattern("sig:acme") == {
+        "signature": "sig:acme",
+        "typology": "FI-01",
+        "sourceDecisionId": "A-2",
+        "sourceAlertId": "A-2",
+        "clearedCount": 2,
+        "clearedAt": "2026-07-02T10:14:00+08:00",
+    }

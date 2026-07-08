@@ -23,7 +23,9 @@ from agents.queue_agent import (
     narrate_briefing,
     stamp_routing,
 )
-from agents.str_drafter import recommended_action
+from agents.knowledge_base import card_citation
+from agents.screening import screen
+from agents.str_drafter import policy_basis_line, recommended_action
 from schemas import Alert, AlertInput, TriageResult
 from timeutil import now_local
 
@@ -130,14 +132,27 @@ def _write_artifacts(results: list[dict], *, narrate: bool = False, client=None)
     triage (no LLM). When `narrate=True` the briefing summary is LLM-written (#8), falling
     back to the deterministic template if that call fails (drop-first, ADR-0010)."""
     at = now_local()
+    # Slice B: deterministic sanctions/PEP screening, persisted on each triage so the served demo
+    # carries it and the Queue Agent can honour a hit (screening.blocked disqualifies auto-clear).
+    # Pure (no LLM): idempotent on a fresh precompute (re-screens to the same value) and backfills
+    # a pre-screening results.json on --restamp. Runs before stamp_routing so routing sees the hit.
+    for a in results:
+        a["triage"]["screening"] = screen(Alert.model_validate(a)).model_dump(by_alias=True, mode="json")
     routed = stamp_routing(results, config.AUTO_CLEAR_THRESHOLD)
-    # Re-derive the deterministic STR recommended action (#9) so a restamp of a pre-#9
-    # results.json picks up the case-specific text (idempotent for a fresh precompute).
+    # Re-derive the deterministic STR recommended action (#9) + append the card's policy-basis
+    # citation to the grounds (Slice B) so a restamp of a frozen results.json picks up both
+    # without an LLM re-run. Pure string logic; idempotent (the citation line is only appended
+    # if absent, matched byte-for-byte via policy_basis_line).
     for a in routed:
         sd = a["triage"].get("strDraft")
         if sd is not None:
+            code = a["triage"]["matchedTypology"]["code"]
+            citation = card_citation(code)
+            line = policy_basis_line(citation)
+            if line and line not in sd["groundsForSuspicion"]:
+                sd["groundsForSuspicion"].append(line)
             sd["recommendedAction"] = recommended_action(
-                a["triage"]["verifier"]["status"], a["triage"]["matchedTypology"]["name"]
+                a["triage"]["verifier"]["status"], a["triage"]["matchedTypology"]["name"], citation
             )
     _OUT.write_text(json.dumps(routed, indent=2, ensure_ascii=False), encoding="utf-8")
     # The trail opens populated with the autonomous run (ADR-0010) AND every contested call

@@ -119,4 +119,18 @@ def test_default_client_configures_timeout_and_retries(monkeypatch):
 
     assert captured["timeout"] == config.LLM_TIMEOUT_SECONDS
     assert captured["max_retries"] == config.LLM_MAX_RETRIES
-    assert captured["base_url"] == config.DEEPSEEK_BASE_URL
+    assert captured["base_url"] == config.LLM_BASE_URL  # active provider (DeepSeek by default)
+
+
+def test_build_client_uses_the_active_provider_endpoint(monkeypatch):
+    # Slice B on-prem swap: the client is built from LLM_BASE_URL/LLM_API_KEY, so pointing
+    # OLLAMA_BASE_URL at an on-prem endpoint routes every call there with no code change.
+    captured = {}
+    monkeypatch.setattr(llm, "_make_openai", lambda **kw: captured.update(kw) or object())
+    monkeypatch.setattr(config, "LLM_BASE_URL", "http://localhost:11434/v1")
+    monkeypatch.setattr(config, "LLM_API_KEY", "ollama")
+
+    llm._build_client(5.0)
+
+    assert captured["base_url"] == "http://localhost:11434/v1"
+    assert captured["api_key"] == "ollama"

@@ -24,6 +24,10 @@ _FIXTURES = _REPO / "frontend" / "src" / "fixtures"
 _PAIRS = [
     (_DATA / "results.json", _FIXTURES / "alerts.json"),
     (_DATA / "metrics.json", _FIXTURES / "metrics.json"),
+    # The curated typology cards are the single source; the coaching panel reads a synced copy.
+    (_DATA / "typologies" / "typologies.json", _FIXTURES / "typologies.json"),
+    # The held-out evaluation set (250 alerts + labels) shown on the dashboard.
+    (_DATA / "evaluation.json", _FIXTURES / "evaluation.json"),
 ]
 
 

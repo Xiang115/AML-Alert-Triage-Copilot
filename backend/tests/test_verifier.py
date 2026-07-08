@@ -9,27 +9,31 @@ from schemas import Challenge, Rebuttal, Reverdict
 
 def test_disagreement_flags_for_human_review(make_client):
     card = get_card("FI-01")
-    out = verify(
-        "evidence block",
-        "escalate",
-        card,
-        client=make_client([json.dumps({"agreesWithRecommendation": False, "note": "Could be a small business."})]),
+    ver, claims = verify(
+        "evidence block", "escalate", card,
+        client=make_client([json.dumps({
+            "agreesWithRecommendation": False,
+            "claims": [{"claim": "Could be a small business.", "citedTransactionIds": [],
+                        "firedIndicators": []}],
+        })]),
     )
-    assert out.status == "flagged"
-    assert out.agrees_with_recommendation is False
-    assert out.note
+    assert ver.status == "flagged"
+    assert ver.agrees_with_recommendation is False
+    assert claims and claims[0].text == "Could be a small business."
 
 
 def test_agreement_passes_through(make_client):
     card = get_card("PT-01")
-    out = verify(
-        "evidence block",
-        "escalate",
-        card,
-        client=make_client([json.dumps({"agreesWithRecommendation": True, "note": "Evidence clearly meets the test."})]),
+    ver, claims = verify(
+        "evidence block", "escalate", card,
+        client=make_client([json.dumps({
+            "agreesWithRecommendation": True,
+            "claims": [{"claim": "Evidence clearly meets the test.", "citedTransactionIds": [],
+                        "firedIndicators": []}],
+        })]),
     )
-    assert out.status == "agreed"
-    assert out.agrees_with_recommendation is True
+    assert ver.status == "agreed"
+    assert ver.agrees_with_recommendation is True
 
 
 # --- adversarial debate (ADR-0011) -------------------------------------------------

@@ -16,4 +16,9 @@ pandas==3.0.3          # SynthAML loader (Phase 1)
 lxml==6.1.1            # goAML STR export: build + XSD-validate the report (goaml.py)
 sqlalchemy==2.0.51     # decisions + audit persistence behind the DATABASE_URL seam (store.py)
 psycopg[binary]==3.3.4 # Postgres driver — only used when DATABASE_URL points at Postgres
+# --- knowledge-base RAG (analyst handbook) ---
+pypdf==6.14.2          # extract text from the KB PDFs (data/knowledge_base/ingest_kb.py)
+fastembed==0.8.0       # OPTIONAL local ONNX embedder for semantic retrieval (DeepSeek has no
+                       # embeddings endpoint). Absent => kb_retrieval falls back to lexical BM25.
+numpy==2.4.6           # cosine scoring over the KB vectors (agents/kb_retrieval, embed_kb)
 

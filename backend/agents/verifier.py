@@ -13,43 +13,74 @@ from pydantic import field_validator
 
 import config
 from llm import coerce_text, complete_model
-from schemas import Challenge, LLMResponse, Rebuttal, Reverdict, TypologyCard, Verifier
+from schemas import Challenge, ClaimCitation, LLMResponse, Rebuttal, Reverdict, TypologyCard, Verifier
 
 _SYSTEM = (
     "You are a skeptical second-line AML QA reviewer. Independently re-examine the evidence and "
     "ASSUME THE TRIAGE CALL MAY BE WRONG. Using only the typology's distinguishing test and its "
     "benign look-alike, judge whether the evidence genuinely supports the recommendation or could "
     "instead be the benign look-alike. Do not defer to the triage agent. Reply ONLY with JSON: "
-    '{"agreesWithRecommendation" (bool), "note" (one sentence on what is or is not satisfied)}.'
+    '{"agreesWithRecommendation" (bool), '
+    '"claims": a list of your grounds, each {"claim" (one sentence on what is or is not satisfied), '
+    '"citedTransactionIds" (ids it rests on, [] if none), '
+    '"firedIndicators" (indicators it rests on, [] if none)}}.'
 )
+
+
+class _VerifyClaim(LLMResponse):
+    claim: str
+    cited_transaction_ids: list[str] = []
+    fired_indicators: list[str] = []
+
+    @field_validator("claim", mode="before")
+    @classmethod
+    def _flatten(cls, v):
+        return coerce_text(v)
 
 
 class _VerifyResponse(LLMResponse):
     """The verifier's verdict shape. `agreesWithRecommendation` is required (it
-    drives the agreed/flagged status); the note is advisory."""
+    drives the agreed/flagged status); the claims are the raw, unanchored rationale."""
 
     agrees_with_recommendation: bool
-    note: str = ""
+    claims: list[_VerifyClaim] = []
 
 
-def verify(evidence: str, recommendation: str, card: TypologyCard, *, client=None,
-           model: str | None = None) -> Verifier:
+def verify(
+    evidence: str,
+    recommendation: str,
+    card: TypologyCard,
+    *,
+    client=None,
+    model: str | None = None,
+    memory_context: str | None = None,
+) -> tuple[Verifier, list[ClaimCitation]]:
+    memory_block = (
+        "\n\nLearned clearance precedent to challenge, not blindly trust:\n"
+        f"{memory_context}"
+        if memory_context
+        else ""
+    )
     parsed = complete_model(
         _SYSTEM,
         f"Recommendation to challenge: {recommendation}\n"
         f"Typology [{card.code}] {card.name}\n"
         f"Distinguishing test: {card.distinguishing_test}\n"
         f"Benign look-alike: {card.benign_lookalike}\n\n"
-        f"Evidence:\n{evidence}",
+        f"Evidence:\n{evidence}"
+        f"{memory_block}",
         model or config.MODEL_VERIFIER,
         _VerifyResponse,
         client=client,
+        stage="verifier",
+        template_id="verifier-v1",
     )
     agrees = parsed.agrees_with_recommendation
-    return Verifier(
-        status="agreed" if agrees else "flagged",
-        agrees_with_recommendation=agrees,
-        note=parsed.note,
+    claims = [ClaimCitation(text=c.claim, cited_transaction_ids=c.cited_transaction_ids,
+                            fired_indicators=c.fired_indicators) for c in parsed.claims]
+    return (
+        Verifier(status="agreed" if agrees else "flagged", agrees_with_recommendation=agrees),
+        claims,
     )
 
 
@@ -94,6 +125,8 @@ def challenge(evidence: str, recommendation: str, card: TypologyCard, *, client=
         model or config.MODEL_VERIFIER,
         _ChallengeResponse,
         client=client,
+        stage="verifierChallenge",
+        template_id="verifier-challenge-v1",
     )
     return Challenge(
         counter_hypothesis=parsed.counter_hypothesis,
@@ -138,6 +171,8 @@ def re_verdict(evidence: str, recommendation: str, card: TypologyCard, challenge
         model or config.MODEL_VERIFIER,
         _ReverdictResponse,
         client=client,
+        stage="verifierReverdict",
+        template_id="verifier-reverdict-v1",
     )
     outcome = "convinced" if parsed.outcome == "convinced" else "holds"
     return Reverdict(outcome=outcome, disposition_changed=False, note=parsed.note)

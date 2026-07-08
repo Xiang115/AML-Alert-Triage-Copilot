@@ -1,43 +1,45 @@
 {
   "totalAlerts": 250,
-  "accuracyVsLabels": 0.688,
+  "accuracyVsLabels": 0.66,
   "baselineAccuracy": 0.4,
-  "recall": 0.72,
-  "precision": 0.75,
-  "specificity": 0.64,
-  "falsePositiveReduction": 0.6038,
+  "recall": 0.6933,
+  "precision": 0.7273,
+  "specificity": 0.61,
+  "falsePositiveReduction": 0.5701,
   "confusionMatrix": {
-    "tp": 108,
-    "fp": 36,
-    "fn": 42,
-    "tn": 64
+    "tp": 104,
+    "fp": 39,
+    "fn": 46,
+    "tn": 61
   },
   "avgReviewTimeBaselineMin": 14.0,
   "avgReviewTimeWithCopilotMin": 4.5,
-  "autoClearedShare": 0.424,
-  "autoClearPrecision": 0.6038,
+  "autoClearedShare": 0.428,
+  "autoClearPrecision": 0.5701,
   "perTypologyRecall": {
     "COVERAGE_GAP": {
-      "recall": 0.25,
-      "caught": 5,
+      "recall": 0.3,
+      "caught": 6,
       "total": 20
     },
     "PT-01": {
-      "recall": 0.7714,
-      "caught": 27,
+      "recall": 0.8,
+      "caught": 28,
       "total": 35
     },
     "ST-01": {
-      "recall": 0.7368,
-      "caught": 28,
+      "recall": 0.7895,
+      "caught": 30,
       "total": 38
     },
     "FI-01": {
-      "recall": 0.8421,
-      "caught": 48,
+      "recall": 0.7018,
+      "caught": 40,
       "total": 57
     }
   },
+  "validatedAt": "2026-07-05T16:44:35.422910+08:00",
+  "model": "deepseek-v4-pro",
   "measuredTypologies": [
     "PT-01",
     "FI-01",

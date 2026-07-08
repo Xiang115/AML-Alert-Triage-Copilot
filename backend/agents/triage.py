@@ -14,7 +14,15 @@ from pydantic import field_validator
 import config
 from agents.knowledge_base import get_card, load_cards
 from llm import coerce_text, complete_model
-from schemas import Challenge, LLMResponse, MatchedTypology, Rebuttal, TriageOutput, TypologyCard
+from schemas import (
+    Challenge,
+    ClaimCitation,
+    LLMResponse,
+    MatchedTypology,
+    Rebuttal,
+    TriageOutput,
+    TypologyCard,
+)
 
 # Sentinel: no candidate typology matched the evidence. A first-class, one-call
 # answer (recommendation = dismiss) rather than an empty code that retries until
@@ -33,8 +41,12 @@ _SYSTEM = (
     f'matchedTypologyCode "{NO_MATCH_CODE}" with recommendation "dismiss". '
     "Reply ONLY with a JSON object: "
     '{"matchedTypologyCode", "firedIndicators" (subset of that card\'s indicators present in '
-    'the evidence), "citedTransactionIds" (ids supporting the call, [] if none), '
-    '"recommendation" ("escalate"|"dismiss"), "explanation"}.'
+    'the evidence), "recommendation" ("escalate"|"dismiss"), '
+    '"claims": a list of the specific grounds for the call. Each claim is '
+    '{"claim" (one plain-English analytical sentence), '
+    '"citedTransactionIds" (the transaction ids that claim rests on, [] if none), '
+    '"firedIndicators" (the card indicators that claim rests on, [] if none)}. '
+    "Make each claim atomic and specific; cite the evidence it rests on.}"
 )
 
 # Cost-sensitive operating-point note (opt-in via triage(cost_sensitive=True)). In AML a
@@ -68,16 +80,25 @@ def _cost_sensitive_escalate(recommendation: str, fired: list[str], min_fired_to
     return recommendation
 
 
+class _ClaimOut(LLMResponse):
+    claim: str
+    cited_transaction_ids: list[str] = []
+    fired_indicators: list[str] = []
+
+    @field_validator("claim", mode="before")
+    @classmethod
+    def _flatten(cls, v):
+        return coerce_text(v)
+
+
 class _TriageResponse(LLMResponse):
-    """The shape the Triage Agent prompt asks the model to return. `recommendation`
-    gates the retry; an absent/empty/NONE code means "no typology matched" (a clean
-    dismiss), so it never retries. A *hallucinated* code still fails and retries."""
+    """The Triage Agent's reply. `recommendation` gates the retry; an absent/empty/NONE code is a
+    clean dismiss (no retry); a *hallucinated* code fails and retries."""
 
     matched_typology_code: str = NO_MATCH_CODE
     recommendation: Literal["escalate", "dismiss"]
     fired_indicators: list[str] = []
-    cited_transaction_ids: list[str] = []
-    explanation: str = ""
+    claims: list[_ClaimOut] = []
 
     @field_validator("matched_typology_code", mode="before")
     @classmethod
@@ -106,10 +127,15 @@ def _render_cards(cards: list[TypologyCard]) -> str:
     # two agents don't run the same discrimination and the verifier isn't redundant.
     out = []
     for c in cards:
-        out.append(
+        block = (
             f"[{c.code}] {c.name} (source: {c.source})\n"
             f"  indicators: {c.indicators}"
         )
+        # Ground the match in real regulator red flags (BNM App. 4 / FATF-APG) when present, so
+        # the agent recognises the authoritative pattern — not just the hand-authored indicators.
+        if c.red_flags:
+            block += f"\n  regulator red flags: {c.red_flags}"
+        out.append(block)
     return "\n".join(out)
 
 
@@ -133,6 +159,8 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
         model or config.MODEL_WORKHORSE,
         _TriageResponse,
         client=client,
+        stage="triageAgent",
+        template_id="triage-agent-v1",
         **extra,
     )
     if parsed.matched_typology_code == NO_MATCH_CODE:
@@ -142,20 +170,33 @@ def triage(evidence: str, cards: list[TypologyCard], *, client=None, model: str 
             matched_typology=MatchedTypology(code=NO_MATCH_CODE, name="No typology matched", source="—"),
             fired_indicators=[],
             cited_transaction_ids=[],
-            explanation=parsed.explanation
-            or "No candidate typology matched the evidence; no laundering pattern to escalate.",
+            claims=[],
         )
     card = get_card(parsed.matched_typology_code)
     fired = [i for i in parsed.fired_indicators if i in card.indicators]
     recommendation = parsed.recommendation
     if cost_sensitive:
         recommendation = _cost_sensitive_escalate(recommendation, fired, min_fired_to_escalate)
+    claims = [
+        ClaimCitation(
+            text=c.claim,
+            cited_transaction_ids=c.cited_transaction_ids,
+            fired_indicators=[i for i in c.fired_indicators if i in card.indicators],
+        )
+        for c in parsed.claims
+    ]
+    # Aggregate citedTransactionIds = the union of the claims' citations, in first-seen order.
+    cited: list[str] = []
+    for c in claims:
+        for tid in c.cited_transaction_ids:
+            if tid not in cited:
+                cited.append(tid)
     return TriageOutput(
         recommendation=recommendation,
         matched_typology=MatchedTypology(code=card.code, name=card.name, source=card.source),
         fired_indicators=fired,
-        cited_transaction_ids=parsed.cited_transaction_ids,
-        explanation=parsed.explanation,
+        cited_transaction_ids=cited,
+        claims=claims,
     )
 
 
@@ -197,5 +238,7 @@ def rebut(evidence: str, card: TypologyCard, challenge: Challenge, *, client=Non
         model or config.MODEL_WORKHORSE,
         _RebutResponse,
         client=client,
+        stage="triageRebuttal",
+        template_id="triage-rebuttal-v1",
     )
     return Rebuttal(argument=parsed.argument, conceded=parsed.conceded)

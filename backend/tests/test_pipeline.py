@@ -27,14 +27,28 @@ def _alert():
     return Alert.model_validate(json.load(open("data/fixtures/alerts.json"))[0])
 
 
-def _triage_json(fired, recommendation="escalate"):
+def _triage_json(fired, recommendation="escalate", cited=("T-1001", "T-1002"),
+                  claim="In then out within hours."):
     return json.dumps(
         {
             "matchedTypologyCode": "PT-01",
             "firedIndicators": fired,
-            "citedTransactionIds": ["T-1001", "T-1002"],
+            "citedTransactionIds": list(cited),
             "recommendation": recommendation,
-            "explanation": "In then out within hours.",
+            "claims": [
+                {"claim": claim, "citedTransactionIds": list(cited), "firedIndicators": fired},
+            ],
+        }
+    )
+
+
+def _verifier_json(agrees, note="Clearly meets the test."):
+    # `note` here is just the claim text (ADR-0022: the verifier's rationale now travels
+    # as claims, not a free-text note).
+    return json.dumps(
+        {
+            "agreesWithRecommendation": agrees,
+            "claims": [{"claim": note, "citedTransactionIds": [], "firedIndicators": []}],
         }
     )
 
@@ -44,7 +58,7 @@ def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     fake = make_client(
         [
             _triage_json(two),
-            json.dumps({"agreesWithRecommendation": True, "note": "Clearly meets the test."}),
+            _verifier_json(True, "Clearly meets the test."),
             json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
         ]
     )
@@ -62,6 +76,121 @@ def test_run_triage_assembles_full_result_on_escalate_agreed(make_client):
     assert out.cited_transaction_ids == ["T-1001", "T-1002"]
 
 
+def test_pipeline_attaches_evidence_integrity(make_client):
+    # ADR-0022: the pipeline anchors the triage claims and computes EvidenceIntegrity over them,
+    # attaching both to the final TriageResult. One claim cites a real ledger transaction (anchors);
+    # the other is a generic, unanchored inference.
+    two = get_card("PT-01").indicators[:2]
+    triage_json = json.dumps(
+        {
+            "matchedTypologyCode": "PT-01",
+            "firedIndicators": two,
+            "citedTransactionIds": ["T-1001", "T-1002"],
+            "recommendation": "escalate",
+            "claims": [
+                {"claim": "Transfer T-1001 was forwarded within hours with no economic purpose.",
+                 "citedTransactionIds": ["T-1001"], "firedIndicators": []},
+                {"claim": "The customer seemed suspicious overall.",
+                 "citedTransactionIds": [], "firedIndicators": []},
+            ],
+        }
+    )
+    fake = make_client(
+        [
+            triage_json,
+            _verifier_json(True, "Clearly meets the test."),
+            json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
+        ]
+    )
+    result = run_triage(_alert(), client=fake)
+
+    assert result.evidence_integrity.total_count == len(result.claims) == 2
+    assert result.evidence_integrity.anchored_count == sum(c.anchored for c in result.claims)
+    assert result.evidence_integrity.anchored_count == 1  # the T-1001 claim anchors, the generic one doesn't
+    assert result.evidence_integrity.unanchored_count == 1
+
+
+def test_live_pipeline_passes_learned_memory_to_verifier(make_client):
+    import main
+    import store
+
+    from agents.memory import signature as memory_signature
+
+    # DEMO-CL-01 and DEMO-CL-02 share the behavioral envelope (fork B), so a clearance learned from
+    # -01 surfaces on -02. Compute the signature instead of hardcoding a format the fork changed.
+    sig = memory_signature(main.store.get_alert("DEMO-CL-01"))
+    store.record_clearance(
+        signature=sig,
+        typology="PT-01",
+        source_decision_id="DEMO-CL-01",
+        source_alert_id="DEMO-CL-01",
+        cleared_at="2026-07-08T10:00:00+08:00",
+    )
+    alert = Alert.model_validate(main.store.get_alert("DEMO-CL-02"))
+    fake = make_client([
+        _triage_json(
+            [],
+            recommendation="dismiss",
+            cited=("DEMO-CL-02-T1", "DEMO-CL-02-T2"),
+            claim="Licensed MSB remittance pattern.",
+        ),
+        _verifier_json(True, "Prior clearance and ledger envelope support benign remittance."),
+    ])
+
+    out = run_triage(alert, client=fake)
+
+    assert out.suppression is not None
+    assert out.suppression.status == "suppressed"
+    assert out.suppression.source_decision_id == "DEMO-CL-01"
+    verifier_prompt = fake.calls[1]["messages"][1]["content"]
+    assert "Learned clearance precedent" in verifier_prompt
+    assert "DEMO-CL-01" in verifier_prompt
+    assert sig in verifier_prompt
+
+
+def test_semantic_off_by_default_and_reviews_when_enabled(make_client):
+    # Off by default: the 3-response fake below would IndexError if a 4th (semantic) call fired.
+    two = get_card("PT-01").indicators[:2]
+    base = [
+        _triage_json(two),
+        _verifier_json(True, "Clearly meets the test."),
+        json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
+    ]
+    off = make_client(list(base))
+    out_off = run_triage(_alert(), client=off)
+    assert len(off.calls) == 3  # no semantic call on the default path (precompute stays token-clean)
+    assert all(c.semantic_verdict is None for c in out_off.str_draft.traced_claims)
+
+    # Enabled: one extra MODEL_VERIFIER call annotates the claims (grounds = ['no purpose', policy line]).
+    on = make_client(base + [json.dumps({"verdicts": [
+        {"index": 0, "verdict": "unsupported", "reason": "no evidence of purpose"},
+        {"index": 1, "verdict": "supported", "reason": "policy applies"},
+    ]})])
+    out_on = run_triage(_alert(), client=on, semantic=True)
+    assert len(on.calls) == 4
+    assert out_on.str_draft.traced_claims[0].semantic_verdict == "unsupported"
+    assert out_on.str_draft.traced_claims[1].semantic_verdict == "supported"
+
+
+def test_semantic_failure_does_not_discard_the_live_triage(make_client):
+    # The semantic anchor is an advisory extra: if the flash call fails, the fresh live triage must
+    # still stand (unannotated), not fall back. Two invalid replies exhaust complete_model's retry.
+    two = get_card("PT-01").indicators[:2]
+    fake = make_client([
+        _triage_json(two),
+        _verifier_json(True, "Meets the test."),
+        json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
+        "not json",        # semantic attempt 1 -> invalid
+        "still not json",  # semantic retry -> invalid -> ValueError, caught as best-effort
+    ])
+    out = run_triage(_alert(), client=fake, semantic=True)
+
+    assert out.recommendation == "escalate"   # the live result survives the semantic failure
+    assert out.str_draft is not None
+    assert all(c.semantic_verdict is None for c in out.str_draft.traced_claims)  # just unannotated
+    assert len(fake.calls) == 5  # triage, verify, draft, then semantic tried twice (retry) before giving up
+
+
 def test_debate_holds_keeps_flag(make_client):
     # ADR-0011: verifier flags an escalate, triage defends (no concede), the re-verdict HOLDS →
     # flag stands, disposition unchanged, and the debate is recorded. The escalate keeps its
@@ -70,7 +199,7 @@ def test_debate_holds_keeps_flag(make_client):
     fake = make_client(
         [
             _triage_json(four),
-            json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign sweep."}),
+            _verifier_json(False, "Could be a benign sweep."),
             json.dumps({"counterHypothesis": "Payroll sweep.", "distinguishingTestAssessment": "Dwell > 1d."}),
             json.dumps({"argument": "Balance drains to zero each cycle.", "conceded": False}),
             json.dumps({"outcome": "holds", "note": "Dwell time does not clear it."}),
@@ -94,7 +223,7 @@ def test_debate_concede_flips_dismiss_to_escalate(make_client):
     fake = make_client(
         [
             _triage_json(two, "dismiss"),
-            json.dumps({"agreesWithRecommendation": False, "note": "This looks like a real pass-through."}),
+            _verifier_json(False, "This looks like a real pass-through."),
             json.dumps({"counterHypothesis": "Active pass-through.", "distinguishingTestAssessment": "Same-day sweep."}),
             json.dumps({"argument": "On reflection the same-day sweep fits the typology.", "conceded": True}),
             json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
@@ -117,7 +246,7 @@ def test_debate_resists_conceding_away_a_strong_escalation(make_client):
     fake = make_client(
         [
             _triage_json(two, "escalate"),
-            json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign merchant."}),
+            _verifier_json(False, "Could be a benign merchant."),
             json.dumps({"counterHypothesis": "Legit merchant.", "distinguishingTestAssessment": "Retains balance."}),
             json.dumps({"argument": "On reflection it might be a merchant.", "conceded": True}),
             json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),  # STR still drafted (escalate)
@@ -138,7 +267,7 @@ def test_debate_honours_concession_on_a_weak_escalation(make_client):
     fake = make_client(
         [
             _triage_json(one, "escalate"),
-            json.dumps({"agreesWithRecommendation": False, "note": "Likely benign."}),
+            _verifier_json(False, "Likely benign."),
             json.dumps({"counterHypothesis": "Benign.", "distinguishingTestAssessment": "Evidence is thin."}),
             json.dumps({"argument": "Agreed, the match is too thin.", "conceded": True}),
         ]
@@ -157,7 +286,7 @@ def test_debate_convinced_resolves_flag_without_flipping(make_client):
     fake = make_client(
         [
             _triage_json(two, "escalate"),
-            json.dumps({"agreesWithRecommendation": False, "note": "Could be benign."}),
+            _verifier_json(False, "Could be benign."),
             json.dumps({"counterHypothesis": "Benign retailer.", "distinguishingTestAssessment": "Maybe high turnover."}),
             json.dumps({"argument": "Counterparties are unrelated shells.", "conceded": False}),
             json.dumps({"outcome": "convinced", "note": "Shell counterparties settle it."}),
@@ -178,7 +307,7 @@ def test_run_triage_events_includes_the_debate_turns(make_client):
     fake = make_client(
         [
             _triage_json(four),
-            json.dumps({"agreesWithRecommendation": False, "note": "Could be a benign sweep."}),
+            _verifier_json(False, "Could be a benign sweep."),
             json.dumps({"counterHypothesis": "Payroll sweep.", "distinguishingTestAssessment": "Dwell > 1d."}),
             json.dumps({"argument": "Balance drains to zero.", "conceded": False}),
             json.dumps({"outcome": "holds", "note": "Does not clear it."}),
@@ -186,7 +315,7 @@ def test_run_triage_events_includes_the_debate_turns(make_client):
         ]
     )
     ids = [e["id"] for e in run_triage_events(_alert(), client=fake) if e["type"] == "stage"]
-    assert ids == ["retrieve", "triage", "grounding", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
+    assert ids == ["retrieve", "screening", "triage", "grounding", "verifier", "challenge", "rebuttal", "reverdict", "confidence", "draft"]
 
 
 def test_retrieve_stage_shows_the_candidate_ranking(make_client):
@@ -196,7 +325,7 @@ def test_retrieve_stage_shows_the_candidate_ranking(make_client):
     fake = make_client(
         [
             _triage_json(two),
-            json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+            _verifier_json(True, "meets test"),
             json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
         ]
     )
@@ -215,16 +344,8 @@ def test_citations_are_grounded_to_the_ledger(make_client):
     two = get_card("PT-01").indicators[:2]
     fake = make_client(
         [
-            json.dumps(
-                {
-                    "matchedTypologyCode": "PT-01",
-                    "firedIndicators": two,
-                    "citedTransactionIds": ["T-1001", "T-9999"],  # T-9999 is not in the ledger
-                    "recommendation": "escalate",
-                    "explanation": "In then out within hours.",
-                }
-            ),
-            json.dumps({"agreesWithRecommendation": True, "note": "meets test"}),
+            _triage_json(two, cited=("T-1001", "T-9999")),  # T-9999 is not in the ledger
+            _verifier_json(True, "meets test"),
             json.dumps({"activitySummary": "x", "groundsForSuspicion": ["y"]}),
         ]
     )
@@ -248,14 +369,14 @@ def test_run_triage_events_streams_stages_then_result(make_client):
     fake = make_client(
         [
             _triage_json(two),
-            json.dumps({"agreesWithRecommendation": True, "note": "Clearly meets the test."}),
+            _verifier_json(True, "Clearly meets the test."),
             json.dumps({"activitySummary": "Funds in then out.", "groundsForSuspicion": ["no purpose"]}),
         ]
     )
     events = list(run_triage_events(_alert(), client=fake))
 
     assert [e["id"] for e in events if e["type"] == "stage"] == [
-        "retrieve", "triage", "grounding", "verifier", "confidence", "draft",
+        "retrieve", "screening", "triage", "grounding", "verifier", "confidence", "draft",
     ]
     inds = [e for e in events if e["type"] == "indicator"]
     assert len(inds) == len(get_card("PT-01").indicators)

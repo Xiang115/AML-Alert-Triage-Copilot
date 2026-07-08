@@ -1,4 +1,5 @@
 import type { Metrics, TypologyRecall } from '../types'
+import { EvaluationSet } from './EvaluationSet'
 
 // Card code -> human label for the per-typology recall bars (ADR-0012). COVERAGE_GAP is the
 // bucket of true Reports whose pattern maps to no card — the quantified KB-coverage limit.
@@ -38,7 +39,7 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
             <Figure
               label="Beats always-dismiss baseline"
               value={`+${((metrics.accuracyVsLabels - metrics.baselineAccuracy) * 100).toFixed(0)} pts`}
-              note={`${(metrics.accuracyVsLabels * 100).toFixed(0)}% accuracy vs ${(metrics.baselineAccuracy * 100).toFixed(0)}% for a do-nothing model — the first dataset where the AI adds real signal.`}
+              note={`${(metrics.accuracyVsLabels * 100).toFixed(0)}% accuracy vs ${(metrics.baselineAccuracy * 100).toFixed(0)}% for always dismissing this held-out slice — the baseline catches zero reportable cases.`}
             />
             <Figure
               label="Review time per alert"
@@ -93,8 +94,9 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
               before tuning, with no label leakage. The slice is <strong>report-enriched
               (~60% positive)</strong> for measurement power, so accuracy and precision reflect that mix,
               not the real ~0.1% base rate — <strong>recall is the mix-independent truth</strong>. On the
-              real base rate, an always-dismiss model scores {(metrics.baselineAccuracy * 100).toFixed(0)}%
-              accuracy while catching zero launderers.
+              held-out slice, the {(metrics.baselineAccuracy * 100).toFixed(0)}% baseline is simply the
+              benign share: an always-dismiss model marks every alert benign, gets those benign cases right,
+              and catches zero reportable cases.
             </p>
 
             <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-md border border-line bg-line">
@@ -111,6 +113,9 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
               </p>
             )}
           </div>
+
+          {/* The held-out set itself, made visible (token-free) — the 250 alerts behind the number */}
+          <EvaluationSet />
 
           {/* Safety net — the human-in-the-loop guarantee */}
           <div className="rounded-lg border border-line bg-surface p-5">
@@ -135,12 +140,23 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
                 auto-filing. Measured on the held-out slice:
               </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line">
+              <div
+                className={`mt-5 grid gap-px overflow-hidden rounded-md border border-line bg-line ${
+                  metrics.autoClearLeakageRate != null ? 'grid-cols-3' : 'grid-cols-2'
+                }`}
+              >
                 <MiniStat
                   label="Queue auto-cleared"
                   value={`${(metrics.autoClearedShare * 100).toFixed(0)}%`}
                   sub="handled unattended"
                 />
+                {metrics.autoClearLeakageRate != null && (
+                  <MiniStat
+                    label="Auto-clear leakage"
+                    value={`${(metrics.autoClearLeakageRate * 100).toFixed(0)}%`}
+                    sub={`of true reports (${metrics.autoClearedReports}/${metrics.totalReports}) auto-cleared`}
+                  />
+                )}
                 <MiniStat
                   label="Auto-clear precision"
                   value={`${(metrics.autoClearPrecision * 100).toFixed(0)}%`}
@@ -149,12 +165,28 @@ export function MetricsDashboard({ metrics }: MetricsDashboardProps) {
               </div>
 
               <p className="mt-4 text-[13px] leading-relaxed text-ink-soft">
-                Stated honestly: the remaining {((1 - metrics.autoClearPrecision) * 100).toFixed(0)}% of
-                auto-cleared alerts were in fact reportable — the structural recall ceiling of any
-                single-account view. That residual is contained by <strong>human sampling of the
-                auto-cleared lane</strong> and is the exact gap the <strong>Mule-Network roadmap</strong>{' '}
-                closes with cross-account link analysis. The human is never removed; the agent removes the
-                benign noise.
+                Stated honestly:{' '}
+                {metrics.autoClearLeakageRate != null ? (
+                  <>
+                    of the true reports in this slice,{' '}
+                    <strong>
+                      {(metrics.autoClearLeakageRate * 100).toFixed(0)}% ({metrics.autoClearedReports}/
+                      {metrics.totalReports})
+                    </strong>{' '}
+                    would be auto-cleared unsupervised — the <strong>mix-independent</strong> leakage (like
+                    recall, it doesn&rsquo;t move with the base rate), the structural recall ceiling of any
+                    single-account view.
+                  </>
+                ) : (
+                  <>
+                    the remaining {((1 - metrics.autoClearPrecision) * 100).toFixed(0)}% of auto-cleared
+                    alerts were in fact reportable — the structural recall ceiling of any single-account view.
+                  </>
+                )}{' '}
+                That is exactly why auto-clear is <strong>never unsupervised</strong>: a risk-weighted{' '}
+                <strong>QA sample of the auto-cleared lane</strong> routes the least-sure clears back to a
+                human, and the <strong>Mule-Network roadmap</strong> closes the rest with cross-account link
+                analysis. The human is never removed; the agent removes the benign noise.
               </p>
             </div>
           )}

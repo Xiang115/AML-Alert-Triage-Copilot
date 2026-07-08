@@ -1,5 +1,6 @@
 import type { Verifier } from '../types'
 import { Badge } from './ui/Badge'
+import { TracedClaimList } from './TracedClaimList'
 
 interface VerifierPanelProps {
   verifier: Verifier
@@ -20,7 +21,7 @@ export function VerifierPanel({ verifier }: VerifierPanelProps) {
       {flagged ? (
         <div className="mt-4 border-l-2 border-flag pl-4">
           <div className="text-[12px] font-semibold uppercase tracking-wide text-flag">Distinguishing test alert</div>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink">{verifier.note}</p>
+          <TracedClaimList claims={verifier.claims ?? []} />
           <p className="mt-2 text-[12px] text-ink-soft">
             The verifier disagrees with this call — manual review required to finalize.
           </p>
@@ -28,7 +29,7 @@ export function VerifierPanel({ verifier }: VerifierPanelProps) {
       ) : (
         <div className="mt-4 border-l-2 border-verified pl-4">
           <div className="text-[12px] font-semibold uppercase tracking-wide text-verified">Triage call verified</div>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-soft">{verifier.note}</p>
+          <TracedClaimList claims={verifier.claims ?? []} />
         </div>
       )}
     </section>

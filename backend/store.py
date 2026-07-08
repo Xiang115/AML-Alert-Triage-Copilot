@@ -43,6 +43,7 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.pool import StaticPool
 
 import config
@@ -61,6 +62,19 @@ audit = Table(
     _metadata,
     Column("seq", Integer, primary_key=True, autoincrement=True),  # SERIAL on PG, rowid on SQLite
     Column("payload", Text, nullable=False),
+)
+
+# Slice A: learned cross-customer suppression patterns, keyed by a normalized
+# behavioral-envelope signature. record_clearance() upserts on a human dismiss.
+cleared_patterns = Table(
+    "cleared_patterns",
+    _metadata,
+    Column("signature", String(160), primary_key=True),
+    Column("typology", String(32), nullable=True),
+    Column("source_decision_id", String(64), nullable=False),
+    Column("source_alert_id", String(64), nullable=False),
+    Column("cleared_count", Integer, nullable=False),
+    Column("cleared_at", String(40), nullable=False),
 )
 
 # Input data: the alert catalog. One row per alert (metadata + embedded triage) and one
@@ -87,9 +101,36 @@ transactions = Table(
     Column("payload", Text, nullable=False),  # the Transaction dict
 )
 
+copilot_runs = Table(
+    "copilot_runs",
+    _metadata,
+    Column("run_id", String(64), primary_key=True),
+    Column("alert_id", String(64), nullable=False, index=True),
+    Column("started_at", String(40), nullable=False, index=True),
+    Column("payload", Text, nullable=False),
+)
+
+qa_outcomes = Table(
+    "qa_outcomes",
+    _metadata,
+    Column("alert_id", String(64), primary_key=True),
+    Column("reviewed_at", String(40), nullable=False, index=True),
+    Column("payload", Text, nullable=False),
+)
+
+governance_changes = Table(
+    "governance_changes",
+    _metadata,
+    Column("change_id", String(64), primary_key=True),
+    Column("status", String(32), nullable=False, index=True),
+    Column("requested_at", String(40), nullable=False, index=True),
+    Column("payload", Text, nullable=False),
+)
+
 _engine: Engine | None = None
 _seed: list[dict] = []  # remembered so reset() can restore the Queue Agent's audit trail
 _alert_seed: list[dict] = []  # remembered so reset() can restore the alert catalog
+_cleared_seed: list[dict] = []  # remembered so reset() can restore the demo suppression patterns
 
 
 def _is_memory_sqlite(url: str) -> bool:
@@ -170,6 +211,88 @@ def all_audit() -> list[dict]:
     return [json.loads(r[0]) for r in rows]
 
 
+def record_copilot_run(payload: dict) -> None:
+    """Persist a captured live copilot run ledger for later audit replay."""
+    eng = _require()
+    with eng.begin() as conn:
+        conn.execute(insert(copilot_runs), {
+            "run_id": payload["runId"],
+            "alert_id": payload["alertId"],
+            "started_at": payload["startedAt"],
+            "payload": json.dumps(payload),
+        })
+
+
+def list_copilot_runs(alert_id: str) -> list[dict]:
+    eng = _require()
+    with eng.connect() as conn:
+        rows = conn.execute(
+            select(copilot_runs.c.payload)
+            .where(copilot_runs.c.alert_id == alert_id)
+            .order_by(copilot_runs.c.started_at.desc())
+        ).all()
+    return [json.loads(r[0]) for r in rows]
+
+
+def get_copilot_run(alert_id: str, run_id: str) -> dict | None:
+    eng = _require()
+    with eng.connect() as conn:
+        row = conn.execute(
+            select(copilot_runs.c.payload)
+            .where(copilot_runs.c.alert_id == alert_id)
+            .where(copilot_runs.c.run_id == run_id)
+        ).first()
+    return json.loads(row[0]) if row else None
+
+
+def record_qa_outcome(payload: dict) -> None:
+    eng = _require()
+    with eng.begin() as conn:
+        conn.execute(delete(qa_outcomes).where(qa_outcomes.c.alert_id == payload["alertId"]))
+        conn.execute(insert(qa_outcomes), {
+            "alert_id": payload["alertId"],
+            "reviewed_at": payload["reviewedAt"],
+            "payload": json.dumps(payload),
+        })
+
+
+def get_qa_outcome(alert_id: str) -> dict | None:
+    eng = _require()
+    with eng.connect() as conn:
+        row = conn.execute(
+            select(qa_outcomes.c.payload).where(qa_outcomes.c.alert_id == alert_id)
+        ).first()
+    return json.loads(row[0]) if row else None
+
+
+def all_qa_outcomes() -> list[dict]:
+    eng = _require()
+    with eng.connect() as conn:
+        rows = conn.execute(select(qa_outcomes.c.payload).order_by(qa_outcomes.c.reviewed_at.desc())).all()
+    return [json.loads(r[0]) for r in rows]
+
+
+def record_governance_change(payload: dict) -> None:
+    eng = _require()
+    with eng.begin() as conn:
+        conn.execute(delete(governance_changes).where(governance_changes.c.change_id == payload["changeId"]))
+        conn.execute(insert(governance_changes), {
+            "change_id": payload["changeId"],
+            "status": payload["status"],
+            "requested_at": payload["requestedAt"],
+            "payload": json.dumps(payload),
+        })
+
+
+def all_governance_changes() -> list[dict]:
+    eng = _require()
+    with eng.connect() as conn:
+        rows = conn.execute(
+            select(governance_changes.c.payload).order_by(governance_changes.c.requested_at.desc())
+        ).all()
+    return [json.loads(r[0]) for r in rows]
+
+
 # Timestamp fields stamped into stored payloads — the audit trail's `at`, and the decision
 # record's `decidedAt` / `submittedAt`. Migrated to GMT+8 by migrate_timestamps_to_local().
 _TS_FIELDS = ("at", "decidedAt", "submittedAt")
@@ -213,6 +336,125 @@ def migrate_timestamps_to_local() -> int:
                     conn.execute(update(tbl).where(key == row[0]).values(payload=new))
                     rewritten += 1
     return rewritten
+
+
+# --- Slice A: cross-customer self-learning suppression -----------------------------
+
+def seed_cleared_patterns(patterns: list[dict]) -> None:
+    """Seed the learned-suppression patterns (demo initial state — prior clearances the team made),
+    but ONLY if the table is empty, so a restart keeps session-learned patterns. Remembers the seed
+    so reset() restores it. Each dict is camelCase: signature, typology, sourceDecisionId,
+    sourceAlertId, clearedCount, clearedAt."""
+    global _cleared_seed
+    _cleared_seed = list(patterns)
+    eng = _require()
+    with eng.begin() as conn:
+        count = conn.execute(select(func.count()).select_from(cleared_patterns)).scalar_one()
+        if count == 0 and _cleared_seed:
+            conn.execute(insert(cleared_patterns), [
+                {"signature": p["signature"], "typology": p.get("typology"),
+                 "source_decision_id": p["sourceDecisionId"], "source_alert_id": p["sourceAlertId"],
+                 "cleared_count": p["clearedCount"], "cleared_at": p["clearedAt"]}
+                for p in _cleared_seed
+            ])
+
+
+def record_clearance(
+    signature: str,
+    typology: str,
+    source_decision_id: str,
+    source_alert_id: str,
+    cleared_at: str,
+) -> None:
+    """Atomically upsert a learned suppression pattern keyed by its normalized signature."""
+    eng = _require()
+    with eng.begin() as conn:
+        updated = conn.execute(
+            update(cleared_patterns)
+            .where(cleared_patterns.c.signature == signature)
+            .values(
+                cleared_count=cleared_patterns.c.cleared_count + 1,
+                cleared_at=cleared_at,
+                source_decision_id=source_decision_id,
+                source_alert_id=source_alert_id,
+            )
+        )
+        if updated.rowcount:
+            return
+        try:
+            conn.execute(
+                insert(cleared_patterns),
+                {
+                    "signature": signature,
+                    "typology": typology,
+                    "source_decision_id": source_decision_id,
+                    "source_alert_id": source_alert_id,
+                    "cleared_count": 1,
+                    "cleared_at": cleared_at,
+                },
+            )
+        except IntegrityError:
+            # Another request inserted the same signature after our update miss; retry as an increment.
+            conn.execute(
+                update(cleared_patterns)
+                .where(cleared_patterns.c.signature == signature)
+                .values(
+                    cleared_count=cleared_patterns.c.cleared_count + 1,
+                    cleared_at=cleared_at,
+                    source_decision_id=source_decision_id,
+                    source_alert_id=source_alert_id,
+                )
+            )
+
+
+def find_cleared_pattern(signature: str) -> dict | None:
+    eng = _require()
+    with eng.connect() as conn:
+        row = conn.execute(
+            select(
+                cleared_patterns.c.signature,
+                cleared_patterns.c.typology,
+                cleared_patterns.c.source_decision_id,
+                cleared_patterns.c.source_alert_id,
+                cleared_patterns.c.cleared_count,
+                cleared_patterns.c.cleared_at,
+            ).where(cleared_patterns.c.signature == signature)
+        ).first()
+    if row is None:
+        return None
+    return {
+        "signature": row[0],
+        "typology": row[1],
+        "sourceDecisionId": row[2],
+        "sourceAlertId": row[3],
+        "clearedCount": row[4],
+        "clearedAt": row[5],
+    }
+
+
+def all_cleared_patterns() -> list[dict]:
+    """All learned suppression patterns, newest first."""
+    eng = _require()
+    with eng.connect() as conn:
+        rows = conn.execute(
+            select(
+                cleared_patterns.c.signature,
+                cleared_patterns.c.typology,
+                cleared_patterns.c.source_alert_id,
+                cleared_patterns.c.cleared_count,
+                cleared_patterns.c.cleared_at,
+            ).order_by(cleared_patterns.c.cleared_at.desc())
+        ).all()
+    return [
+        {
+            "signature": row[0],
+            "typology": row[1],
+            "sourceAlertId": row[2],
+            "clearedCount": row[3],
+            "clearedAt": row[4],
+        }
+        for row in rows
+    ]
 
 
 # --- alert catalog: input data (alerts + their transactions) ----------------------
@@ -333,7 +575,12 @@ def reset() -> None:
     with eng.begin() as conn:
         conn.execute(delete(decisions))
         conn.execute(delete(audit))
+        conn.execute(delete(cleared_patterns))  # Slice A: drop learned suppression patterns
+        conn.execute(delete(copilot_runs))
+        conn.execute(delete(qa_outcomes))
+        conn.execute(delete(governance_changes))
         conn.execute(delete(transactions))
         conn.execute(delete(alerts))
-    seed_audit(_seed)         # re-insert the remembered audit seed
-    seed_alerts(_alert_seed)  # re-insert the remembered alert catalog
+    seed_audit(_seed)                     # re-insert the remembered audit seed
+    seed_alerts(_alert_seed)              # re-insert the remembered alert catalog
+    seed_cleared_patterns(_cleared_seed)  # re-insert the remembered suppression patterns

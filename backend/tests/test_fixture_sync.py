@@ -19,6 +19,8 @@ _FIXTURES = _BACKEND.parent / "frontend" / "src" / "fixtures"
 _PAIRS = [
     ("results.json", "alerts.json"),
     ("metrics.json", "metrics.json"),
+    ("typologies/typologies.json", "typologies.json"),
+    ("evaluation.json", "evaluation.json"),
 ]
 
 

@@ -71,6 +71,17 @@
     </xs:sequence>
   </xs:complexType>
 
+  <!-- The activity window under report (ADR-0017). An EXTENSION beyond the transaction-based
+       core: real goAML infers the window from the transaction dates, but the copilot carries an
+       explicit period on the draft, so we surface it on the filed report too. Optional so a
+       report built without a period still validates. -->
+  <xs:complexType name="reporting_period">
+    <xs:sequence>
+      <xs:element name="from_date" type="xs:dateTime"/>
+      <xs:element name="to_date" type="xs:dateTime"/>
+    </xs:sequence>
+  </xs:complexType>
+
   <xs:complexType name="report_indicators">
     <xs:sequence>
       <xs:element name="indicator" type="xs:string" maxOccurs="unbounded"/>
@@ -86,6 +97,7 @@
         <xs:element name="entity_reference" type="xs:string"/>
         <xs:element name="submission_date" type="xs:dateTime"/>
         <xs:element name="currency_code_local" type="xs:string"/>
+        <xs:element name="reporting_period" type="reporting_period" minOccurs="0"/>
         <xs:element name="reporting_person" type="reporting_person"/>
         <xs:element name="reason" type="xs:string"/>
         <xs:element name="action" type="xs:string"/>

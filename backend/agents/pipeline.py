@@ -11,17 +11,61 @@ overwritten by low confidence (ADR-0007); "needs review" is derived downstream a
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from datetime import datetime
 
 import config
+from agents.anchoring import anchor_claims, evidence_integrity
 from agents.confidence import compute_confidence
 from agents.evidence import render_alert_evidence
 from agents.knowledge_base import get_card, rank_cards, select_cards
+from agents.screening import screen
 from agents.str_drafter import draft_str
 from agents.triage import NO_MATCH_CODE, rebut, triage
 from agents.verifier import challenge, re_verdict, verify
-from schemas import AlertInput, Debate, IndicatorCoverage, Reverdict, TriageResult, Verifier
+from schemas import AlertInput, Debate, EvidenceIntegrity, IndicatorCoverage, Reverdict, TriageResult, Verifier
+
+logger = logging.getLogger("pipeline")
+
+
+def _alert_with_triage(alert: AlertInput, triage_dict: dict) -> dict:
+    return {
+        "alertId": alert.alert_id,
+        "transactions": [t.model_dump(by_alias=True, mode="json") for t in (alert.transactions or [])],
+        "triage": triage_dict,
+    }
+
+
+def _memory_context(suppression: dict | None) -> str | None:
+    if not suppression:
+        return None
+    status = suppression.get("status")
+    if status == "revoked":
+        return (
+            f"Prior clearance {suppression.get('sourceDecisionId')} matched signature "
+            f"{suppression.get('signature')}, but network risk revoked it "
+            f"({suppression.get('revokedNetworkId')}). Treat this as evidence against auto-clear."
+        )
+    return (
+        f"Prior human dismissal {suppression.get('sourceDecisionId')} cleared signature "
+        f"{suppression.get('signature')} {suppression.get('clearedCount')} time(s). "
+        "Use it as benign-precedent evidence only if this alert's ledger still fits the same benign envelope."
+    )
+
+
+def enrich_served_alert(alert: dict) -> dict:
+    """Slice A serve-time decorator: additive, deterministic enrichment of a served alert dict.
+    Suppression is session-dynamic (it depends on decisions made this session), so it is computed
+    at serve time here rather than baked into results.json. Screening (Slice B) is deterministic
+    and already persisted on the triage by the pipeline, so it is NOT recomputed here."""
+    from agents.memory import suppress
+
+    triage = alert.get("triage")
+    if triage is None:
+        return alert
+    triage["suppression"] = suppress(alert)
+    return alert
 
 
 def resolve_concession(prior: str, fired_count: int, min_fired_to_resist: int) -> tuple[str, bool]:
@@ -43,7 +87,7 @@ def resolve_concession(prior: str, fired_count: int, min_fired_to_resist: int) -
 
 
 def run_triage_events(
-    alert: AlertInput, *, client=None, cost_sensitive: bool = False
+    alert: AlertInput, *, client=None, cost_sensitive: bool = False, semantic: bool = False
 ) -> Iterator[dict]:
     """Run the pipeline, yielding one event per step so the UI can reveal the agent's
     reasoning live. Stage/indicator events are JSON-friendly dicts; the terminal event
@@ -61,6 +105,18 @@ def run_triage_events(
                   f"All passed to triage to reason over.",
     }
 
+    # Deterministic sanctions/PEP screening, computed once and persisted on the result. A hit
+    # disqualifies the alert from auto-clear (queue_agent.auto_clear_policy reads screening.blocked).
+    screening = screen(alert)
+    yield {
+        "type": "stage", "id": "screening",
+        "label": "Sanctions / PEP screening",
+        "detail": (f"Screened {screening.screened_counterparties} counterparties — "
+                   + (f"MATCH: {screening.matches[0].matched_name} ({screening.matches[0].list_name}) "
+                      "— human review required" if screening.blocked else "no watchlist matches")),
+        "tone": "flag" if screening.blocked else "verified",
+    }
+
     tri = triage(evidence, cards, client=client, cost_sensitive=cost_sensitive)
 
     if tri.matched_typology.code == NO_MATCH_CODE:
@@ -68,15 +124,17 @@ def run_triage_events(
             alert_id=alert.alert_id,
             recommendation="dismiss",
             confidence=compute_confidence(0, 0, "dismiss", verifier_flagged=False),
-            explanation=tri.explanation,
+            claims=[],
+            evidence_integrity=EvidenceIntegrity(anchored_count=0, unanchored_count=0, total_count=0),
             matched_typology=tri.matched_typology,
             cited_transaction_ids=[],
             indicator_coverage=IndicatorCoverage(indicators=[], fired=[]),
             verifier=Verifier(
                 status="agreed",
                 agrees_with_recommendation=True,
-                note="No candidate typology matched the evidence; no laundering pattern to escalate.",
+                claims=[],
             ),
+            screening=screening,
             str_draft=None,
             model=config.MODEL_WORKHORSE,
             generated_at=datetime.now(),
@@ -103,10 +161,21 @@ def run_triage_events(
     )
     grounded_count = len(tri.cited_transaction_ids)
     dropped = cited_count - grounded_count
+
+    alert_txns = list(alert.transactions or [])
+    triage_traced, _ = anchor_claims(
+        tri.claims,
+        citable_transactions=alert_txns,
+        fired_indicators=tri.fired_indicators,
+        matched_typology_name=tri.matched_typology.name,
+    )
+    triage_integrity = evidence_integrity(triage_traced)
+
     yield {
         "type": "stage", "id": "triage", "label": "Triage agent — assessing the call",
         "detail": f"{'Escalate' if tri.recommendation == 'escalate' else 'Dismiss'} — "
-                  f"matched {card.code} {card.name}. {tri.explanation}",
+                  f"matched {card.code} {card.name}. "
+                  f"{triage_integrity.anchored_count}/{triage_integrity.total_count} grounds evidence-anchored.",
         "tone": "escalate" if tri.recommendation == "escalate" else "verified",
     }
     fired = set(tri.fired_indicators)
@@ -126,10 +195,42 @@ def run_triage_events(
                "label": "Grounding citations against the source ledger",
                "detail": detail, "tone": "verified"}
 
-    ver = verify(evidence, tri.recommendation, card, client=client)
+    from agents.memory import suppress
+
+    triage_memory_dict = {
+        "recommendation": tri.recommendation,
+        "matchedTypology": tri.matched_typology.model_dump(by_alias=True, mode="json"),
+        "citedTransactionIds": tri.cited_transaction_ids,
+    }
+    learned_suppression = suppress(_alert_with_triage(alert, triage_memory_dict))
+    memory_context = _memory_context(learned_suppression)
+    if learned_suppression:
+        yield {
+            "type": "stage",
+            "id": "learned-memory",
+            "label": "Learned memory retrieved",
+            "detail": (
+                f"{learned_suppression['status']} — cites decision "
+                f"{learned_suppression['sourceDecisionId']} for {learned_suppression['signature']}"
+            ),
+            "tone": "verified" if learned_suppression["status"] == "suppressed" else "flag",
+        }
+
+    ver, ver_claims = verify(
+        evidence,
+        tri.recommendation,
+        card,
+        client=client,
+        memory_context=memory_context,
+    )
+    ver_traced, _ = anchor_claims(
+        ver_claims, citable_transactions=alert_txns, fired_indicators=tri.fired_indicators,
+        matched_typology_name=tri.matched_typology.name)
+    ver = ver.model_copy(update={"claims": ver_traced})
     yield {
         "type": "stage", "id": "verifier", "label": "Adversarial verifier — challenging the call",
-        "detail": f"{'FLAGGED for human review' if ver.status == 'flagged' else 'Agreed'} — {ver.note}",
+        "detail": f"{'FLAGGED for human review' if ver.status == 'flagged' else 'Agreed'} — "
+                  f"{len(ver_traced)} ground(s) assessed.",
         "tone": "flag" if ver.status == "flagged" else "verified",
     }
 
@@ -164,7 +265,7 @@ def run_triage_events(
             rev = re_verdict(evidence, tri.recommendation, card, ch, rb, client=client)
         final_status = "flagged" if rev.outcome == "holds" else "agreed"
         final_ver = Verifier(status=final_status, agrees_with_recommendation=final_status == "agreed",
-                             note=rev.note or ver.note)
+                             claims=ver.claims)
         debate = Debate(challenge=ch, rebuttal=rb, reverdict=rev)
         yield {"type": "stage", "id": "reverdict", "label": "Verifier re-verdict",
                "detail": {"holds": f"Flag holds — {rev.note}",
@@ -193,16 +294,45 @@ def run_triage_events(
            "detail": "Structured Suspicious Transaction Report drafted" if str_draft
                      else "Skipped — no report on a dismiss"}
 
+    # LLM semantic anchor (ADR-0013) — off by default (deterministic demo path); the live
+    # /triage?semantic=true Q&A opts in. One cheap MODEL_VERIFIER call reviews whether the evidence
+    # actually substantiates each drafted claim, annotating (never editing) the report. Best-effort:
+    # it is an advisory extra, so a provider failure must NOT discard the fresh live triage — on
+    # error we keep the deterministic draft (verdicts stay None) and note that the reviewer was
+    # unavailable, rather than letting the whole /triage fall back to precomputed.
+    if semantic and str_draft is not None:
+        try:
+            from agents.semantic_anchor import semantic_review
+
+            str_draft = semantic_review(str_draft, eff_tri, card, client=client)
+            reviewed = str_draft.traced_claims or []
+            yield {"type": "stage", "id": "semantic",
+                   "label": "LLM semantic review of the drafted claims",
+                   "detail": f"{sum(1 for c in reviewed if c.semantic_verdict == 'supported')} supported, "
+                             f"{sum(1 for c in reviewed if c.semantic_verdict == 'unsupported')} unsupported, "
+                             f"{sum(1 for c in reviewed if c.semantic_verdict == 'unclear')} unclear",
+                   "tone": "verified"}
+        except Exception as e:  # noqa: BLE001 — advisory pass; never fail the live triage over it
+            logger.warning("Semantic review failed for %s (%s); serving the unannotated draft.",
+                           alert.alert_id, e)
+            yield {"type": "stage", "id": "semantic",
+                   "label": "LLM semantic review of the drafted claims",
+                   "detail": "Skipped — the semantic reviewer was unavailable; the deterministic anchoring stands.",
+                   "tone": "flag"}
+
     result = TriageResult(
         alert_id=alert.alert_id,
         recommendation=recommendation,
         confidence=confidence,
-        explanation=tri.explanation,
+        claims=triage_traced,
+        evidence_integrity=triage_integrity,
         matched_typology=tri.matched_typology,
         cited_transaction_ids=tri.cited_transaction_ids,
         indicator_coverage=IndicatorCoverage(indicators=card.indicators, fired=tri.fired_indicators),
         verifier=final_ver,
         debate=debate,
+        screening=screening,
+        suppression=learned_suppression,
         str_draft=str_draft,
         model=config.MODEL_WORKHORSE,
         generated_at=datetime.now(),
@@ -210,10 +340,12 @@ def run_triage_events(
     yield {"type": "result", "triage": result}
 
 
-def run_triage(alert: AlertInput, *, client=None, cost_sensitive: bool = False) -> TriageResult:
+def run_triage(
+    alert: AlertInput, *, client=None, cost_sensitive: bool = False, semantic: bool = False
+) -> TriageResult:
     """Batch path: run the pipeline and return the final assembled result."""
     result: TriageResult | None = None
-    for ev in run_triage_events(alert, client=client, cost_sensitive=cost_sensitive):
+    for ev in run_triage_events(alert, client=client, cost_sensitive=cost_sensitive, semantic=semantic):
         if ev["type"] == "result":
             result = ev["triage"]
     assert result is not None, "run_triage_events must yield a result event"

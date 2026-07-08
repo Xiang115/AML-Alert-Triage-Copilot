@@ -11,6 +11,13 @@ from __future__ import annotations
 from schemas import STRDraft
 
 
+def final_disposition_for(recommendation: str, action: str) -> str:
+    """Approving keeps the AI recommendation; overriding flips it."""
+    if action == "approve":
+        return recommendation
+    return "dismiss" if recommendation == "escalate" else "escalate"
+
+
 def resolve_str_draft(
     current: dict | None,
     final_disposition: str,
@@ -24,3 +31,26 @@ def resolve_str_draft(
     if edited is not None:
         return edited.model_dump(by_alias=True, mode="json")
     return current
+
+
+def learn_from_decision(alert: dict, decision) -> None:
+    """Slice A: learn a suppression pattern from a human dismiss so future look-alikes surface it.
+    A no-op on escalate/approve — only a benign dismiss teaches a clearance. Records the clearance
+    against the alert's behavioral-envelope signature (agents.memory.signature)."""
+    if decision.final_disposition != "dismiss":
+        return
+
+    import store
+    from agents.memory import signature
+
+    sig = signature(alert)
+    if not sig:
+        return
+
+    store.record_clearance(
+        signature=sig,
+        typology=alert["triage"]["matchedTypology"]["code"],
+        source_decision_id=alert["alertId"],
+        source_alert_id=alert["alertId"],
+        cleared_at=decision.decided_at.isoformat(),
+    )
