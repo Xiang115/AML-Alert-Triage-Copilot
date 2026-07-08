@@ -1,0 +1,407 @@
+[
+  {
+    "alertId": "DEMO-CL-01",
+    "status": "pending",
+    "createdAt": "2026-07-02T15:05:00+08:00",
+    "riskScore": 57,
+    "trigger": "3 transactions (1 in / 2 out) to QuickCash Remittance Bhd flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-CL-01",
+      "holderName": "Kedai Runcit Aman",
+      "accountType": "SME current account",
+      "openedAt": "2023-02-14T09:00:00+08:00"
+    },
+    "transactionIds": [
+      "DEMO-CL-01-T0",
+      "DEMO-CL-01-T1",
+      "DEMO-CL-01-T2"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DEMO-CL-01-T0",
+        "timestamp": "2026-07-02T09:12:00+08:00",
+        "amount": 8420.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Daily takings (POS settlement)",
+        "counterpartyAccount": "POS-ACC-CL-01",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 11420.0,
+        "flags": []
+      },
+      {
+        "transactionId": "DEMO-CL-01-T1",
+        "timestamp": "2026-07-02T11:40:00+08:00",
+        "amount": 5200.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 6220.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      },
+      {
+        "transactionId": "DEMO-CL-01-T2",
+        "timestamp": "2026-07-02T15:05:00+08:00",
+        "amount": 2900.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 3320.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "DEMO-CL-01",
+      "recommendation": "dismiss",
+      "confidence": 0.61,
+      "claims": [
+        {
+          "text": "Same-day outbound movement to a single counterparty resembles pass-through, but the counterparty is QuickCash Remittance Bhd, a licensed money-services business, and the amounts match routine remittance for a small retailer. No pass-through indicator fires once the MSB relationship is recognised.",
+          "evidence": {
+            "transactionIds": [
+              "DEMO-CL-01-T1",
+              "DEMO-CL-01-T2"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "Pass-through / rapid movement",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      },
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / rapid movement",
+        "source": "FATF/BNM typology"
+      },
+      "citedTransactionIds": [
+        "DEMO-CL-01-T1",
+        "DEMO-CL-01-T2"
+      ],
+      "indicatorCoverage": {
+        "indicators": [
+          "rapid in-out movement",
+          "funds forwarded within hours",
+          "high pass-through ratio"
+        ],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees: a licensed remittance provider is the counterparty; the pattern is expected.",
+            "evidence": {
+              "transactionIds": [
+                "DEMO-CL-01-T1",
+                "DEMO-CL-01-T2"
+              ],
+              "firedIndicators": [],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-07T17:12:28.974916+08:00"
+    },
+    "routing": "needsReview"
+  },
+  {
+    "alertId": "DEMO-CL-02",
+    "status": "pending",
+    "createdAt": "2026-07-02T15:05:00+08:00",
+    "riskScore": 57,
+    "trigger": "3 transactions (1 in / 2 out) to QuickCash Remittance Bhd flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-CL-02",
+      "holderName": "Warung Selera Ibu",
+      "accountType": "SME current account",
+      "openedAt": "2023-02-14T09:00:00+08:00"
+    },
+    "transactionIds": [
+      "DEMO-CL-02-T0",
+      "DEMO-CL-02-T1",
+      "DEMO-CL-02-T2"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DEMO-CL-02-T0",
+        "timestamp": "2026-07-02T09:12:00+08:00",
+        "amount": 7650.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Daily takings (POS settlement)",
+        "counterpartyAccount": "POS-ACC-CL-02",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 10650.0,
+        "flags": []
+      },
+      {
+        "transactionId": "DEMO-CL-02-T1",
+        "timestamp": "2026-07-02T11:40:00+08:00",
+        "amount": 4800.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 5850.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      },
+      {
+        "transactionId": "DEMO-CL-02-T2",
+        "timestamp": "2026-07-02T15:05:00+08:00",
+        "amount": 2500.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 3350.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "DEMO-CL-02",
+      "recommendation": "dismiss",
+      "confidence": 0.61,
+      "claims": [
+        {
+          "text": "Same-day outbound movement to a single counterparty resembles pass-through, but the counterparty is QuickCash Remittance Bhd, a licensed money-services business, and the amounts match routine remittance for a small retailer. No pass-through indicator fires once the MSB relationship is recognised.",
+          "evidence": {
+            "transactionIds": [
+              "DEMO-CL-02-T1",
+              "DEMO-CL-02-T2"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "Pass-through / rapid movement",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      },
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / rapid movement",
+        "source": "FATF/BNM typology"
+      },
+      "citedTransactionIds": [
+        "DEMO-CL-02-T1",
+        "DEMO-CL-02-T2"
+      ],
+      "indicatorCoverage": {
+        "indicators": [
+          "rapid in-out movement",
+          "funds forwarded within hours",
+          "high pass-through ratio"
+        ],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees: a licensed remittance provider is the counterparty; the pattern is expected.",
+            "evidence": {
+              "transactionIds": [
+                "DEMO-CL-02-T1",
+                "DEMO-CL-02-T2"
+              ],
+              "firedIndicators": [],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-07T17:12:28.975064+08:00"
+    },
+    "routing": "needsReview"
+  },
+  {
+    "alertId": "DEMO-CL-03",
+    "status": "pending",
+    "createdAt": "2026-07-02T15:05:00+08:00",
+    "riskScore": 57,
+    "trigger": "3 transactions (1 in / 2 out) to QuickCash Remittance Bhd flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-CL-03",
+      "holderName": "Bengkel Motor Jaya",
+      "accountType": "SME current account",
+      "openedAt": "2023-02-14T09:00:00+08:00"
+    },
+    "transactionIds": [
+      "DEMO-CL-03-T0",
+      "DEMO-CL-03-T1",
+      "DEMO-CL-03-T2"
+    ],
+    "transactions": [
+      {
+        "transactionId": "DEMO-CL-03-T0",
+        "timestamp": "2026-07-02T09:12:00+08:00",
+        "amount": 9310.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Daily takings (POS settlement)",
+        "counterpartyAccount": "POS-ACC-CL-03",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 12310.0,
+        "flags": []
+      },
+      {
+        "transactionId": "DEMO-CL-03-T1",
+        "timestamp": "2026-07-02T11:40:00+08:00",
+        "amount": 6100.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 6210.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      },
+      {
+        "transactionId": "DEMO-CL-03-T2",
+        "timestamp": "2026-07-02T15:05:00+08:00",
+        "amount": 2950.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "QuickCash Remittance Bhd",
+        "counterpartyAccount": "9911223344",
+        "counterpartyBank": "QuickCash MSB",
+        "channel": "ift",
+        "runningBalance": 3260.0,
+        "flags": [
+          "rapid-movement"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "DEMO-CL-03",
+      "recommendation": "dismiss",
+      "confidence": 0.61,
+      "claims": [
+        {
+          "text": "Same-day outbound movement to a single counterparty resembles pass-through, but the counterparty is QuickCash Remittance Bhd, a licensed money-services business, and the amounts match routine remittance for a small retailer. No pass-through indicator fires once the MSB relationship is recognised.",
+          "evidence": {
+            "transactionIds": [
+              "DEMO-CL-03-T1",
+              "DEMO-CL-03-T2"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "Pass-through / rapid movement",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      },
+      "matchedTypology": {
+        "code": "PT-01",
+        "name": "Pass-through / rapid movement",
+        "source": "FATF/BNM typology"
+      },
+      "citedTransactionIds": [
+        "DEMO-CL-03-T1",
+        "DEMO-CL-03-T2"
+      ],
+      "indicatorCoverage": {
+        "indicators": [
+          "rapid in-out movement",
+          "funds forwarded within hours",
+          "high pass-through ratio"
+        ],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees: a licensed remittance provider is the counterparty; the pattern is expected.",
+            "evidence": {
+              "transactionIds": [
+                "DEMO-CL-03-T1",
+                "DEMO-CL-03-T2"
+              ],
+              "firedIndicators": [],
+              "matchedTypology": null,
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-07T17:12:28.975172+08:00"
+    },
+    "routing": "needsReview"
+  }
+]

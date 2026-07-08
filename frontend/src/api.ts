@@ -78,25 +78,6 @@ mockClearedPatterns.set('typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|
   clearedCount: 2, clearedAt: '2026-07-01T09:14:00+08:00',
 })
 
-// Dominant counterparty (cited transactions preferred) + matched typology — mirror of memory.signature.
-function mockSignature(alert: Alert): string | null {
-  const code = alert.triage.matchedTypology.code
-  if (code === 'NONE') return null
-  const txns = alert.transactions ?? []
-  const cited = new Set(alert.triage.citedTransactionIds ?? [])
-  const pool = txns.filter((t) => cited.has(t.transactionId))
-  const keys = (pool.length ? pool : txns)
-    .map((t) => (t.counterpartyAccount || t.counterpartyName || '').trim().toLowerCase())
-    .filter(Boolean)
-  if (!keys.length) return null
-  const counts = new Map<string, number>()
-  for (const k of keys) counts.set(k, (counts.get(k) ?? 0) + 1)
-  let best = keys[0]
-  let bestN = 0
-  for (const [k, n] of counts) if (n > bestN) { best = k; bestN = n }
-  return behavioralSignature(alert)
-}
-
 const AMT_EDGES = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5]
 
 function behavioralAmtBand(x: number): number {

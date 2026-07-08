@@ -1,0 +1,836 @@
+[
+  {
+    "alertId": "IBM-MULE-01",
+    "status": "pending",
+    "createdAt": "2022-09-04T21:32:00",
+    "riskScore": 41,
+    "trigger": "12 transactions (4 in / 8 out) on an active account flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-81A2D04C0",
+      "holderName": "Sole Proprietorship #110792",
+      "accountType": "Sole Proprietorship",
+      "openedAt": "2022-09-01T00:10:00"
+    },
+    "transactionIds": [
+      "IBM-MULE-01-T0",
+      "IBM-MULE-01-T1",
+      "IBM-MULE-01-T2",
+      "IBM-MULE-01-T3",
+      "IBM-MULE-01-T4",
+      "IBM-MULE-01-T5",
+      "IBM-MULE-01-T6",
+      "IBM-MULE-01-T7",
+      "IBM-MULE-01-T8",
+      "IBM-MULE-01-T9",
+      "IBM-MULE-01-T10",
+      "IBM-MULE-01-T11"
+    ],
+    "transactions": [
+      {
+        "transactionId": "IBM-MULE-01-T0",
+        "timestamp": "2022-09-02T21:44:00",
+        "amount": 128150.36,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Partnership #112460",
+        "counterpartyAccount": "81C1E19C0",
+        "counterpartyBank": "0266915",
+        "channel": "Cheque",
+        "runningBalance": 460398.82,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T1",
+        "timestamp": "2022-09-03T11:00:00",
+        "amount": 23018.33,
+        "currency": "Ruble",
+        "direction": "inbound",
+        "counterpartyName": "Sole Proprietorship #110711",
+        "counterpartyAccount": "1004287C8",
+        "counterpartyBank": "070",
+        "channel": "Cheque",
+        "runningBalance": 483417.15,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T2",
+        "timestamp": "2022-09-03T11:28:00",
+        "amount": 10060.81,
+        "currency": "Ruble",
+        "direction": "inbound",
+        "counterpartyName": "Sole Proprietorship #110711",
+        "counterpartyAccount": "1004287C8",
+        "counterpartyBank": "070",
+        "channel": "Credit Card",
+        "runningBalance": 493477.96,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T3",
+        "timestamp": "2022-09-03T17:15:00",
+        "amount": 3957.27,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #111429",
+        "counterpartyAccount": "81A52D220",
+        "counterpartyBank": "0272140",
+        "channel": "Credit Card",
+        "runningBalance": 489520.69,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T4",
+        "timestamp": "2022-09-03T17:24:00",
+        "amount": 15163.46,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #111429",
+        "counterpartyAccount": "81A52D220",
+        "counterpartyBank": "0272140",
+        "channel": "Cheque",
+        "runningBalance": 474357.23,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T5",
+        "timestamp": "2022-09-03T20:09:00",
+        "amount": 226808.61,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #112580",
+        "counterpartyAccount": "81CE8D7D0",
+        "counterpartyBank": "0277486",
+        "channel": "Cheque",
+        "runningBalance": 247548.62,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T6",
+        "timestamp": "2022-09-03T20:25:00",
+        "amount": 20930.94,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #112580",
+        "counterpartyAccount": "81CE8D7D0",
+        "counterpartyBank": "0277486",
+        "channel": "Cash",
+        "runningBalance": 226617.68,
+        "flags": [
+          "cross-border",
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T7",
+        "timestamp": "2022-09-04T14:13:00",
+        "amount": 10060.81,
+        "currency": "Ruble",
+        "direction": "inbound",
+        "counterpartyName": "Sole Proprietorship #110711",
+        "counterpartyAccount": "1004287C8",
+        "counterpartyBank": "070",
+        "channel": "Credit Card",
+        "runningBalance": 236678.49,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T8",
+        "timestamp": "2022-09-04T14:15:00",
+        "amount": 23018.33,
+        "currency": "Ruble",
+        "direction": "inbound",
+        "counterpartyName": "Sole Proprietorship #110711",
+        "counterpartyAccount": "1004287C8",
+        "counterpartyBank": "070",
+        "channel": "Cheque",
+        "runningBalance": 259696.82,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T9",
+        "timestamp": "2022-09-04T17:30:00",
+        "amount": 226808.61,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #112580",
+        "counterpartyAccount": "81CE8D7D0",
+        "counterpartyBank": "0277486",
+        "channel": "Cheque",
+        "runningBalance": 32888.21,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T10",
+        "timestamp": "2022-09-04T17:35:00",
+        "amount": 20930.94,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #112580",
+        "counterpartyAccount": "81CE8D7D0",
+        "counterpartyBank": "0277486",
+        "channel": "Cash",
+        "runningBalance": 11957.27,
+        "flags": [
+          "cross-border",
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-01-T11",
+        "timestamp": "2022-09-04T21:32:00",
+        "amount": 3957.27,
+        "currency": "Ruble",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #111429",
+        "counterpartyAccount": "81A52D220",
+        "counterpartyBank": "0272140",
+        "channel": "Credit Card",
+        "runningBalance": 8000.0,
+        "flags": [
+          "cross-border"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "IBM-MULE-01",
+      "recommendation": "dismiss",
+      "confidence": 0.58,
+      "matchedTypology": {
+        "code": "NONE",
+        "name": "No typology matched",
+        "source": "n/a"
+      },
+      "citedTransactionIds": [],
+      "indicatorCoverage": {
+        "indicators": [],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees the single-account evidence is unremarkable; no typology to challenge.",
+            "evidence": {
+              "transactionIds": [],
+              "firedIndicators": [],
+              "matchedTypology": "No typology matched",
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-04T23:47:02.205689+08:00",
+      "claims": [
+        {
+          "text": "Windowed activity is consistent with an ordinary active business: recurring, established counterparties and modest transfers in both directions, with no single large movement and no rapid full-forwarding of incoming funds. No money-laundering typology fires on the account viewed alone.",
+          "evidence": {
+            "transactionIds": [
+              "IBM-MULE-01-T0",
+              "IBM-MULE-01-T1",
+              "IBM-MULE-01-T2",
+              "IBM-MULE-01-T3",
+              "IBM-MULE-01-T4",
+              "IBM-MULE-01-T5",
+              "IBM-MULE-01-T6",
+              "IBM-MULE-01-T7",
+              "IBM-MULE-01-T8",
+              "IBM-MULE-01-T9",
+              "IBM-MULE-01-T10",
+              "IBM-MULE-01-T11"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "No typology matched",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      }
+    },
+    "routing": "needsReview"
+  },
+  {
+    "alertId": "IBM-MULE-02",
+    "status": "pending",
+    "createdAt": "2022-09-01T16:27:00",
+    "riskScore": 41,
+    "trigger": "12 transactions (0 in / 12 out) on an active account flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-80006FD60",
+      "holderName": "Partnership #153",
+      "accountType": "Sole Proprietorship",
+      "openedAt": "2022-09-01T04:41:00"
+    },
+    "transactionIds": [
+      "IBM-MULE-02-T0",
+      "IBM-MULE-02-T1",
+      "IBM-MULE-02-T2",
+      "IBM-MULE-02-T3",
+      "IBM-MULE-02-T4",
+      "IBM-MULE-02-T5",
+      "IBM-MULE-02-T6",
+      "IBM-MULE-02-T7",
+      "IBM-MULE-02-T8",
+      "IBM-MULE-02-T9",
+      "IBM-MULE-02-T10",
+      "IBM-MULE-02-T11"
+    ],
+    "transactions": [
+      {
+        "transactionId": "IBM-MULE-02-T0",
+        "timestamp": "2022-09-01T04:41:00",
+        "amount": 261.86,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #169395",
+        "counterpartyAccount": "80053E520",
+        "counterpartyBank": "000",
+        "channel": "Cheque",
+        "runningBalance": 14739.49,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T1",
+        "timestamp": "2022-09-01T04:51:00",
+        "amount": 95.89,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #169395",
+        "counterpartyAccount": "80053E520",
+        "counterpartyBank": "000",
+        "channel": "Credit Card",
+        "runningBalance": 14643.6,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T2",
+        "timestamp": "2022-09-01T09:07:00",
+        "amount": 289.81,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #203",
+        "counterpartyAccount": "80024A940",
+        "counterpartyBank": "020",
+        "channel": "Cheque",
+        "runningBalance": 14353.79,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T3",
+        "timestamp": "2022-09-01T09:13:00",
+        "amount": 596.68,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #7241",
+        "counterpartyAccount": "8003DAEF0",
+        "counterpartyBank": "011",
+        "channel": "Cheque",
+        "runningBalance": 13757.11,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-02-T4",
+        "timestamp": "2022-09-01T09:13:00",
+        "amount": 660.22,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #7241",
+        "counterpartyAccount": "8003DAEF0",
+        "counterpartyBank": "011",
+        "channel": "Credit Card",
+        "runningBalance": 13096.89,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-02-T5",
+        "timestamp": "2022-09-01T09:18:00",
+        "amount": 444.53,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Corporation #7241",
+        "counterpartyAccount": "8003DAEF0",
+        "counterpartyBank": "011",
+        "channel": "Cash",
+        "runningBalance": 12652.36,
+        "flags": [
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T6",
+        "timestamp": "2022-09-01T09:28:00",
+        "amount": 1619.33,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #203",
+        "counterpartyAccount": "80024A940",
+        "counterpartyBank": "020",
+        "channel": "ACH",
+        "runningBalance": 11033.03,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T7",
+        "timestamp": "2022-09-01T11:54:00",
+        "amount": 755.89,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #206554",
+        "counterpartyAccount": "81C013430",
+        "counterpartyBank": "005763",
+        "channel": "Credit Card",
+        "runningBalance": 10277.14,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T8",
+        "timestamp": "2022-09-01T11:58:00",
+        "amount": 290.82,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #206554",
+        "counterpartyAccount": "81C013430",
+        "counterpartyBank": "005763",
+        "channel": "Cheque",
+        "runningBalance": 9986.32,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-02-T9",
+        "timestamp": "2022-09-01T16:05:00",
+        "amount": 483.86,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #346",
+        "counterpartyAccount": "8003D1670",
+        "counterpartyBank": "011",
+        "channel": "Credit Card",
+        "runningBalance": 9502.46,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-02-T10",
+        "timestamp": "2022-09-01T16:21:00",
+        "amount": 669.77,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #346",
+        "counterpartyAccount": "8003D1670",
+        "counterpartyBank": "011",
+        "channel": "Wire",
+        "runningBalance": 8832.69,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-02-T11",
+        "timestamp": "2022-09-01T16:27:00",
+        "amount": 832.69,
+        "currency": "US Dollar",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #346",
+        "counterpartyAccount": "8003D1670",
+        "counterpartyBank": "011",
+        "channel": "Cheque",
+        "runningBalance": 8000.0,
+        "flags": []
+      }
+    ],
+    "triage": {
+      "alertId": "IBM-MULE-02",
+      "recommendation": "dismiss",
+      "confidence": 0.58,
+      "matchedTypology": {
+        "code": "NONE",
+        "name": "No typology matched",
+        "source": "n/a"
+      },
+      "citedTransactionIds": [],
+      "indicatorCoverage": {
+        "indicators": [],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees the single-account evidence is unremarkable; no typology to challenge.",
+            "evidence": {
+              "transactionIds": [],
+              "firedIndicators": [],
+              "matchedTypology": "No typology matched",
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-04T23:47:02.206407+08:00",
+      "claims": [
+        {
+          "text": "Windowed activity is consistent with an ordinary active business: recurring, established counterparties and modest transfers in both directions, with no single large movement and no rapid full-forwarding of incoming funds. No money-laundering typology fires on the account viewed alone.",
+          "evidence": {
+            "transactionIds": [
+              "IBM-MULE-02-T0",
+              "IBM-MULE-02-T1",
+              "IBM-MULE-02-T2",
+              "IBM-MULE-02-T3",
+              "IBM-MULE-02-T4",
+              "IBM-MULE-02-T5",
+              "IBM-MULE-02-T6",
+              "IBM-MULE-02-T7",
+              "IBM-MULE-02-T8",
+              "IBM-MULE-02-T9",
+              "IBM-MULE-02-T10",
+              "IBM-MULE-02-T11"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "No typology matched",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      }
+    },
+    "routing": "needsReview"
+  },
+  {
+    "alertId": "IBM-MULE-03",
+    "status": "pending",
+    "createdAt": "2022-09-16T03:55:00",
+    "riskScore": 41,
+    "trigger": "12 transactions (4 in / 8 out) on an active account flagged by transaction monitoring",
+    "account": {
+      "accountId": "ACC-822268310",
+      "holderName": "Partnership #116108",
+      "accountType": "Sole Proprietorship",
+      "openedAt": "2022-09-01T00:07:00"
+    },
+    "transactionIds": [
+      "IBM-MULE-03-T0",
+      "IBM-MULE-03-T1",
+      "IBM-MULE-03-T2",
+      "IBM-MULE-03-T3",
+      "IBM-MULE-03-T4",
+      "IBM-MULE-03-T5",
+      "IBM-MULE-03-T6",
+      "IBM-MULE-03-T7",
+      "IBM-MULE-03-T8",
+      "IBM-MULE-03-T9",
+      "IBM-MULE-03-T10",
+      "IBM-MULE-03-T11"
+    ],
+    "transactions": [
+      {
+        "transactionId": "IBM-MULE-03-T0",
+        "timestamp": "2022-09-15T04:07:00",
+        "amount": 141.33,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #115469",
+        "counterpartyAccount": "8239D9890",
+        "counterpartyBank": "0095638",
+        "channel": "Cash",
+        "runningBalance": 16018.9,
+        "flags": [
+          "cross-border",
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T1",
+        "timestamp": "2022-09-15T04:08:00",
+        "amount": 1157.21,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #115469",
+        "counterpartyAccount": "8239D9890",
+        "counterpartyBank": "0095638",
+        "channel": "Credit Card",
+        "runningBalance": 14861.69,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T2",
+        "timestamp": "2022-09-15T04:09:00",
+        "amount": 2651.47,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Partnership #118831",
+        "counterpartyAccount": "82612DA00",
+        "counterpartyBank": "00100579",
+        "channel": "Cheque",
+        "runningBalance": 12210.22,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T3",
+        "timestamp": "2022-09-15T04:15:00",
+        "amount": 116.87,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #115469",
+        "counterpartyAccount": "8239D9890",
+        "counterpartyBank": "0095638",
+        "channel": "ACH",
+        "runningBalance": 12093.35,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T4",
+        "timestamp": "2022-09-15T19:02:00",
+        "amount": 600.65,
+        "currency": "UK Pound",
+        "direction": "inbound",
+        "counterpartyName": "Partnership #116069",
+        "counterpartyAccount": "821FB86D0",
+        "counterpartyBank": "006",
+        "channel": "Cheque",
+        "runningBalance": 12694.0,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T5",
+        "timestamp": "2022-09-15T19:04:00",
+        "amount": 527.79,
+        "currency": "UK Pound",
+        "direction": "inbound",
+        "counterpartyName": "Partnership #116069",
+        "counterpartyAccount": "821FB86D0",
+        "counterpartyBank": "006",
+        "channel": "Cash",
+        "runningBalance": 13221.79,
+        "flags": [
+          "cross-border",
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T6",
+        "timestamp": "2022-09-15T22:06:00",
+        "amount": 134.52,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Partnership #119526",
+        "counterpartyAccount": "8234D7360",
+        "counterpartyBank": "0294328",
+        "channel": "Credit Card",
+        "runningBalance": 13087.27,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T7",
+        "timestamp": "2022-09-15T22:09:00",
+        "amount": 358.08,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Partnership #119526",
+        "counterpartyAccount": "8234D7360",
+        "counterpartyBank": "0294328",
+        "channel": "Cheque",
+        "runningBalance": 12729.19,
+        "flags": [
+          "cross-border"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T8",
+        "timestamp": "2022-09-16T00:25:00",
+        "amount": 1903.84,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #196662",
+        "counterpartyAccount": "8226965D0",
+        "counterpartyBank": "027",
+        "channel": "Cheque",
+        "runningBalance": 10825.35,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-03-T9",
+        "timestamp": "2022-09-16T00:27:00",
+        "amount": 2825.35,
+        "currency": "UK Pound",
+        "direction": "outbound",
+        "counterpartyName": "Sole Proprietorship #196662",
+        "counterpartyAccount": "8226965D0",
+        "counterpartyBank": "027",
+        "channel": "Credit Card",
+        "runningBalance": 8000.0,
+        "flags": []
+      },
+      {
+        "transactionId": "IBM-MULE-03-T10",
+        "timestamp": "2022-09-16T03:33:00",
+        "amount": 527.79,
+        "currency": "UK Pound",
+        "direction": "inbound",
+        "counterpartyName": "Partnership #116069",
+        "counterpartyAccount": "821FB86D0",
+        "counterpartyBank": "006",
+        "channel": "Cash",
+        "runningBalance": 8527.79,
+        "flags": [
+          "cross-border",
+          "cash"
+        ]
+      },
+      {
+        "transactionId": "IBM-MULE-03-T11",
+        "timestamp": "2022-09-16T03:55:00",
+        "amount": 600.65,
+        "currency": "UK Pound",
+        "direction": "inbound",
+        "counterpartyName": "Partnership #116069",
+        "counterpartyAccount": "821FB86D0",
+        "counterpartyBank": "006",
+        "channel": "Cheque",
+        "runningBalance": 9128.44,
+        "flags": [
+          "cross-border"
+        ]
+      }
+    ],
+    "triage": {
+      "alertId": "IBM-MULE-03",
+      "recommendation": "dismiss",
+      "confidence": 0.58,
+      "matchedTypology": {
+        "code": "NONE",
+        "name": "No typology matched",
+        "source": "n/a"
+      },
+      "citedTransactionIds": [],
+      "indicatorCoverage": {
+        "indicators": [],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees the single-account evidence is unremarkable; no typology to challenge.",
+            "evidence": {
+              "transactionIds": [],
+              "firedIndicators": [],
+              "matchedTypology": "No typology matched",
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-04T23:47:02.206929+08:00",
+      "claims": [
+        {
+          "text": "Windowed activity is consistent with an ordinary active business: recurring, established counterparties and modest transfers in both directions, with no single large movement and no rapid full-forwarding of incoming funds. No money-laundering typology fires on the account viewed alone.",
+          "evidence": {
+            "transactionIds": [
+              "IBM-MULE-03-T0",
+              "IBM-MULE-03-T1",
+              "IBM-MULE-03-T2",
+              "IBM-MULE-03-T3",
+              "IBM-MULE-03-T4",
+              "IBM-MULE-03-T5",
+              "IBM-MULE-03-T6",
+              "IBM-MULE-03-T7",
+              "IBM-MULE-03-T8",
+              "IBM-MULE-03-T9",
+              "IBM-MULE-03-T10",
+              "IBM-MULE-03-T11"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "No typology matched",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      }
+    },
+    "routing": "needsReview"
+  }
+]

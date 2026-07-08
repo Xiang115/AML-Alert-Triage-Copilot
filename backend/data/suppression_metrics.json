@@ -1,0 +1,655 @@
+{
+  "n": 250,
+  "nBenign": 100,
+  "nLaundering": 150,
+  "method": "leave-one-out cross-validation, label-blind (label read only at scoring); envelope from compute_activity_profile; token-free/deterministic (ADR-0021)",
+  "naiveBaseline": {
+    "features": [
+      "typ",
+      "amt",
+      "dir"
+    ],
+    "minBenign": 1,
+    "requirePure": false,
+    "suppressed": 115,
+    "leaked": 17,
+    "coverage": 0.46,
+    "leakage": 0.1478,
+    "leakage95Upper": 0.224
+  },
+  "operatingPoint": {
+    "features": [
+      "typ",
+      "amt",
+      "dir",
+      "drain",
+      "conc",
+      "xb",
+      "cash",
+      "ntxn"
+    ],
+    "minBenign": 1,
+    "requirePure": true,
+    "suppressed": 80,
+    "leaked": 0,
+    "coverage": 0.32,
+    "leakage": 0.0,
+    "leakage95Upper": 0.0375,
+    "preRegistered": true,
+    "rationale": "tightest envelope + pure-benign precedent, fixed a priori"
+  },
+  "splitValidation": {
+    "trainA_reportB": {
+      "suppressed": 39,
+      "leaked": 0,
+      "coverage": 0.312,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0769
+    },
+    "trainB_reportA": {
+      "suppressed": 33,
+      "leaked": 0,
+      "coverage": 0.264,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0909
+    }
+  },
+  "frontier": [
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 115,
+      "leaked": 17,
+      "coverage": 0.46,
+      "leakage": 0.1478,
+      "leakage95Upper": 0.224
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 63,
+      "leaked": 3,
+      "coverage": 0.252,
+      "leakage": 0.0476,
+      "leakage95Upper": 0.1309
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 112,
+      "leaked": 16,
+      "coverage": 0.448,
+      "leakage": 0.1429,
+      "leakage95Upper": 0.2195
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 62,
+      "leaked": 2,
+      "coverage": 0.248,
+      "leakage": 0.0323,
+      "leakage95Upper": 0.1102
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 108,
+      "leaked": 15,
+      "coverage": 0.432,
+      "leakage": 0.1389,
+      "leakage95Upper": 0.2166
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 58,
+      "leaked": 1,
+      "coverage": 0.232,
+      "leakage": 0.0172,
+      "leakage95Upper": 0.0914
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 113,
+      "leaked": 17,
+      "coverage": 0.452,
+      "leakage": 0.1504,
+      "leakage95Upper": 0.2278
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 63,
+      "leaked": 3,
+      "coverage": 0.252,
+      "leakage": 0.0476,
+      "leakage95Upper": 0.1309
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 111,
+      "leaked": 15,
+      "coverage": 0.444,
+      "leakage": 0.1351,
+      "leakage95Upper": 0.211
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 61,
+      "leaked": 1,
+      "coverage": 0.244,
+      "leakage": 0.0164,
+      "leakage95Upper": 0.0872
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 108,
+      "leaked": 15,
+      "coverage": 0.432,
+      "leakage": 0.1389,
+      "leakage95Upper": 0.2166
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 58,
+      "leaked": 1,
+      "coverage": 0.232,
+      "leakage": 0.0172,
+      "leakage95Upper": 0.0914
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 110,
+      "leaked": 15,
+      "coverage": 0.44,
+      "leakage": 0.1364,
+      "leakage95Upper": 0.2129
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 63,
+      "leaked": 1,
+      "coverage": 0.252,
+      "leakage": 0.0159,
+      "leakage95Upper": 0.0846
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 108,
+      "leaked": 15,
+      "coverage": 0.432,
+      "leakage": 0.1389,
+      "leakage95Upper": 0.2166
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 63,
+      "leaked": 1,
+      "coverage": 0.252,
+      "leakage": 0.0159,
+      "leakage95Upper": 0.0846
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 101,
+      "leaked": 14,
+      "coverage": 0.404,
+      "leakage": 0.1386,
+      "leakage95Upper": 0.2193
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 56,
+      "leaked": 0,
+      "coverage": 0.224,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0536
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 97,
+      "leaked": 6,
+      "coverage": 0.388,
+      "leakage": 0.0619,
+      "leakage95Upper": 0.1284
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 80,
+      "leaked": 2,
+      "coverage": 0.32,
+      "leakage": 0.025,
+      "leakage95Upper": 0.0866
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 87,
+      "leaked": 2,
+      "coverage": 0.348,
+      "leakage": 0.023,
+      "leakage95Upper": 0.08
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 76,
+      "leaked": 2,
+      "coverage": 0.304,
+      "leakage": 0.0263,
+      "leakage95Upper": 0.091
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 83,
+      "leaked": 1,
+      "coverage": 0.332,
+      "leakage": 0.012,
+      "leakage95Upper": 0.0651
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 72,
+      "leaked": 1,
+      "coverage": 0.288,
+      "leakage": 0.0139,
+      "leakage95Upper": 0.0746
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 96,
+      "leaked": 5,
+      "coverage": 0.384,
+      "leakage": 0.0521,
+      "leakage95Upper": 0.1162
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 81,
+      "leaked": 1,
+      "coverage": 0.324,
+      "leakage": 0.0123,
+      "leakage95Upper": 0.0667
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 86,
+      "leaked": 1,
+      "coverage": 0.344,
+      "leakage": 0.0116,
+      "leakage95Upper": 0.063
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 75,
+      "leaked": 1,
+      "coverage": 0.3,
+      "leakage": 0.0133,
+      "leakage95Upper": 0.0717
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 83,
+      "leaked": 1,
+      "coverage": 0.332,
+      "leakage": 0.012,
+      "leakage95Upper": 0.0651
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 72,
+      "leaked": 1,
+      "coverage": 0.288,
+      "leakage": 0.0139,
+      "leakage95Upper": 0.0746
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 1,
+      "requirePure": false,
+      "suppressed": 80,
+      "leaked": 0,
+      "coverage": 0.32,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0375
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 1,
+      "requirePure": true,
+      "suppressed": 80,
+      "leaked": 0,
+      "coverage": 0.32,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0375
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 2,
+      "requirePure": false,
+      "suppressed": 70,
+      "leaked": 0,
+      "coverage": 0.28,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0429
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 2,
+      "requirePure": true,
+      "suppressed": 70,
+      "leaked": 0,
+      "coverage": 0.28,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0429
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 3,
+      "requirePure": false,
+      "suppressed": 70,
+      "leaked": 0,
+      "coverage": 0.28,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0429
+    },
+    {
+      "features": [
+        "typ",
+        "amt",
+        "dir",
+        "drain",
+        "conc",
+        "xb",
+        "cash",
+        "ntxn"
+      ],
+      "minBenign": 3,
+      "requirePure": true,
+      "suppressed": 70,
+      "leaked": 0,
+      "coverage": 0.28,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0429
+    }
+  ],
+  "headline": "Naive coarse-envelope self-suppression leaks 15% of laundering (17/115). The pre-registered firewall envelope collapses that to 0.0% (0/80) at 32% coverage - but at N~100 benign the 95% upper bound is 4%, so we report the frontier and state plainly that certifying <=1% is a labelled-data-volume problem, solved by the confirmed-SAR feedback loop, not a design gap.",
+  "caveat": "<=1% is aspirational, not certified: ~100 benign held-out alerts cap the CI; the leaked laundering overlaps the triage model's own false negatives, so the dismiss+agreed gate does not clearly purify further. Frontier is the honest artifact."
+}
