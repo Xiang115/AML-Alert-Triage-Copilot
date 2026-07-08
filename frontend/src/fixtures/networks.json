@@ -1,0 +1,479 @@
+{
+  "IBM-MULE-01": {
+    "seedAlertId": "IBM-MULE-01",
+    "typology": {
+      "code": "FI-01",
+      "name": "Fan-in consolidation",
+      "source": "FATF/BNM typology"
+    },
+    "nodes": [
+      {
+        "accountId": "81A4AFE20",
+        "holderName": "Sole Proprietorship #110823",
+        "role": "hub",
+        "isSeed": false,
+        "x": 620.0,
+        "y": 260.0,
+        "totalLegs": 67,
+        "launderingLegs": 15,
+        "note": "Consolidation account \u2014 receives the fan-in and forwards it on."
+      },
+      {
+        "accountId": "81C5B2870",
+        "holderName": "Sole Proprietorship #112056",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 60.0,
+        "totalLegs": 236,
+        "launderingLegs": 21,
+        "note": "2 transfer(s) into the hub."
+      },
+      {
+        "accountId": "81A4AFE70",
+        "holderName": "Corporation #111314",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 126.7,
+        "totalLegs": 61,
+        "launderingLegs": 3,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "81A4AF9E0",
+        "holderName": "Sole Proprietorship #110824",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 193.3,
+        "totalLegs": 121,
+        "launderingLegs": 4,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "81C3CD2E0",
+        "holderName": "Partnership #112610",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 260.0,
+        "totalLegs": 142,
+        "launderingLegs": 4,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "81C5B2AB0",
+        "holderName": "Sole Proprietorship #111346",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 326.7,
+        "totalLegs": 42,
+        "launderingLegs": 37,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "81A2D04C0",
+        "holderName": "Sole Proprietorship #110792",
+        "role": "hidden_mule",
+        "isSeed": true,
+        "x": 180.0,
+        "y": 393.3,
+        "totalLegs": 286,
+        "launderingLegs": 5,
+        "note": "286 transactions, only 5 laundering (2%) \u2014 reads as an ordinary business alone; the network exposes it."
+      },
+      {
+        "accountId": "8189265A0",
+        "holderName": "Sole Proprietorship #30365",
+        "role": "benign_cleared",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 460.0,
+        "totalLegs": 97,
+        "launderingLegs": 0,
+        "note": "Legitimate payer to the same account \u2014 cleared, not flagged."
+      }
+    ],
+    "edges": [
+      {
+        "fromAccountId": "81C5B2870",
+        "toAccountId": "81A4AFE20",
+        "amount": 1815367.69,
+        "currency": "Ruble",
+        "transferCount": 2,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "81A4AFE70",
+        "toAccountId": "81A4AFE20",
+        "amount": 1409305.96,
+        "currency": "Ruble",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "81A4AF9E0",
+        "toAccountId": "81A4AFE20",
+        "amount": 1392590.03,
+        "currency": "Ruble",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "81C3CD2E0",
+        "toAccountId": "81A4AFE20",
+        "amount": 1155546.44,
+        "currency": "Ruble",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "81C5B2AB0",
+        "toAccountId": "81A4AFE20",
+        "amount": 1104862.69,
+        "currency": "Ruble",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "81A2D04C0",
+        "toAccountId": "81A4AFE20",
+        "amount": 398276.71,
+        "currency": "Ruble",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "8189265A0",
+        "toAccountId": "81A4AFE20",
+        "amount": 4047359.68,
+        "currency": "Ruble",
+        "transferCount": 32,
+        "laundering": false
+      }
+    ],
+    "narrative": "7 accounts funnel into Sole Proprietorship #110823 \u2014 a fan-in consolidation pattern. Account-level triage cleared Sole Proprietorship #110792: on its own it looks like an ordinary business (286 transactions, 2% laundering). The network re-surfaces it as a mule feeding the hub, while clearing a legitimate payer to the same account \u2014 discrimination, not guilt by association.",
+    "source": "Real IBM AMLworld HI-Medium cluster \u2014 illustrative; the measured numbers are the SAML-D triage metrics (ADR-0015).",
+    "generatedAt": "2026-07-04T23:47:02.187898+08:00"
+  },
+  "IBM-MULE-02": {
+    "seedAlertId": "IBM-MULE-02",
+    "typology": {
+      "code": "FI-01",
+      "name": "Fan-in consolidation",
+      "source": "FATF/BNM typology"
+    },
+    "nodes": [
+      {
+        "accountId": "804B45920",
+        "holderName": "Partnership #10126",
+        "role": "hub",
+        "isSeed": false,
+        "x": 620.0,
+        "y": 260.0,
+        "totalLegs": 93,
+        "launderingLegs": 18,
+        "note": "Consolidation account \u2014 receives the fan-in and forwards it on."
+      },
+      {
+        "accountId": "803C25F20",
+        "holderName": "Corporation #6379",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 60.0,
+        "totalLegs": 161,
+        "launderingLegs": 47,
+        "note": "2 transfer(s) into the hub."
+      },
+      {
+        "accountId": "80321FBF0",
+        "holderName": "Sole Proprietorship #6548",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 126.7,
+        "totalLegs": 127,
+        "launderingLegs": 19,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "80241F020",
+        "holderName": "Sole Proprietorship #197110",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 193.3,
+        "totalLegs": 79,
+        "launderingLegs": 25,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "805753DD0",
+        "holderName": "Corporation #9104",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 260.0,
+        "totalLegs": 39,
+        "launderingLegs": 37,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "80139DE20",
+        "holderName": "Partnership #2128",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 326.7,
+        "totalLegs": 126,
+        "launderingLegs": 22,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "80006FD60",
+        "holderName": "Partnership #153",
+        "role": "hidden_mule",
+        "isSeed": true,
+        "x": 180.0,
+        "y": 393.3,
+        "totalLegs": 322,
+        "launderingLegs": 25,
+        "note": "322 transactions, only 25 laundering (8%) \u2014 reads as an ordinary business alone; the network exposes it."
+      },
+      {
+        "accountId": "8034489D0",
+        "holderName": "Sole Proprietorship #17604",
+        "role": "benign_cleared",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 460.0,
+        "totalLegs": 185,
+        "launderingLegs": 0,
+        "note": "Legitimate payer to the same account \u2014 cleared, not flagged."
+      }
+    ],
+    "edges": [
+      {
+        "fromAccountId": "803C25F20",
+        "toAccountId": "804B45920",
+        "amount": 20155.7,
+        "currency": "US Dollar",
+        "transferCount": 2,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "80321FBF0",
+        "toAccountId": "804B45920",
+        "amount": 9471.49,
+        "currency": "US Dollar",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "80241F020",
+        "toAccountId": "804B45920",
+        "amount": 8192.19,
+        "currency": "US Dollar",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "805753DD0",
+        "toAccountId": "804B45920",
+        "amount": 3459.32,
+        "currency": "US Dollar",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "80139DE20",
+        "toAccountId": "804B45920",
+        "amount": 3214.97,
+        "currency": "US Dollar",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "80006FD60",
+        "toAccountId": "804B45920",
+        "amount": 10194.2,
+        "currency": "US Dollar",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "8034489D0",
+        "toAccountId": "804B45920",
+        "amount": 87584.52,
+        "currency": "US Dollar",
+        "transferCount": 24,
+        "laundering": false
+      }
+    ],
+    "narrative": "7 accounts funnel into Partnership #10126 \u2014 a fan-in consolidation pattern. Account-level triage cleared Partnership #153: on its own it looks like an ordinary business (322 transactions, 8% laundering). The network re-surfaces it as a mule feeding the hub, while clearing a legitimate payer to the same account \u2014 discrimination, not guilt by association.",
+    "source": "Real IBM AMLworld HI-Medium cluster \u2014 illustrative; the measured numbers are the SAML-D triage metrics (ADR-0015).",
+    "generatedAt": "2026-07-04T23:47:02.205769+08:00"
+  },
+  "IBM-MULE-03": {
+    "seedAlertId": "IBM-MULE-03",
+    "typology": {
+      "code": "FI-01",
+      "name": "Fan-in consolidation",
+      "source": "FATF/BNM typology"
+    },
+    "nodes": [
+      {
+        "accountId": "822577230",
+        "holderName": "Sole Proprietorship #115561",
+        "role": "hub",
+        "isSeed": false,
+        "x": 620.0,
+        "y": 260.0,
+        "totalLegs": 88,
+        "launderingLegs": 15,
+        "note": "Consolidation account \u2014 receives the fan-in and forwards it on."
+      },
+      {
+        "accountId": "8076422E0",
+        "holderName": "Partnership #68475",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 60.0,
+        "totalLegs": 107,
+        "launderingLegs": 33,
+        "note": "2 transfer(s) into the hub."
+      },
+      {
+        "accountId": "8230E3350",
+        "holderName": "Sole Proprietorship #116387",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 126.7,
+        "totalLegs": 61,
+        "launderingLegs": 20,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "82232F700",
+        "holderName": "Partnership #174636",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 193.3,
+        "totalLegs": 125,
+        "launderingLegs": 32,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "822577140",
+        "holderName": "Partnership #116195",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 260.0,
+        "totalLegs": 95,
+        "launderingLegs": 33,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "822C47930",
+        "holderName": "Sole Proprietorship #217110",
+        "role": "mule",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 326.7,
+        "totalLegs": 166,
+        "launderingLegs": 28,
+        "note": "1 transfer(s) into the hub."
+      },
+      {
+        "accountId": "822268310",
+        "holderName": "Partnership #116108",
+        "role": "hidden_mule",
+        "isSeed": true,
+        "x": 180.0,
+        "y": 393.3,
+        "totalLegs": 236,
+        "launderingLegs": 14,
+        "note": "236 transactions, only 14 laundering (6%) \u2014 reads as an ordinary business alone; the network exposes it."
+      },
+      {
+        "accountId": "821FEE380",
+        "holderName": "Partnership #19425",
+        "role": "benign_cleared",
+        "isSeed": false,
+        "x": 180.0,
+        "y": 460.0,
+        "totalLegs": 206,
+        "launderingLegs": 0,
+        "note": "Legitimate payer to the same account \u2014 cleared, not flagged."
+      }
+    ],
+    "edges": [
+      {
+        "fromAccountId": "8076422E0",
+        "toAccountId": "822577230",
+        "amount": 16799.22,
+        "currency": "UK Pound",
+        "transferCount": 2,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "8230E3350",
+        "toAccountId": "822577230",
+        "amount": 15119.3,
+        "currency": "UK Pound",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "82232F700",
+        "toAccountId": "822577230",
+        "amount": 8456.07,
+        "currency": "UK Pound",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "822577140",
+        "toAccountId": "822577230",
+        "amount": 4044.98,
+        "currency": "UK Pound",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "822C47930",
+        "toAccountId": "822577230",
+        "amount": 2792.18,
+        "currency": "UK Pound",
+        "transferCount": 1,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "822268310",
+        "toAccountId": "822577230",
+        "amount": 19866.52,
+        "currency": "UK Pound",
+        "transferCount": 2,
+        "laundering": true
+      },
+      {
+        "fromAccountId": "821FEE380",
+        "toAccountId": "822577230",
+        "amount": 2328.4,
+        "currency": "UK Pound",
+        "transferCount": 1,
+        "laundering": false
+      }
+    ],
+    "narrative": "7 accounts funnel into Sole Proprietorship #115561 \u2014 a fan-in consolidation pattern. Account-level triage cleared Partnership #116108: on its own it looks like an ordinary business (236 transactions, 6% laundering). The network re-surfaces it as a mule feeding the hub, while clearing a legitimate payer to the same account \u2014 discrimination, not guilt by association.",
+    "source": "Real IBM AMLworld HI-Medium cluster \u2014 illustrative; the measured numbers are the SAML-D triage metrics (ADR-0015).",
+    "generatedAt": "2026-07-04T23:47:02.206459+08:00"
+  }
+}

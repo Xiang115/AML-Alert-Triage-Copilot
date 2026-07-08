@@ -1,0 +1,183 @@
+{
+  "n": 250,
+  "nBenign": 100,
+  "naive": {
+    "coverage": 0.46,
+    "leakage": 0.1478,
+    "leakage95Upper": 0.224,
+    "suppressed": 115,
+    "leaked": 17
+  },
+  "operatingPoint": {
+    "coverage": 0.32,
+    "leakage": 0.0,
+    "leakage95Upper": 0.0375,
+    "suppressed": 80,
+    "leaked": 0
+  },
+  "curve": [
+    {
+      "coverage": 0.224,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0536,
+      "suppressed": 56,
+      "leaked": 0
+    },
+    {
+      "coverage": 0.232,
+      "leakage": 0.0172,
+      "leakage95Upper": 0.0914,
+      "suppressed": 58,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.244,
+      "leakage": 0.0164,
+      "leakage95Upper": 0.0872,
+      "suppressed": 61,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.248,
+      "leakage": 0.0323,
+      "leakage95Upper": 0.1102,
+      "suppressed": 62,
+      "leaked": 2
+    },
+    {
+      "coverage": 0.252,
+      "leakage": 0.0159,
+      "leakage95Upper": 0.0846,
+      "suppressed": 63,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.28,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0429,
+      "suppressed": 70,
+      "leaked": 0
+    },
+    {
+      "coverage": 0.288,
+      "leakage": 0.0139,
+      "leakage95Upper": 0.0746,
+      "suppressed": 72,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.3,
+      "leakage": 0.0133,
+      "leakage95Upper": 0.0717,
+      "suppressed": 75,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.304,
+      "leakage": 0.0263,
+      "leakage95Upper": 0.091,
+      "suppressed": 76,
+      "leaked": 2
+    },
+    {
+      "coverage": 0.32,
+      "leakage": 0.0,
+      "leakage95Upper": 0.0375,
+      "suppressed": 80,
+      "leaked": 0
+    },
+    {
+      "coverage": 0.324,
+      "leakage": 0.0123,
+      "leakage95Upper": 0.0667,
+      "suppressed": 81,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.332,
+      "leakage": 0.012,
+      "leakage95Upper": 0.0651,
+      "suppressed": 83,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.344,
+      "leakage": 0.0116,
+      "leakage95Upper": 0.063,
+      "suppressed": 86,
+      "leaked": 1
+    },
+    {
+      "coverage": 0.348,
+      "leakage": 0.023,
+      "leakage95Upper": 0.08,
+      "suppressed": 87,
+      "leaked": 2
+    },
+    {
+      "coverage": 0.384,
+      "leakage": 0.0521,
+      "leakage95Upper": 0.1162,
+      "suppressed": 96,
+      "leaked": 5
+    },
+    {
+      "coverage": 0.388,
+      "leakage": 0.0619,
+      "leakage95Upper": 0.1284,
+      "suppressed": 97,
+      "leaked": 6
+    },
+    {
+      "coverage": 0.404,
+      "leakage": 0.1386,
+      "leakage95Upper": 0.2193,
+      "suppressed": 101,
+      "leaked": 14
+    },
+    {
+      "coverage": 0.432,
+      "leakage": 0.1389,
+      "leakage95Upper": 0.2166,
+      "suppressed": 108,
+      "leaked": 15
+    },
+    {
+      "coverage": 0.44,
+      "leakage": 0.1364,
+      "leakage95Upper": 0.2129,
+      "suppressed": 110,
+      "leaked": 15
+    },
+    {
+      "coverage": 0.444,
+      "leakage": 0.1351,
+      "leakage95Upper": 0.211,
+      "suppressed": 111,
+      "leaked": 15
+    },
+    {
+      "coverage": 0.448,
+      "leakage": 0.1429,
+      "leakage95Upper": 0.2195,
+      "suppressed": 112,
+      "leaked": 16
+    },
+    {
+      "coverage": 0.452,
+      "leakage": 0.1504,
+      "leakage95Upper": 0.2278,
+      "suppressed": 113,
+      "leaked": 17
+    },
+    {
+      "coverage": 0.46,
+      "leakage": 0.1478,
+      "leakage95Upper": 0.224,
+      "suppressed": 115,
+      "leaked": 17
+    }
+  ],
+  "headline": "Naive coarse-envelope self-suppression leaks 15% of laundering (17/115). The pre-registered firewall envelope collapses that to 0.0% (0/80) at 32% coverage - but at N~100 benign the 95% upper bound is 4%, so we report the frontier and state plainly that certifying <=1% is a labelled-data-volume problem, solved by the confirmed-SAR feedback loop, not a design gap.",
+  "caveat": "<=1% is aspirational, not certified: ~100 benign held-out alerts cap the CI; the leaked laundering overlaps the triage model's own false negatives, so the dismiss+agreed gate does not clearly purify further. Frontier is the honest artifact."
+}

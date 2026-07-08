@@ -1,0 +1,9 @@
+[
+  {
+    "signature": "typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|ntxn=5",
+    "typology": "PT-01",
+    "sourceAlertId": "SD-00004",
+    "clearedCount": 2,
+    "clearedAt": "2026-07-01T09:14:00+08:00"
+  }
+]
