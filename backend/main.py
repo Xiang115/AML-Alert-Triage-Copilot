@@ -490,6 +490,18 @@ def _apply_control(alert: dict, *, qa_sample_ids: set[str] | None = None) -> dic
     return alert
 
 
+_DEMO_PIN_RANK = {aid: i for i, aid in enumerate(config.DEMO_PINNED_ALERT_IDS)}
+
+
+def _pin_demo_cases(alerts: list[dict]) -> list[dict]:
+    """Pin the curated demo cases to the top of the queue in a fixed order (ADR-0003/0005) so the
+    presented set stays put while the rest of the queue moves; everything else follows in
+    deterministic alertId order. Reorders only — nothing is hidden or fabricated. The store has no
+    ORDER BY (SQLite hands rows back arbitrarily), so this is also what makes the queue stable."""
+    return sorted(
+        alerts,
+        key=lambda a: (_DEMO_PIN_RANK.get(a["alertId"], len(_DEMO_PIN_RANK)), a["alertId"]),
+    )
 
 
 @app.get("/alerts")
@@ -523,7 +535,7 @@ def list_alerts(status: str | None = None, routing: str | None = None):
             a["triage"]["suppression"] = supp
         if routing is None or a["routing"] == routing:
             filtered.append(a)
-    return filtered
+    return _pin_demo_cases(filtered)
 
 
 def _attach_serve_time_insight(alert: dict) -> None:

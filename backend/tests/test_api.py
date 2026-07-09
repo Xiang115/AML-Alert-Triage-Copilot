@@ -520,6 +520,19 @@ def test_alerts_flags_a_risk_weighted_qa_sample():
     assert all(a["routing"] == "autoCleared" for a in sampled)
 
 
+def test_alerts_pins_the_curated_demo_cases_to_the_top():
+    """The presented demo set leads the queue in a fixed order (ADR-0003/0005), so it stays put on
+    stage while the rest of the queue moves; the remaining alerts follow in deterministic order."""
+    import config as _cfg
+
+    ids = [a["alertId"] for a in client.get("/alerts").json()]
+    pinned = [aid for aid in _cfg.DEMO_PINNED_ALERT_IDS if aid in ids]
+    assert len(pinned) >= 2, "expected the curated demo cases to be present in the seed"
+    assert ids[: len(pinned)] == pinned, "pinned demo cases must lead the queue in config order"
+    tail = ids[len(pinned):]
+    assert tail == sorted(tail), "the non-pinned tail must be in deterministic alertId order"
+
+
 # --- model governance + borderline dismiss (ADR-0020) ---
 
 def test_governance_snapshot():

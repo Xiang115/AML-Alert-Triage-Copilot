@@ -94,3 +94,19 @@ QA_SAMPLE_RATE = float(os.getenv("QA_SAMPLE_RATE", "0.2"))
 DEBATE_RESIST_MIN_FIRED = int(os.getenv("DEBATE_RESIST_MIN_FIRED", "2"))
 # Fixed for reproducible three-bucket split + eval sampling (ADR-0004/0005).
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
+
+# Curated demo-queue ordering (ADR-0003 demo determinism + ADR-0005 curated demo queue). The
+# hero / suppression / hidden-mule cases walked through on stage are pinned to the top of
+# GET /alerts in this exact order, so the presented set is always where the presenter expects
+# even as the rest of the queue moves (auto-clears flip lanes, decisions change status). This is
+# reordering only — no alert is hidden or fabricated; absent ids are skipped and the remaining
+# alerts follow in deterministic alertId order. Override via env (comma-separated); set empty to
+# disable and fall back to plain deterministic ordering.
+DEMO_PINNED_ALERT_IDS: tuple[str, ...] = tuple(
+    s.strip()
+    for s in os.getenv(
+        "DEMO_PINNED_ALERT_IDS",
+        "HERO-001,HERO-002,DEMO-CL-01,DEMO-CL-02,DEMO-CL-03,IBM-MULE-01",
+    ).split(",")
+    if s.strip()
+)

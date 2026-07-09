@@ -545,6 +545,20 @@ function mockCopilotLedger(alert: Alert): CopilotRunLedger {
 
 const MOCK = import.meta.env.VITE_MOCK !== 'false'
 const GOVERNANCE_THRESHOLDS = { review: 0.6, autoClear: 0.85, qaSample: 0.2, borderlineMargin: 0.1 }
+
+// Curated demo-queue ordering — mirror of backend config.DEMO_PINNED_ALERT_IDS (ADR-0003/0005).
+// Pins the on-stage cases to the top of the queue in a fixed order so the presented set is stable
+// in mock mode too; everything else follows in deterministic alertId order. Reorders only.
+const DEMO_PINNED_ALERT_IDS = ['HERO-001', 'HERO-002', 'DEMO-CL-01', 'DEMO-CL-02', 'DEMO-CL-03', 'IBM-MULE-01']
+const demoPinRank = (alertId: string): number => {
+  const i = DEMO_PINNED_ALERT_IDS.indexOf(alertId)
+  return i === -1 ? DEMO_PINNED_ALERT_IDS.length : i
+}
+function pinDemoCases<T extends { alertId: string }>(list: T[]): T[] {
+  return [...list].sort(
+    (a, b) => demoPinRank(a.alertId) - demoPinRank(b.alertId) || a.alertId.localeCompare(b.alertId),
+  )
+}
 const MOCK_ACCESS_CONTROL_POSTURE: AccessControlPosture = {
   mode: 'actorRoleHeaders',
   demoFallbackActor: { actorId: 'demo-operator', actorRole: 'admin', source: 'demoFallback' },
@@ -1251,7 +1265,7 @@ function actorHeaders(actorRole: ActorRole, actorId: string): Record<string, str
 
 export async function getAlerts(status?: AlertStatus): Promise<Alert[]> {
   if (MOCK) {
-    const list = mockServedQueueAlerts().map((a) => ({ ...a, transactions: status ? null : a.transactions }))
+    const list = pinDemoCases(mockServedQueueAlerts()).map((a) => ({ ...a, transactions: status ? null : a.transactions }))
     return status ? list.filter((a) => a.status === status) : list
   }
   const url = new URL('/alerts', BASE)
