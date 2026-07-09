@@ -19,7 +19,6 @@ interface StrEditorProps {
   ack: SubmissionAck | null
 }
 
-const money = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2 })
 // SAML-D carries no real account type; render the honest placeholder as an em dash.
 const orDash = (v: string) => (v && v !== 'unknown' ? v : '—')
 
@@ -151,42 +150,9 @@ export function StrEditor({ strDraft, citedTransactions, summary, onSummaryChang
           )}
         </div>
 
-        {/* Reported transactions — the cited legs being filed (read-only). Full transactions so
-            direction shows; mirrors the goAML <transaction> list. */}
-        {citedTransactions.length > 0 && (
-          <div>
-            <div className="mb-1.5 flex items-baseline justify-between">
-              <span className="label">Reported transactions</span>
-              <span className="text-[11px] text-ink-faint">{citedTransactions.length} filed · read-only</span>
-            </div>
-            <table className="w-full text-left text-[12px]">
-              <thead>
-                <tr className="border-b border-line text-ink-faint">
-                  <th className="py-1.5 pr-2 font-medium">Date</th>
-                  <th className="py-1.5 pr-2 font-medium">Dir</th>
-                  <th className="py-1.5 pr-2 font-medium">Counterparty</th>
-                  <th className="py-1.5 text-right font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {citedTransactions.map((t) => (
-                  <tr key={t.transactionId} className="border-b border-line align-top last:border-0">
-                    <td className="py-1.5 pr-2 font-mono text-ink-soft">{t.timestamp.substring(0, 10)}</td>
-                    <td className="py-1.5 pr-2">
-                      <span className={t.direction === 'inbound' ? 'text-verified' : 'text-ink-soft'}>
-                        {t.direction === 'inbound' ? 'in' : 'out'}
-                      </span>
-                    </td>
-                    <td className="py-1.5 pr-2 text-ink">{t.counterpartyName}</td>
-                    <td className="py-1.5 text-right font-mono tabular-nums text-ink">
-                      {money(t.amount)} {t.currency}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* The cited legs are NOT repeated as a table here — the left-panel ledger
+            (TransactionTable) already lists every transaction and highlights the cited ones. The STR
+            keeps only the honest cited-count in the goAML evidence package below. */}
 
         {/* Grounds for suspicion — Evidence-Anchored STR (ADR-0013) */}
         <div>

@@ -61,6 +61,13 @@ def suppress(alert: dict) -> dict | None:
     if not pattern:
         return None
 
+    # An alert is never auto-suppressed by the clearance it ITSELF taught: the source is the teacher,
+    # not a future look-alike. This keeps the learned-patterns view from double-counting the teacher
+    # as an alert its own pattern removed, and matches the full-population learning scan (which
+    # already excludes the source when it counts affected future alerts).
+    if pattern.get("sourceAlertId") and alert.get("alertId") == pattern["sourceAlertId"]:
+        return None
+
     # The match key is the behavioral envelope; the counterparty is needed only for Network Revocation
     # (does the cleared corridor's counterparty look like a consolidation hub).
     counterparty = _dominant_counterparty(alert)

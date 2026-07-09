@@ -226,3 +226,28 @@ def test_suppress_returns_a_suppression_that_cites_the_source_decision(memory_st
     assert out["sourceDecisionId"] == "SD-00021"
     assert out["signature"] == signature
     assert out["clearedCount"] == 1
+
+
+def test_suppress_does_not_suppress_an_alert_against_the_pattern_it_itself_taught(memory_store):
+    # An alert must not be "auto-suppressed" by the very clearance it is the source of (else the
+    # learned-patterns view double-counts the teacher as a future look-alike it removed). The teacher
+    # is excluded; a different customer with the same envelope is still suppressed.
+    teacher = _alert(
+        _txn("T-1", counterparty_account="acme-123"),
+        _txn("T-2", counterparty_account="acme-123"),
+        alert_id="TEACH-001",
+    )
+    signature = _memory_module().signature(teacher)
+    store.record_clearance(
+        signature=signature, typology="FI-01", source_decision_id="TEACH-001",
+        source_alert_id="TEACH-001", cleared_at="2026-07-02T09:14:00+08:00",
+    )
+
+    assert _memory_module().suppress(teacher) is None  # the source teaches, it is not suppressed
+
+    look_alike = _alert(
+        _txn("T-1", counterparty_account="totally-different-999"),
+        _txn("T-2", counterparty_account="totally-different-999"),
+        alert_id="LOOKALIKE-001",
+    )
+    assert _memory_module().suppress(look_alike)["status"] == "suppressed"
