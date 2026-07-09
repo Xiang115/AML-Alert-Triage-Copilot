@@ -18,7 +18,7 @@ describe('App (smoke)', () => {
     // The Queue Agent's Shift Briefing renders (ADR-0010)...
     expect(await screen.findByText(/overnight run/i)).toBeTruthy()
     // ...and the default all lane keeps the full population available.
-    expect(screen.getByText(/31 shown/i)).toBeTruthy()
+    expect(screen.getByText(/33 shown/i)).toBeTruthy()
     expect(await screen.findByText('SAML-D account 7881299162')).toBeTruthy()
 
     // Nothing selected yet -> the empty-state prompt is shown.

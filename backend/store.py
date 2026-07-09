@@ -349,6 +349,11 @@ def seed_cleared_patterns(patterns: list[dict]) -> None:
     _cleared_seed = list(patterns)
     eng = _require()
     with eng.begin() as conn:
+        # Purge pre-ADR-0021 counterparty-format rows (cp:<acct>|typ:<code>). signature() now emits a
+        # behavioral envelope (typ=...), so an obsolete row can never match — it silently kills
+        # suppression on every alert AND blocks the current-format seed from loading (seed-only-if-
+        # empty). Surgical: current-format session patterns (typ=...) are untouched.
+        conn.execute(delete(cleared_patterns).where(cleared_patterns.c.signature.like("cp:%")))
         count = conn.execute(select(func.count()).select_from(cleared_patterns)).scalar_one()
         if count == 0 and _cleared_seed:
             conn.execute(insert(cleared_patterns), [
@@ -470,6 +475,23 @@ def seed_alerts(alert_dicts: list[dict]) -> None:
         count = conn.execute(select(func.count()).select_from(alerts)).scalar_one()
         if count == 0:
             for a in _alert_seed:
+                _insert_alert(conn, a)
+
+
+def reconcile_alerts(alert_dicts: list[dict]) -> None:
+    """Startup catalog reconcile: INSERT any seed alert not already in the DB, and leave every
+    existing row exactly as it is. Unlike seed_alerts (seed-only-if-empty), this lets a populated
+    DURABLE db (e.g. Neon on Render) pick up newly-added catalog alerts on the next deploy without
+    clobbering a decided alert's status/STR or the audit history. It deliberately does NOT update or
+    delete existing alerts — a full catalog rewrite still needs an explicit reset/clear. Remembers
+    the catalog so reset() restores the same set."""
+    global _alert_seed
+    _alert_seed = list(alert_dicts)
+    eng = _require()
+    with eng.begin() as conn:
+        existing = set(conn.execute(select(alerts.c.alert_id)).scalars().all())
+        for a in _alert_seed:
+            if a["alertId"] not in existing:
                 _insert_alert(conn, a)
 
 

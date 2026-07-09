@@ -64,7 +64,11 @@ def enrich_served_alert(alert: dict) -> dict:
     triage = alert.get("triage")
     if triage is None:
         return alert
-    triage["suppression"] = suppress(alert)
+    # A learned suppression is benign-precedent context for a dismiss; it must never paint a
+    # "matches a previously cleared pattern" panel onto a confident escalate (which it can, since
+    # suppress() matches on the behavioral envelope alone). Gate the served display on the
+    # recommendation — the triage-time memory_context (below) is unaffected.
+    triage["suppression"] = suppress(alert) if triage.get("recommendation") == "dismiss" else None
     return alert
 
 

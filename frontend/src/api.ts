@@ -7,6 +7,7 @@ import { AUTO_CLEAR_THRESHOLD, REVIEW_THRESHOLD, effectiveRouting, envelopeBenig
 import alertsFixture from './fixtures/alerts.json'
 import ibmAlertsFixture from './fixtures/ibmAlerts.json'
 import clusterAlertsFixture from './fixtures/clusterAlerts.json'
+import standingClusterAlertsFixture from './fixtures/standingClusterAlerts.json'
 import metricsFixture from './fixtures/metrics.json'
 import evaluationFixture from './fixtures/evaluation.json'
 import networksFixture from './fixtures/networks.json'
@@ -18,6 +19,7 @@ const mockAlerts: Alert[] = [
   ...(alertsFixture as unknown as Alert[]),
   ...(ibmAlertsFixture as unknown as Alert[]),
   ...(clusterAlertsFixture as unknown as Alert[]),  // Slice A beat-3 self-suppression cluster
+  ...(standingClusterAlertsFixture as unknown as Alert[]),  // Slice A standing seeded suppression pair
 ]
 // Append-only audit trail for mock mode (mirrors the backend _AUDIT_LOG).
 const mockAudit: AuditEntry[] = []
@@ -63,19 +65,14 @@ interface MockClearedPattern {
 }
 
 const mockClearedPatterns = new Map<string, MockClearedPattern>()
-// Demo initial state: a benign PT-01 counterparty the team cleared on prior alerts (kept in sync
-// with fixtures/learnedPatterns.json). Makes SD-00006 open pre-suppressed, citing the real
-// SD-00004 decision; dismissing any alert below learns a new pattern the same way.
-mockClearedPatterns.set('typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|ntxn=5', {
-  signature: 'typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|ntxn=5', typology: 'PT-01',
-  sourceDecisionId: 'SD-00004', sourceAlertId: 'SD-00004',
-  clearedCount: 2, clearedAt: '2026-07-01T09:14:00+08:00',
-})
-mockClearedPatterns.clear()
-mockClearedPatterns.set('typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|ntxn=5', {
-  signature: 'typ=PT-01|amt=5|dir=mix|drain=False|conc=0|xb=1|cash=1|ntxn=5', typology: 'PT-01',
-  sourceDecisionId: 'SD-00004', sourceAlertId: 'SD-00004',
-  clearedCount: 2, clearedAt: '2026-07-01T09:14:00+08:00',
+// Demo initial state (mirror of backend/data/cleared_patterns_seed.json): STANDCL-01, a benign FI-01
+// rotating-savings committee the team cleared before, so its look-alike STANDCL-02 opens auto-
+// suppressed on a cold load (a real "1 future alert affected" learning path). Dismissing any alert
+// below learns a new pattern the same way.
+mockClearedPatterns.set('typ=FI-01|amt=3|dir=mix|drain=False|conc=0|xb=0|cash=0|ntxn=5', {
+  signature: 'typ=FI-01|amt=3|dir=mix|drain=False|conc=0|xb=0|cash=0|ntxn=5', typology: 'FI-01',
+  sourceDecisionId: 'STANDCL-01', sourceAlertId: 'STANDCL-01',
+  clearedCount: 1, clearedAt: '2026-07-01T09:14:00+08:00',
 })
 
 const AMT_EDGES = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5]
@@ -176,10 +173,16 @@ for (const net of Object.values(networksFixture as Record<string, { seedAlertId:
 
 // Serve-time suppression enrichment — mirror of agents/memory.suppress (+ network_revocation).
 function mockSuppress(alert: Alert): Suppression | null {
+  // A learned suppression is benign-precedent context for a dismiss; never paint it onto a confident
+  // escalate (mirror of the backend enrich_served_alert display gate).
+  if (alert.triage.recommendation !== 'dismiss') return null
   const sig = behavioralSignature(alert)
   if (!sig) return null
   const p = mockClearedPatterns.get(sig)
   if (!p) return null
+  // An alert is never suppressed by the clearance it itself taught (mirror of agents/memory.suppress):
+  // the source is the teacher, not a future look-alike it removed.
+  if (p.sourceAlertId && alert.alertId === p.sourceAlertId) return null
   const cp = dominantCounterparty(alert)
   const code = alert.triage.matchedTypology.code
   const base = {

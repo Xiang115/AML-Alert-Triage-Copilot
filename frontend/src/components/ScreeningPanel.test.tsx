@@ -33,13 +33,15 @@ describe('ScreeningPanel', () => {
     expect(screen.getByText(/screened 6 counterparties/i)).toBeTruthy()
   })
 
-  it('shows the honest no-match positive signal when clear', () => {
+  it('renders a compact clear chip (not a full section) with the gate still discoverable', () => {
     render(<ScreeningPanel data={clear} />)
-    expect(screen.getByText(/^clear$/i)).toBeTruthy()
-    expect(screen.getByText(/no watchlist matches/i)).toBeTruthy()
+    // The common case reads as a small chip, not a big "nothing happened" box.
+    expect(screen.getByText(/sanctions \/ pep: clear/i)).toBeTruthy()
     expect(screen.getByText(/screened 11 counterparties/i)).toBeTruthy()
-    expect(screen.getByText(/a future hit would override auto-clear/i)).toBeTruthy()
+    expect(screen.getByText(/deterministic gate/i)).toBeTruthy()
+    // The verbose fail-safe prose belongs to the blocked state only.
     expect(screen.queryByText(/will not auto-clear/i)).toBeNull()
+    expect(screen.queryByText(/no watchlist matches/i)).toBeNull()
   })
 
   it('renders nothing for an unscreened (pre-Slice-B) record', () => {

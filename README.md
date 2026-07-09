@@ -4,6 +4,11 @@ NexHack 2026 — Track 2: Fintech Risk & Fraud Intelligence
 
 VerdictAML is a multi-agent system designed to assist banking anti-money laundering (AML) compliance analysts in triaging suspicious transaction alerts. Leveraging DeepSeek-v4 language models, the copilot analyzes transaction typologies, runs an adversarial verifier to challenge false-positive escalations, drafts structured Suspicious Activity Reports (STR), and reports workload-reduction metrics on a held-out synthetic transaction dataset. It also works the queue **autonomously**: before the analyst arrives, the **Queue Agent** runs every alert through this pipeline and auto-clears the high-confidence, verifier-agreed benign noise — surfacing only the alerts that need a human and never auto-filing a report (the *Autonomous AI Workforce* theme, with a human gate; ADR-0010). Once an analyst signs off on an escalation, the approved STR exports as a **schema-valid goAML XML** — the wire format Bank Negara Malaysia's Financial Intelligence Unit ingests — so the copilot is a drop-in component of the bank's existing STR submission flow, not a standalone tool.
 
+> **🏁 Final-round submission links**
+> - 📊 **Pitch deck (PDF):** [docs/VerdictAML-finals.pdf](docs/VerdictAML-finals.pdf)
+> - 🌐 **Live console (Render):** https://aml-alert-triage-copilot-1.onrender.com
+> - 📺 **7-min demo video (YouTube):** https://youtu.be/5_GYoHZ4b9E
+>
 > **📦 Prelim submission links**
 > - 📺 **7-min demo video (YouTube):** https://youtu.be/5_GYoHZ4b9E
 > - 📊 **Pitch deck (Google Slides):** https://docs.google.com/presentation/d/1Oo8ttmGPhU5pcUtKKO_EHwChylzOs0nc/edit?usp=sharing&ouid=111272448091501598018&rtpof=true&sd=true
@@ -93,17 +98,19 @@ In Malaysia this sits under the **AMLA 2001** regime: reporting institutions mus
 
 ### Pricing Tiers
 
-A SaaS model priced on the value delivered (analyst time recovered), not on compute. Figures below are illustrative go-to-market positioning for the prelim; final pricing would be validated in pilot.
+Value-based pricing — the buyer pays for analyst time recovered, not for compute. Anchor: at 5,000 alerts/month VerdictAML recovers **~360 analyst-hours/month (~RM 216k/year** at a fully-loaded RM 50/hour), so the platform is priced *below* the time it returns. Figures are go-to-market positioning; final pricing is validated in pilot. These same figures are exposed live by the app at `/pilot/adoption-plan` (Governance tab).
 
-| Tier | Who it's for | Model | Indicative price |
+| Tier | Who it's for | Model | Price |
 | :--- | :--- | :--- | :--- |
-| **Pilot / Proof of Value** | A single compliance team evaluating impact | Fixed-fee 8–12 week engagement, runs in shadow mode against historical alerts to quantify time saved before going live | One-time setup fee (creditable toward an annual contract) |
-| **Team** | Small/mid compliance functions (≤ ~15 analysts) | Per-analyst seat license, billed annually | ~RM 400–600 / analyst / month |
-| **Enterprise** | Banks with high alert volume | Annual platform license + consumption (per-alert-triaged), with SSO, audit logging, on-prem/VPC deployment, and SLA | Custom (volume-tiered) |
+| **Paid shadow pilot** | A compliance team proving value on its own alerts | Fixed-fee 8-week engagement in shadow mode against historical alerts; creditable toward year 1 | **RM 50,000** (~US$11k), one-time |
+| **Production assist** | Live triage with human-owned decisions | Annual platform license + per-reviewed-alert consumption (volume-tiered); hosted DeepSeek API, COGS a few sen/alert | **RM 120,000/year** (~US$26k) incl. up to 5,000 alerts/mo, then **RM 2/alert** |
+| **Governed automation / Enterprise** | Banks needing data residency + bounded auto-clear | Self-hosted open-weight model in the bank's VPC (data never leaves the perimeter); SSO, audit, model-risk change control, SLA | **From RM 250,000/year** (~US$53k), custom |
 
-Add-ons across tiers: custom typology-card authoring, integration with the institution's existing case-management/transaction-monitoring stack, and a private model deployment for data-residency-sensitive buyers.
+Add-ons across tiers: custom typology-card authoring, and integration with the institution's existing case-management/transaction-monitoring stack.
 
-**Unit economics / ROI framing (modeled, per ADR-0004):** the copilot's value is the analyst time it returns per alert, the benign alerts the Queue Agent auto-clears with no human touch at all (around 40% of the held-out queue), and the fewer false positives escalated. With a per-seat price well below a fraction of a loaded analyst salary, a team clearing a large daily queue reaches payback inside the first contract year on labor cost alone — before counting the risk-reduction value of a consistent, audit-ready second pair of eyes on every borderline call. (Time-saved figures are modeled/cited, not yet measured in production; `accuracyVsLabels` is the one number measured on held-out data.)
+**Why self-hosting is a control choice, not a cost saving:** the hosted DeepSeek API is *variable* and cheap (~a few sen/alert), while a self-hosted open-weight model is a *fixed* GPU cost (~RM 7–10k/month for one H100) that only wins on price at very high volume. So the Enterprise tier's self-host option is about **data residency, data sovereignty, and model-risk reproducibility (frozen weights)** — the GPU cost sits on the tier that demands it, keeping the volume tiers high-margin and capital-light.
+
+**Unit economics / ROI framing (modeled, per ADR-0004):** the copilot's value is the analyst time it returns per alert, the benign alerts the Queue Agent auto-clears with no human touch at all (around 40% of the held-out queue), and the fewer false positives escalated. The **RM 120k/year** platform sits below the **~RM 216k/year** of analyst time recovered at 5,000 alerts/month, and the **RM 2/alert** overage is under the ~RM 4 of analyst time each review saves — so the bank is ROI-positive on labor cost alone, before counting the risk-reduction value of a consistent, audit-ready second pair of eyes on every borderline call. Inference COGS on the hosted DeepSeek API is a few sen per alert, so gross margin stays high and the system is capital-light. (Time-saved figures are modeled/cited, not yet measured in production; `accuracyVsLabels` is the one number measured on held-out data.)
 
 ### Deployment & Data Residency
 

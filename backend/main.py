@@ -230,6 +230,7 @@ _SUPPRESSION = _DATA / "suppression_metrics.json"  # closed-loop suppression fro
 _NETWORKS = _DATA / "networks.json"  # frozen Mule Network heroes (ADR-0009/0015)
 _IBM_SEED = _DATA / "ibm_seed_alerts.json"  # the hidden mule's own account as a queue alert (ADR-0015)
 _DEMO_CLUSTER = _DATA / "demo_cluster_alerts.json"  # Slice A beat-3 self-suppression cluster
+_STANDING_CLUSTER = _DATA / "standing_cluster_alerts.json"  # Slice A standing seeded suppression pair
 _GOAML_CONFIG = GoamlConfig.model_validate(
     json.loads((_DATA / "goaml_config.json").read_text(encoding="utf-8"))
 )
@@ -287,6 +288,19 @@ def _load_demo_cluster() -> list[dict]:
     return catalog
 
 
+def _load_standing_cluster() -> list[dict]:
+    """The Slice A standing cluster (data/build_standing_cluster.py): a benign FI-01 committee pair
+    sharing one envelope. STANDCL-01 is seeded into cleared_patterns_seed.json as a prior clearance,
+    so STANDCL-02 shows a real standing suppression (and a truthful '1 future alert affected') on a
+    cold load, without pre-empting the live DEMO-CL beat. Missing file -> none."""
+    if not _STANDING_CLUSTER.exists():
+        return []
+    catalog = json.loads(_STANDING_CLUSTER.read_text(encoding="utf-8"))
+    for a in catalog:
+        Alert.model_validate(a)  # fail fast on a malformed cluster alert
+    return catalog
+
+
 def _load_audit_seed() -> list[dict]:
     """The Queue Agent's autoClear events (ADR-0010), so /audit opens populated with the
     autonomous overnight run instead of empty until a human acts. Missing file
@@ -325,7 +339,12 @@ _NETWORKS_DATA = _load_networks()
 # autonomous run (ADR-0010); each seed only takes when its table is empty, so a restart
 # keeps decision-updated alert statuses and real runtime events.
 store.init()
-store.seed_alerts(_load_alert_catalog() + _load_ibm_seed_alerts() + _load_demo_cluster())
+# reconcile_alerts (not seed_alerts): inserts any catalog alert missing from the DB and leaves
+# existing (decided) rows untouched, so a durable Neon-backed deploy picks up newly-added seed
+# alerts (e.g. the standing cluster) on the next boot instead of staying frozen on first-seed.
+store.reconcile_alerts(
+    _load_alert_catalog() + _load_ibm_seed_alerts() + _load_demo_cluster() + _load_standing_cluster()
+)
 store.seed_audit(_load_audit_seed())
 store.seed_cleared_patterns(_load_cleared_patterns_seed())
 
@@ -2234,7 +2253,9 @@ def get_pilot_adoption_plan():
             "estimatedMonthlyHoursSaved": 360,
             "valueHypothesis": (
                 "At 5,000 alerts/month, a conservative 5-minute handling reduction on reviewed alerts "
-                "plus bounded auto-clear can recover hundreds of analyst hours while preserving QA."
+                "plus bounded auto-clear recovers ~360 analyst hours/month - about RM 216k/year at a "
+                "fully-loaded RM 50/hour - while preserving QA. The RM 120k/year platform is priced "
+                "below the analyst time it returns."
             ),
             "caveat": (
                 "Pilot economics are a validation target, not a production claim; the bank must replace "
@@ -2265,7 +2286,7 @@ def get_pilot_adoption_plan():
             {
                 "name": "Paid shadow pilot",
                 "customerStage": "Historical replay and shadow validation",
-                "pricingModel": "Fixed pilot fee scoped by alert volume and integration effort.",
+                "pricingModel": "RM 50,000 (~US$11k) fixed for the 8-week pilot, creditable toward year 1; scoped by alert volume and integration effort.",
                 "includes": [
                     "Data mapping and historical replay.",
                     "Validation dossier and leakage report.",
@@ -2276,7 +2297,7 @@ def get_pilot_adoption_plan():
             {
                 "name": "Production assist",
                 "customerStage": "Live triage with human-owned decisions",
-                "pricingModel": "Annual platform fee plus alert-volume tier.",
+                "pricingModel": "RM 120,000/year (~US$26k) platform including up to 5,000 reviewed alerts/month, plus RM 2 (~US$0.40) per additional reviewed alert (volume-tiered). Priced below the ~RM 216k/year of analyst time it returns at that volume.",
                 "includes": [
                     "Queue triage, defense cases, QA sampling, and audit.",
                     "Human-gated STR/goAML export.",
@@ -2287,11 +2308,12 @@ def get_pilot_adoption_plan():
             {
                 "name": "Governed automation",
                 "customerStage": "Limited auto-clear after bank validation",
-                "pricingModel": "Enterprise or private deployment tier for stricter data residency and model-risk controls.",
+                "pricingModel": "From RM 250,000/year (~US$53k), custom. Self-hosted open-weight model in the bank's VPC so data never leaves the perimeter (customer-provided or surcharged GPU); the LLM client is swappable by config.",
                 "includes": [
                     "Approved auto-clear thresholds.",
                     "Ongoing leakage monitoring and rollback.",
                     "Model-risk change control and audit evidence bundle.",
+                    "Self-hosted open-weight LLM inside the bank's VPC - data never leaves the perimeter.",
                 ],
                 "conversionGate": "Historical replay and shadow pilot show acceptable leakage under bank policy.",
             },

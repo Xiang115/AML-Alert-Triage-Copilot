@@ -19,10 +19,10 @@ import { FilingSlaClock } from './FilingSlaClock'
 import { StrEditor } from './StrEditor'
 import { DismissalRecord } from './DismissalRecord'
 import { DecisionPanel } from './DecisionPanel'
-import { DefenseCase } from './DefenseCase'
 import { CaseHandoffCard } from './CaseHandoffCard'
 import { DecisionTraceCard } from './DecisionTraceCard'
 import { CopilotLedgerCard } from './CopilotLedgerCard'
+import { CollapsibleSection } from './ui/CollapsibleSection'
 
 interface AlertDetailProps {
   alert: Alert
@@ -245,7 +245,7 @@ export function AlertDetail({ alert, setAlert, onReloadList, thresholds }: Alert
             borderline={alert.borderlineDismiss ?? false}
             thresholds={thresholds}
           />
-          <SuppressionPanel data={alert.triage.suppression} />
+          <SuppressionPanel data={alert.triage.suppression} routing={alert.routing} />
           <VerifierPanel verifier={alert.triage.verifier} />
           {alert.triage.debate && <DebatePanel debate={alert.triage.debate} />}
           {/* Related-account reveal (ADR-0009/0015): the hidden mule the network re-surfaces.
@@ -271,7 +271,9 @@ export function AlertDetail({ alert, setAlert, onReloadList, thresholds }: Alert
           )}
         </div>
 
-        {/* Right: activity profile, STR draft, filing SLA + decision */}
+        {/* Right: the working surface (activity, the record, the decision) up top; the
+            governance/provenance cards collapsed below it so acting on the alert doesn't mean
+            scrolling past them. */}
         <div className="col-span-5 flex flex-col space-y-5">
           {/* QA-sample notice (ADR-0019): this auto-cleared alert was risk-weighted-sampled for a
               human spot-check — the control for the measured auto-clear leakage. */}
@@ -290,14 +292,6 @@ export function AlertDetail({ alert, setAlert, onReloadList, thresholds }: Alert
 
           {/* Ledger-derived Account Activity Profile (ADR-0016): fills the rail on every alert,
               including dismiss, with real money-movement insight (never fabricated KYC). */}
-          <DefenseCase alert={alert} thresholds={thresholds} auditEntries={auditEntries} />
-
-          <DecisionTraceCard trace={decisionTrace} />
-
-          <CopilotLedgerCard runs={copilotRuns} ledger={copilotLedger} />
-
-          <CaseHandoffCard handoff={caseHandoff} />
-
           {alert.activityProfile && (
             <AccountActivityProfile
               profile={alert.activityProfile}
@@ -347,6 +341,24 @@ export function AlertDetail({ alert, setAlert, onReloadList, thresholds }: Alert
             onApprove={(note) => handleDecision('approve', note)}
             onOverride={(note) => handleDecision('override', note)}
           />
+
+          {/* Provenance & controls: the merged decision trace (routing rationale + deterministic
+              gates + audit replay), the copilot run ledger, and the bank write-back packet. The
+              defensibility story, tucked below the action so triage isn't buried under it. */}
+          <CollapsibleSection
+            title="Provenance & controls"
+            subtitle="Decision trace, copilot run ledger, and bank handoff packet."
+            defaultOpen
+          >
+            <DecisionTraceCard
+              trace={decisionTrace}
+              alert={alert}
+              thresholds={thresholds}
+              auditEntries={auditEntries}
+            />
+            <CopilotLedgerCard runs={copilotRuns} ledger={copilotLedger} />
+            <CaseHandoffCard handoff={caseHandoff} />
+          </CollapsibleSection>
         </div>
       </div>
     </div>

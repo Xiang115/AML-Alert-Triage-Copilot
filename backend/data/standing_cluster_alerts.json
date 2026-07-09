@@ -1,0 +1,332 @@
+[
+  {
+    "alertId": "STANDCL-01",
+    "status": "pending",
+    "createdAt": "2026-07-03T14:30:00+08:00",
+    "riskScore": 44,
+    "trigger": "5 transactions (4 in / 1 out) consolidating into one account flagged by monitoring",
+    "account": {
+      "accountId": "ACC-SC-01",
+      "holderName": "Taman Sri Aman Committee Fund",
+      "accountType": "Committee/association account",
+      "openedAt": "2021-08-10T09:00:00+08:00"
+    },
+    "transactionIds": [
+      "STANDCL-01-T0",
+      "STANDCL-01-T1",
+      "STANDCL-01-T2",
+      "STANDCL-01-T3",
+      "STANDCL-01-T4"
+    ],
+    "transactions": [
+      {
+        "transactionId": "STANDCL-01-T0",
+        "timestamp": "2026-07-03T09:05:00+08:00",
+        "amount": 2600.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 1",
+        "counterpartyAccount": "MBR-ACC-SC-01-1",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 5600.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-01-T1",
+        "timestamp": "2026-07-03T09:40:00+08:00",
+        "amount": 2550.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 2",
+        "counterpartyAccount": "MBR-ACC-SC-01-2",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 8150.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-01-T2",
+        "timestamp": "2026-07-03T10:15:00+08:00",
+        "amount": 2700.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 3",
+        "counterpartyAccount": "MBR-ACC-SC-01-3",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 10850.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-01-T3",
+        "timestamp": "2026-07-03T10:55:00+08:00",
+        "amount": 2500.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 4",
+        "counterpartyAccount": "MBR-ACC-SC-01-4",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 13350.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-01-T4",
+        "timestamp": "2026-07-03T14:30:00+08:00",
+        "amount": 9000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Scheduled payout (member of the month)",
+        "counterpartyAccount": "PAYEE-ACC-SC-01",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 4350.0,
+        "flags": []
+      }
+    ],
+    "triage": {
+      "alertId": "STANDCL-01",
+      "recommendation": "dismiss",
+      "confidence": 0.7,
+      "claims": [
+        {
+          "text": "Multiple inbound contributions consolidating into one account before a single payout resembles fan-in consolidation, but the account is a registered rotating-savings committee (kootu / ROSCA): fixed, equal monthly contributions from known members and one scheduled payout. No scam-victim consolidation indicator fires once the committee relationship is recognised.",
+          "evidence": {
+            "transactionIds": [
+              "STANDCL-01-T0",
+              "STANDCL-01-T1",
+              "STANDCL-01-T2",
+              "STANDCL-01-T3"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "Fan-in / Fan-out (Consolidation)",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      },
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "STANDCL-01-T0",
+        "STANDCL-01-T1",
+        "STANDCL-01-T2",
+        "STANDCL-01-T3"
+      ],
+      "indicatorCoverage": {
+        "indicators": [
+          "many inbound sources",
+          "consolidation into one account",
+          "onward forwarding"
+        ],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees: contributions are fixed and periodic and the payout is scheduled \u2014 a benign rotating-savings pattern, not scam-victim consolidation.",
+            "evidence": {
+              "transactionIds": [
+                "STANDCL-01-T0",
+                "STANDCL-01-T1",
+                "STANDCL-01-T2",
+                "STANDCL-01-T3"
+              ],
+              "firedIndicators": [],
+              "matchedTypology": "Fan-in / Fan-out (Consolidation)",
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-09T14:01:35.921017+08:00"
+    },
+    "routing": "needsReview"
+  },
+  {
+    "alertId": "STANDCL-02",
+    "status": "pending",
+    "createdAt": "2026-07-03T14:30:00+08:00",
+    "riskScore": 44,
+    "trigger": "5 transactions (4 in / 1 out) consolidating into one account flagged by monitoring",
+    "account": {
+      "accountId": "ACC-SC-02",
+      "holderName": "Kampung Melati Kootu Fund",
+      "accountType": "Committee/association account",
+      "openedAt": "2021-08-10T09:00:00+08:00"
+    },
+    "transactionIds": [
+      "STANDCL-02-T0",
+      "STANDCL-02-T1",
+      "STANDCL-02-T2",
+      "STANDCL-02-T3",
+      "STANDCL-02-T4"
+    ],
+    "transactions": [
+      {
+        "transactionId": "STANDCL-02-T0",
+        "timestamp": "2026-07-03T09:05:00+08:00",
+        "amount": 2600.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 1",
+        "counterpartyAccount": "MBR-ACC-SC-02-1",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 5600.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-02-T1",
+        "timestamp": "2026-07-03T09:40:00+08:00",
+        "amount": 2550.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 2",
+        "counterpartyAccount": "MBR-ACC-SC-02-2",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 8150.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-02-T2",
+        "timestamp": "2026-07-03T10:15:00+08:00",
+        "amount": 2700.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 3",
+        "counterpartyAccount": "MBR-ACC-SC-02-3",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 10850.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-02-T3",
+        "timestamp": "2026-07-03T10:55:00+08:00",
+        "amount": 2500.0,
+        "currency": "MYR",
+        "direction": "inbound",
+        "counterpartyName": "Member contribution 4",
+        "counterpartyAccount": "MBR-ACC-SC-02-4",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 13350.0,
+        "flags": []
+      },
+      {
+        "transactionId": "STANDCL-02-T4",
+        "timestamp": "2026-07-03T14:30:00+08:00",
+        "amount": 9000.0,
+        "currency": "MYR",
+        "direction": "outbound",
+        "counterpartyName": "Scheduled payout (member of the month)",
+        "counterpartyAccount": "PAYEE-ACC-SC-02",
+        "counterpartyBank": "Demo Bank",
+        "channel": "ift",
+        "runningBalance": 4350.0,
+        "flags": []
+      }
+    ],
+    "triage": {
+      "alertId": "STANDCL-02",
+      "recommendation": "dismiss",
+      "confidence": 0.7,
+      "claims": [
+        {
+          "text": "Multiple inbound contributions consolidating into one account before a single payout resembles fan-in consolidation, but the account is a registered rotating-savings committee (kootu / ROSCA): fixed, equal monthly contributions from known members and one scheduled payout. No scam-victim consolidation indicator fires once the committee relationship is recognised.",
+          "evidence": {
+            "transactionIds": [
+              "STANDCL-02-T0",
+              "STANDCL-02-T1",
+              "STANDCL-02-T2",
+              "STANDCL-02-T3"
+            ],
+            "firedIndicators": [],
+            "matchedTypology": "Fan-in / Fan-out (Consolidation)",
+            "citation": null
+          },
+          "anchored": true,
+          "semanticVerdict": null,
+          "semanticReason": null
+        }
+      ],
+      "evidenceIntegrity": {
+        "anchoredCount": 1,
+        "unanchoredCount": 0,
+        "totalCount": 1
+      },
+      "matchedTypology": {
+        "code": "FI-01",
+        "name": "Fan-in / Fan-out (Consolidation)",
+        "source": "FATF Recommendations (2012), R.20; BNM AML/CFT Policy Document; scam-mule guidance"
+      },
+      "citedTransactionIds": [
+        "STANDCL-02-T0",
+        "STANDCL-02-T1",
+        "STANDCL-02-T2",
+        "STANDCL-02-T3"
+      ],
+      "indicatorCoverage": {
+        "indicators": [
+          "many inbound sources",
+          "consolidation into one account",
+          "onward forwarding"
+        ],
+        "fired": []
+      },
+      "verifier": {
+        "status": "agreed",
+        "agreesWithRecommendation": true,
+        "claims": [
+          {
+            "text": "Agrees: contributions are fixed and periodic and the payout is scheduled \u2014 a benign rotating-savings pattern, not scam-victim consolidation.",
+            "evidence": {
+              "transactionIds": [
+                "STANDCL-02-T0",
+                "STANDCL-02-T1",
+                "STANDCL-02-T2",
+                "STANDCL-02-T3"
+              ],
+              "firedIndicators": [],
+              "matchedTypology": "Fan-in / Fan-out (Consolidation)",
+              "citation": null
+            },
+            "anchored": true,
+            "semanticVerdict": null,
+            "semanticReason": null
+          }
+        ]
+      },
+      "debate": null,
+      "screening": null,
+      "suppression": null,
+      "strDraft": null,
+      "model": "precomputed",
+      "generatedAt": "2026-07-09T14:01:35.921182+08:00"
+    },
+    "routing": "needsReview"
+  }
+]

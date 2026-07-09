@@ -85,6 +85,7 @@ def _slice_a_alert(alert_id: str) -> dict:
         },
     ]
     alert["triage"]["alertId"] = alert_id
+    alert["triage"]["recommendation"] = "dismiss"  # a benign look-alike (the panel is dismiss-gated)
     alert["triage"]["citedTransactionIds"] = [f"{alert_id}-T0", f"{alert_id}-T1"]
     alert["triage"]["suppression"] = None
     return alert
@@ -125,9 +126,10 @@ def test_learned_patterns_returns_session_patterns(slice_a_catalog):
 
 def test_learned_patterns_open_with_the_demo_seed():
     # Slice A: /learned-patterns is populated with the seeded prior clearance in LIVE mode too
-    # (parity with mock) — the tab isn't empty before any session dismiss.
+    # (parity with mock) — the tab isn't empty before any session dismiss. The seed is a real benign
+    # dismiss (SD-00015), not the stale SD-00004 escalate the pre-refactor seed cited.
     sigs = [p["signature"] for p in client.get("/learned-patterns").json()]
-    assert _signature_for("SD-00004") in sigs
+    assert _signature_for("STANDCL-01") in sigs
 
 
 def test_learning_loop_opportunities_enumerates_population_and_future_effects():
@@ -150,13 +152,29 @@ def test_learning_loop_opportunities_enumerates_population_and_future_effects():
     assert blocked["blockedReason"].startswith("No reusable signature")
 
 
-def test_seeded_suppression_enriches_a_matching_alert():
-    # SD-00006 shares the seeded behavioral-envelope signature, so GET /alerts attaches the
-    # suppression live from the preloaded demo pattern.
-    s = client.get("/alerts/SD-00006").json()["triage"]["suppression"]
+def test_seeded_suppression_enriches_the_standing_look_alike():
+    # The standing cluster ships STANDCL-01 as a prior clearance, so its look-alike STANDCL-02 (same
+    # benign FI-01 envelope) shows a real auto-suppressed panel on a cold load and auto-clears.
+    la = client.get("/alerts/STANDCL-02").json()
+    s = la["triage"]["suppression"]
     assert s and s["status"] == "suppressed"
-    assert s["sourceDecisionId"] == "SD-00004"
-    assert s["matchedPatternId"] == _signature_for("SD-00004")
+    assert s["sourceDecisionId"] == "STANDCL-01"
+    assert s["matchedPatternId"] == _signature_for("STANDCL-02")
+    assert la["routing"] == "autoCleared"  # no debate on the look-alike -> genuinely auto-suppressed
+
+    # The teacher is NOT suppressed against the pattern it itself taught (no self-count).
+    assert client.get("/alerts/STANDCL-01").json()["triage"]["suppression"] is None
+
+
+def test_suppression_panel_never_shows_on_an_escalate():
+    # suppress() matches on the behavioral envelope alone, so a learned clearance could otherwise
+    # paint "matches a previously cleared pattern" onto a confident escalate. The served display is
+    # gated on the recommendation: an escalate never surfaces a suppression panel.
+    sig = _signature_for("SD-00006")  # a confident escalate
+    assert client.get("/alerts/SD-00006").json()["triage"]["recommendation"] == "escalate"
+    main.store.record_clearance(sig, "PT-01", "PRIOR-DEC", "PRIOR-ALERT", "2026-06-01T09:00:00+08:00")
+
+    assert client.get("/alerts/SD-00006").json()["triage"]["suppression"] is None
 
 
 def test_queue_list_reroutes_a_borderline_dismiss_after_a_clearance_is_learned():

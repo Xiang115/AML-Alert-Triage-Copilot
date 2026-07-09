@@ -137,6 +137,26 @@ def test_set_alert_decision_persists_and_survives_restart(temp_store):
     assert [x["alertId"] for x in store.list_alerts(status="approved")] == ["DQ-100"]  # index in sync
 
 
+def test_reconcile_alerts_inserts_missing_without_touching_existing(temp_store):
+    # A durable DB (e.g. Neon) already holds a decided alert; a later deploy ships a catalog with a
+    # NEW alert plus a would-be status change to the old one. Reconcile must add the new alert and
+    # leave the existing (decided) alert exactly as it is — seed_alerts (seed-only-if-empty) can't.
+    store.seed_alerts([_alert("OLD-1", status="approved")])
+
+    store.reconcile_alerts([_alert("OLD-1", status="pending"), _alert("NEW-1", txns=3)])
+
+    assert store.get_alert("OLD-1")["status"] == "approved"  # existing row untouched, not clobbered
+    new = store.get_alert("NEW-1")
+    assert new is not None and len(new["transactions"]) == 3  # missing alert + its ledger inserted
+    assert store.count_alerts() == 2
+
+
+def test_reconcile_alerts_seeds_an_empty_db(temp_store):
+    # Fresh-deploy path: an empty DB gets the whole catalog (insert-missing == insert-all when empty).
+    store.reconcile_alerts([_alert("A"), _alert("B")])
+    assert store.count_alerts() == 2
+
+
 def test_clear_alerts_empties_the_catalog(temp_store):
     store.seed_alerts([_alert("DQ-100", txns=2)])
     store.clear_alerts()
@@ -154,6 +174,38 @@ def test_seed_cleared_patterns_only_takes_when_empty(temp_store):
     store.record_clearance("sig:live", "FI-01", "D2", "A2", "2026-07-01T10:00:00+08:00")
     store.seed_cleared_patterns(seed)  # table non-empty now => seed is a no-op
     assert store.find_cleared_pattern("sig:live") is not None  # session pattern survives
+
+
+def test_seed_purges_obsolete_counterparty_format_patterns(temp_store):
+    # A pre-ADR-0021 pattern is keyed on the old counterparty format (cp:<acct>|typ:<code>). The
+    # current signature() emits a behavioral envelope (typ=...), so an obsolete row can NEVER match
+    # and it silently kills suppression on every alert — while blocking the current-format seed from
+    # loading (seed-only-if-empty). Seeding must purge the obsolete row so the current seed governs.
+    store.record_clearance("cp:9085912544|typ:PT-01", "PT-01", "SD-00001", "SD-00001",
+                           "2026-06-01T09:00:00+08:00")
+    seed = [{"signature": "typ=FI-01|amt=4|dir=mix|drain=False|conc=0|xb=0|cash=0|ntxn=5",
+             "typology": "FI-01", "sourceDecisionId": "SD-00015", "sourceAlertId": "SD-00015",
+             "clearedCount": 1, "clearedAt": "2026-07-01T09:14:00+08:00"}]
+
+    store.seed_cleared_patterns(seed)
+
+    assert store.find_cleared_pattern("cp:9085912544|typ:PT-01") is None  # obsolete purged
+    assert store.find_cleared_pattern(seed[0]["signature"]) is not None   # current seed now governs
+
+
+def test_seed_purge_spares_current_format_session_patterns(temp_store):
+    # The purge must be surgical: a current-format session pattern is not obsolete, so it survives a
+    # (re)seed and still blocks the demo seed from overwriting real learned memory.
+    store.record_clearance("typ=PT-01|amt=3|dir=mix|drain=False|conc=1|xb=0|cash=0|ntxn=3",
+                           "PT-01", "DEMO-CL-01", "DEMO-CL-01", "2026-07-02T09:14:00+08:00")
+    seed = [{"signature": "typ=FI-01|amt=4|dir=mix|drain=False|conc=0|xb=0|cash=0|ntxn=5",
+             "typology": "FI-01", "sourceDecisionId": "SD-00015", "sourceAlertId": "SD-00015",
+             "clearedCount": 1, "clearedAt": "2026-07-01T09:14:00+08:00"}]
+
+    store.seed_cleared_patterns(seed)
+
+    assert store.find_cleared_pattern("typ=PT-01|amt=3|dir=mix|drain=False|conc=1|xb=0|cash=0|ntxn=3") is not None
+    assert store.find_cleared_pattern(seed[0]["signature"]) is None  # table non-empty => seed no-op
 
 
 def test_record_clearance_increments_in_place_and_survives_restart(temp_store):
