@@ -18,7 +18,8 @@ backend/data/knowledge_base/raw_pdfs/
 !backend/data/watchlist/sanctions.json
 .env
 D:\Dev\nexhack-track2-architecture\.env
-.claude/
+.claude/*
+!.claude/commands/
 .codegraph/
 .superpowers/
 
