@@ -75,6 +75,41 @@ zero leaks), never with model accuracy.
   Our goAML XML export was arguably the most regulator-real integration in the
   competition — and XSD validation is the least visible demo moment imaginable.
 
+## Finding 5 — The judges' own words confirm it
+
+Direct judge feedback after results: *"the architecture is your strength but also
+your weakness — you went far, but the storytelling doesn't capture what makes the
+features outstanding; and the system must be usable by more users — user-friendly
+is a must. Even if it can earn a lot, if only a few users can use it, it's a
+failed product."* Decoded, that's two separate criticisms:
+
+**1. We pitched the machinery, not the moment it pays off.** Every headline
+feature is named after its mechanism — "adversarial verifier", "governed
+self-learning suppression", "leakage/coverage frontier". The champion had nearly
+the same mechanisms and named them after outcomes: *"the same benign vendor never
+wastes an analyst's time twice."* Same feature; theirs is a sentence a judge
+retells in deliberation. Our architecture consumed the storytelling budget — the
+deck explains how the system defends itself to a regulator, and never dramatizes
+the 9am moment where the analyst opens the queue and 43% of it is already gone.
+
+**2. The judges are the users, and they couldn't use it.** Our console shows every
+user five tabs, one of which is a *Governance dossier* (validation frontier,
+model-risk change control, QA sampling). The intended persona — a trained AML
+analyst — is someone no judge can role-play in 90 seconds. Every winner was
+touchable by a stranger: CukaiPandai serves any Malaysian SME owner on a live
+Vercel URL; CompliMY lives inside Slack; ComplianceGuard (same narrow buyer as us)
+still *felt* universal because anyone can drag in a bank statement.
+
+The judge's economic logic ("few users = failed product") is wrong for enterprise
+B2B — Actimize and Quantexa are billion-dollar products with tiny user counts —
+but the actionable reading is right: **in a hackathon, if the judge can't
+personally drive the product in two minutes, it scores as unusable regardless of
+what a CCO would pay.** The fix is progressive disclosure, not a simpler product:
+one clean default screen a stranger can operate (queue → one alert → plain-English
+explanation → one button), governance depth folded behind an "auditor view" opened
+only on request, and one universally relatable entry point (paste/upload
+transactions, watch it reason live).
+
 ## Playbook for the next hackathon
 
 1. **Run the real pipeline live** with visible per-agent progress (SSE stream);
@@ -90,3 +125,11 @@ zero leaks), never with model accuracy.
 6. Keep the governance depth — it is real moat for an actual sale — but give each
    invisible feature one *visible* on-stage moment (e.g. open the exported goAML
    XML in the FIU's validator live).
+7. **Name every feature after its outcome, not its mechanism.** Write the user
+   story first ("Aisyah opens her queue at 9am and 43% is already cleared, with a
+   briefing on top"), then let the architecture appear only as the answer to "how
+   is that safe?".
+8. **Design the demo for a stranger, not the buyer persona.** Default screen
+   operable by a judge in two minutes with zero domain knowledge; expert/governance
+   depth behind a toggle. Judges score the product they can drive, not the one the
+   economic buyer would pay for.
