@@ -8,9 +8,10 @@ describe('App (smoke)', () => {
   it('renders the shell and loads the queue from mock fixtures', async () => {
     render(<App />)
 
-    // Static shell is present immediately.
+    // Static shell is present immediately — essentials only by default.
     expect(screen.getByText('Alert Queue')).toBeTruthy()
-    expect(screen.getByText('System Performance')).toBeTruthy()
+    expect(screen.getByText('Expert view')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'System Performance' })).toBeNull()
 
     // Queue items arrive asynchronously from the mock api (SAML-D accounts, ADR-0012).
     expect((await screen.findAllByText(/SAML-D account/i)).length).toBeGreaterThan(0)
