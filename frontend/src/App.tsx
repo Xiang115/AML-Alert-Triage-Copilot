@@ -59,6 +59,12 @@ function hashForState(tab: Tab, selectedAlertId: string | null) {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>(() => parseHash(window.location.hash).tab)
+  // Progressive disclosure: the analyst's essentials (the queue) are the whole default UI;
+  // reviewer/regulator tabs appear only in Expert view. A deep link to an expert tab
+  // still works — it simply switches Expert view on.
+  const [expertMode, setExpertMode] = useState<boolean>(
+    () => parseHash(window.location.hash).tab !== 'queue',
+  )
   const [filterStatus, setFilterStatus] = useState<AlertStatus | 'all'>('all')
   // The Queue Agent's lane (ADR-0010): default to the full population so auto-clears stay
   // visible beside the human worklist instead of being hidden behind Governance-only counts.
@@ -112,6 +118,7 @@ export default function App() {
     const syncFromHash = () => {
       const route = parseHash(window.location.hash)
       setActiveTab(route.tab)
+      if (route.tab !== 'queue') setExpertMode(true)
       if ('alertId' in route) {
         setSelectedAlertId(route.alertId ?? null)
       }
@@ -136,7 +143,15 @@ export default function App() {
       {/* TOP BAR: brand (aligned over the sidebar) + full-width tabs */}
       <div className="flex shrink-0 items-center border-b border-line bg-surface">
         <BrandHeader />
-        <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          expertMode={expertMode}
+          onExpertModeChange={(on) => {
+            setExpertMode(on)
+            if (!on && activeTab !== 'queue') setActiveTab('queue')
+          }}
+        />
       </div>
 
       {/* BODY: sidebar + main content */}
